@@ -47,7 +47,7 @@ class Telemetry():
         # setup xplane beacon multicast receiver
         MCAST_GRP = '239.255.1.1'  # Standard multicast group
         MCAST_PORT = 49707  # (MCAST_PORT was 49000 for XPlane10)
-        self.beacon_receiver = UdpReceive(MCAST_PORT, None, MCAST_GRP)
+        self.beacon = UdpReceive(MCAST_PORT, None, MCAST_GRP)
         self.BEACON_TIMEOUT = 2 # report beacon lost if no msg for 2 seconds
         self.state = State.INITIALIZED
         self.last_beacon_time = None
@@ -121,7 +121,7 @@ class Telemetry():
 
     def handle_datarefs_lost(self):
         self.report_state_cb("Data connection Lost - Attempting to reconnect...")
-        self.beacon_receiver.clear() # remove queued msgs and wait for a new on
+        self.beacon.clear() # remove queued msgs and wait for a new on
         self.last_beacon_time = time.time()
         self.state = State.INITIALIZED
 
@@ -129,8 +129,8 @@ class Telemetry():
     def receive_beacon_message(self):
         # truncated version just check prolog and return ip address if valid
         """
-        if self.beacon_receiver.available():
-            addr, message = self.beacon_receiver.get()
+        if self.beacon.available():
+            addr, message = self.beacon.get()
             if message.startswith(b'BECN\0'):
                beacon = {"ip": addr}
                return beacon 
@@ -141,8 +141,8 @@ class Telemetry():
         Returns:
             dict: Contains 'ip', 'port', 'hostname', and other relevant details if a beacon is received, else None.
         """
-        if self.beacon_receiver.available():
-            addr, message = self.beacon_receiver.get()
+        if self.beacon.available():
+            addr, message = self.beacon.get()
             if message.startswith(b'BECN\0'):
                 try:
                     # Define the format string for struct unpacking
@@ -204,9 +204,9 @@ class Telemetry():
 
         return connection_status, data_status, state_description
 
-    def close(self):
+    def fin(self):
         self.xplane_udp.close()
-        self.beacon_receiver.close()
+        self.beacon.close()
         
     def run(self):
         if self.state == State.RECEIVING_DATAREFS:
@@ -244,13 +244,14 @@ class Telemetry():
         print("sent", filename, msg)
         """        
 
-    def situation(self, filename): 
-        self.send_SIMO(1, filename)
-        """
-        msg = 'Situation,{}'.format(filename)
+    def set_situation(self, filename): 
+        # self.send_SIMO(1, filename)
+      
+        msg = f"Situation,{filename}"
+        print(f"sending {msg} to {self.xplane_ip}:{TELEMETRY_CMD_PORT}")
         self.xplane_udp.send(msg, (self.xplane_ip, TELEMETRY_CMD_PORT))  
         return
-        """
+
         """
         cmd = 1  # 0=Save sit, 1=Load sit, 2=Save Movie, 3=Load Movie
         path = filename.encode('utf-8')  # Relative path from xplane install dir, e.g., 'Output/situations/my_situation.sit'
@@ -278,13 +279,17 @@ class Telemetry():
         """ 
     def send_SIMO(self, command, filename):
         # commands: 0=Save sit, 1=Load sit, 2=Save Movie, 3=Load Movie
-        msg = struct.pack('<4sxi150s2x', b'SIMO', command, filename.encode('utf-8'))
-        self.beacon_sock.sendto(msg, self.xplane_addr)
-        print("sent", filename,  msg)   
+        filename_bytes = filename.encode('utf-8') + b'\x00'
+        filename_padded = filename_bytes.ljust(153, b'\x00')  # Ensure exactly 150 bytes
+        msg = struct.pack('<4s i 153s', b'SIMO', command, filename_padded)
+        print(len(msg))
+
+        self.beacon.send_bytes(msg, self.xplane_addr)
+        print(f"sent {filename} to {self.xplane_addr} encoded as {msg}")   
    
     def send_CMND(self, command_str):
         msg = 'CMND\x00' + command_str
-        self.beacon_sock.sendto(msg.encode('utf-8'), self.xplane_addr)
+        self.beacon.send_bytes(msg, self.xplane_addr)
         
     
     # following only for washout dev 
