@@ -26,6 +26,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # connect signals from UI to core methods
         self.btn_run.clicked.connect(self.on_btn_run_clicked)
         self.btn_pause.clicked.connect(self.on_btn_pause_clicked)
+        self.cmb_experience.currentIndexChanged.connect(self.on_situation_combo_changed)
+        self.cmb_situation.currentIndexChanged.connect(self.on_situation_combo_changed)
         
         self.btn_intensity_motionless.clicked.connect(self.on_btn_motionless)
         self.btn_intensity_gentle.clicked.connect(self.on_btn_gentle)
@@ -52,6 +54,22 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.configure_ui_defaults()
         log.info("MainWindow: UI initialized")
 
+    def closeEvent(self, event):
+        """ Overriding closeEvent to handle exit actions """
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Exit Confirmation",
+            "Are you sure you want to exit?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No
+        )
+
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.core.cleanup_on_exit()
+            event.accept()  # Proceed with closing
+        else:
+            event.ignore()  # Prevent closing
+            
     def configure_ui_defaults(self):
         """
         Setup initial states or text for the UI elements.
@@ -84,8 +102,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         Called when "Activated/Deactivated" toggle is clicked.
         """
         if self.chk_activate.isChecked():
+            self.chk_activate.setText("Deactivate")
             self.core.update_state("enabled")
         else:
+            self.chk_activate.setText("Activate")
             self.core.update_state("disabled")
 
     def on_slider_value_changed(self, slider_name, value):
@@ -124,11 +144,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # e.g., user toggles CSV capture
         pass
 
-    def on_sim_combo_changed(self, index):
-        """
-        Combo box changed. We store or pass this to core on "Load Sim".
-        """
-        pass
+    def on_situation_combo_changed(self, ignored):
+        # send the experience and flight situation combo box settings to the core
+        situation = f"{self.cmb_experience.currentText()} {self.cmb_situation.currentText()}"
+        self.core.set_sim_scenario(situation)
+        
 
     # --------------------------------------------------------------------------
     # Core -> UI Methods (slots)
