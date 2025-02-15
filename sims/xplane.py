@@ -37,6 +37,9 @@ class Sim():
     
     def set_state_callback(self, callback):
         self.report_state_cb = callback
+        
+    def set_default_address(self, ip_address):
+            pass # code may be added here if needed  
 
     def load(self, loader):
         log.info("Attempting to start sim by executing " + loader)
@@ -49,26 +52,31 @@ class Sim():
         return True  # xplane autoconnects if needed so return True in any state
         
     def get_connection_state(self):
-        return self.x_plane.telemetry.get_connection_state() 
+        return self.x_plane.telemetry.get_connection_state()
         
     def run(self):
-        self.x_plane.run()
+        self.x_plane.telemetry.run()
 
     def pause(self):
-        self.x_plane.pause()
+        self.x_plane.telemetry.pause()
         
     def reset(self):
-        self.x_plane.reset()
+        self.x_plane.telemetry.reset()
         
     def read(self):
         return self.x_plane.telemetry.service(self.washout_callback)
     
+    def set_scenario(self, scenario):
+        self.x_plane.telemetry.set_situation(scenario)
+        
     def get_washout_config(self):
         return config.washout_time       
         
     def set_washout_callback(self, callback):
         self.washout_callback = callback 
 
+    def fin(self):
+        self.xplane.telemetry.fin()
 
 class X_Plane():
     
@@ -78,20 +86,8 @@ class X_Plane():
         self.interval_ms = interval_ms
         self.is_connected = False  
         self.norm_factors = config.norm_factors # edit xplane_cfg.py to change
-       
-        self.xpc = None
-        
-        self.parking_brake = 0
-        self.parking_brake_info = None
-        self.gear_toggle = None        
-        self.gear_info = [0,0,0] # center, left, right
-        self.gear_state = None # 0 if all up, 1 if all down
-        self.flaps_angle = 0
-        self.flaps_index = None       
-
-        self.telemetry = Telemetry(self.norm_factors, self.sleep_func, self.report_state_cb) # itf to X-Plane using UDP msgs to XPPython3 gateway
-        
-        #  self.controls = Controls('127,0,0,1', 10025); # flight controls interface
+        self.selected_flight_situation = None # the file name of the currently selected flight mode
+        self.telemetry = Telemetry(self.norm_factors, self.sleep_func, self.report_state_cb) # itf to X-Plane using UDP msgs to XPPython3 gateway        
 
     def __del__(self):
         pass 
@@ -104,6 +100,7 @@ class X_Plane():
     
     def reset(self):
        self.telemetry.reset()
+
         
 if __name__ == "__main__":
     from time import sleep

@@ -8,7 +8,7 @@ import logging
 import importlib
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 
 """ directory structure
 siminterface folder structure 
@@ -72,8 +72,9 @@ class SimInterfaceCore(QtCore.QObject):
         super().__init__(parent)
 
         # Simulation references
-        self.sim = None
-        self.simserver_addr = "127.0.0.1"   # fallback, can be replaced if simserver_cfg found
+        self.sim = None # the sim to run (xplane 11)
+        self.sim_scenario = None # this is the currently selected flight situation (or ride if roller coaster) 
+        
 
         # Timer for periodic data updates
         self.data_timer = QTimer(self)
@@ -211,6 +212,7 @@ class SimInterfaceCore(QtCore.QObject):
                 log.info("Core: Instantiated sim '%s' from class '%s'", self.sim.name, self.sim_class)
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
+            self.sim.set_default_address(self.sim_ip_address)
         except Exception as e:
             self.handle_error(e, f"Unable to load sim from {sim_path}")
 
@@ -305,20 +307,39 @@ class SimInterfaceCore(QtCore.QObject):
         # self.echo(request, distances, self.k.get_pose())
 
     # --------------------------------------------------------------------------
-    # Platform State Machine
+    # Platform State Machine 
     # --------------------------------------------------------------------------
+
     def update_state(self, new_state):
         """
-        A generic state machine approach for 'disabled', 'enabled', 'running', 'paused'.
+        Valid transitions:
+        - Disabled → Enabled (only)
+        - Enabled → Running, Paused, Disabled
+        - Running → Paused, Disabled
+        - Paused → Running, Disabled
         """
+
         if new_state == self.state:
-            return
+            return  # No change needed
+        
+        # Enforce allowed transitions
+        valid_transitions = {
+            'disabled': ['enabled'],
+            'enabled': ['running', 'paused', 'disabled'],
+            'running': ['paused', 'disabled'],
+            'paused': ['running', 'disabled']
+        }
+        
+        if new_state not in valid_transitions.get(self.state, []):
+            log.warning("Invalid transition: %s → %s", self.state, new_state)
+            return  # Invalid transition
+
         old_state = self.state
         self.state = new_state
         log.debug("Core: Platform state changed from %s to %s", old_state, new_state)
         self.platformStateChanged.emit(self.state)
 
-        # handle transitions
+        # Handle transitions
         if new_state == 'enabled':
             self.enable_platform()
         elif new_state == 'disabled':
@@ -341,6 +362,11 @@ class SimInterfaceCore(QtCore.QObject):
         self.is_output_enabled = False
         # If needed, do slow_move from current transform to DISABLED_DISTANCES
 
+
+    def set_sim_scenario(self, scenario):
+        if self.sim_scenario != scenario:
+            self.sim_scenario = scenario
+            self.sim.set_scenario(scenario)
     # --------------------------------------------------------------------------
     # Error Handling
     # --------------------------------------------------------------------------
@@ -359,6 +385,8 @@ class SimInterfaceCore(QtCore.QObject):
     # --------------------------------------------------------------------------
 
 
+    def cleanup_on_exit(self):
+        print("cleaning up")   
 
 
 def sleep_qt(delay):
@@ -393,6 +421,11 @@ if __name__ == "__main__":
     log.info("Starting SimInterface with separated UI and Core")
 
     app = QtWidgets.QApplication(sys.argv)
+    
+    app.setAttribute(Qt.AA_EnableHighDpiScaling)
+    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+
 
     core = SimInterfaceCore()
     ui = MainWindow(core)
