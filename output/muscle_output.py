@@ -176,7 +176,7 @@ class MuscleOutput(object):
             distances[idx] = int(round(d))
         try:
             out_pressures = self.distance_to_pressure(distances)
-            # print("distances,", (','.join(str(d) for d in distances)), "pressures,", (','.join(str(p) for p in out_pressures)))
+            # print("in move_distance,", (','.join(str(d) for d in distances)), "pressures,", (','.join(str(p) for p in out_pressures)))
             self.send_pressures(out_pressures)
             self.percents = []
             for d in distances:

@@ -72,6 +72,9 @@ class UdpReceive:
 
     def send(self, data, addr):
         self.sock.sendto(data.encode('utf-8'), addr)
+        
+    def send_bytes(self, data, addr):
+        self.sock.sendto(data, addr)    
 
     def reply(self, data):  # send to the address of the last received msg
         if self.sender_addr:
