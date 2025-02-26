@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1002</width>
-    <height>584</height>
+    <width>1278</width>
+    <height>748</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,10 +20,10 @@
     </property>
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>4</y>
-      <width>971</width>
-      <height>411</height>
+      <width>1261</width>
+      <height>591</height>
      </rect>
     </property>
     <property name="accessibleName">
@@ -42,132 +42,22 @@
      <widget class="QGroupBox" name="grp_sim">
       <property name="geometry">
        <rect>
-        <x>390</x>
-        <y>10</y>
-        <width>571</width>
-        <height>371</height>
+        <x>10</x>
+        <y>170</y>
+        <width>1231</width>
+        <height>491</height>
        </rect>
       </property>
       <property name="title">
        <string/>
       </property>
-      <widget class="QGroupBox" name="groupBox_3">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>221</width>
-         <height>151</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>MS 33558</family>
-         <pointsize>10</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="title">
-        <string>Sim Status</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <widget class="QLabel" name="ico_connection">
-        <property name="geometry">
-         <rect>
-          <x>40</x>
-          <y>40</y>
-          <width>50</width>
-          <height>50</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_29">
-        <property name="geometry">
-         <rect>
-          <x>9</x>
-          <y>100</y>
-          <width>111</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>MS 33558</family>
-          <pointsize>7</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Connected</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-       <widget class="QLabel" name="ico_data">
-        <property name="geometry">
-         <rect>
-          <x>136</x>
-          <y>40</y>
-          <width>50</width>
-          <height>50</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_31">
-        <property name="geometry">
-         <rect>
-          <x>120</x>
-          <y>100</y>
-          <width>81</width>
-          <height>16</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>MS 33558</family>
-          <pointsize>7</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Data</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </widget>
       <widget class="QGroupBox" name="groupBox_5">
        <property name="geometry">
         <rect>
-         <x>240</x>
-         <y>40</y>
-         <width>191</width>
-         <height>311</height>
+         <x>960</x>
+         <y>30</y>
+         <width>211</width>
+         <height>351</height>
         </rect>
        </property>
        <property name="font">
@@ -195,10 +85,10 @@
        <widget class="QSlider" name="sld_intensity">
         <property name="geometry">
          <rect>
-          <x>120</x>
-          <y>35</y>
+          <x>130</x>
+          <y>50</y>
           <width>41</width>
-          <height>241</height>
+          <height>281</height>
          </rect>
         </property>
         <property name="styleSheet">
@@ -231,8 +121,8 @@
        <widget class="QLabel" name="label_32">
         <property name="geometry">
          <rect>
-          <x>150</x>
-          <y>260</y>
+          <x>170</x>
+          <y>320</y>
           <width>31</width>
           <height>16</height>
          </rect>
@@ -247,8 +137,8 @@
        <widget class="QLabel" name="label_33">
         <property name="geometry">
          <rect>
-          <x>150</x>
-          <y>29</y>
+          <x>160</x>
+          <y>50</y>
           <width>41</width>
           <height>20</height>
          </rect>
@@ -263,18 +153,27 @@
        <widget class="QPushButton" name="btn_intensity_motionless">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>250</y>
+          <x>30</x>
+          <y>300</y>
           <width>71</width>
-          <height>31</height>
+          <height>41</height>
          </rect>
         </property>
         <property name="font">
          <font>
-          <pointsize>10</pointsize>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
           <weight>50</weight>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Static</string>
@@ -283,18 +182,27 @@
        <widget class="QPushButton" name="btn_intensity_mild">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>170</y>
+          <x>30</x>
+          <y>220</y>
           <width>71</width>
-          <height>31</height>
+          <height>41</height>
          </rect>
         </property>
         <property name="font">
          <font>
-          <pointsize>10</pointsize>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
           <weight>50</weight>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Mild</string>
@@ -304,17 +212,26 @@
         <property name="geometry">
          <rect>
           <x>20</x>
-          <y>30</y>
-          <width>71</width>
-          <height>31</height>
+          <y>40</y>
+          <width>81</width>
+          <height>41</height>
          </rect>
         </property>
         <property name="font">
          <font>
-          <pointsize>10</pointsize>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
           <weight>50</weight>
           <bold>false</bold>
          </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Full</string>
@@ -324,10 +241,10 @@
       <widget class="QGroupBox" name="groupBox_6">
        <property name="geometry">
         <rect>
-         <x>450</x>
-         <y>40</y>
-         <width>91</width>
-         <height>311</height>
+         <x>80</x>
+         <y>30</y>
+         <width>201</width>
+         <height>351</height>
         </rect>
        </property>
        <property name="font">
@@ -355,11 +272,27 @@
        <widget class="QPushButton" name="btn_light_load">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>252</y>
-          <width>75</width>
-          <height>31</height>
+          <x>40</x>
+          <y>280</y>
+          <width>121</width>
+          <height>41</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Light</string>
@@ -374,11 +307,27 @@
        <widget class="QPushButton" name="btn_moderate_load">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>142</y>
-          <width>75</width>
-          <height>31</height>
+          <x>40</x>
+          <y>160</y>
+          <width>121</width>
+          <height>41</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Moderate</string>
@@ -396,11 +345,27 @@
        <widget class="QPushButton" name="btn_heavy_load">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>32</y>
-          <width>75</width>
-          <height>31</height>
+          <x>40</x>
+          <y>50</y>
+          <width>121</width>
+          <height>41</height>
          </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
         </property>
         <property name="text">
          <string>Heavy</string>
@@ -416,16 +381,16 @@
       <widget class="QGroupBox" name="groupBox_9">
        <property name="geometry">
         <rect>
-         <x>0</x>
-         <y>160</y>
-         <width>231</width>
-         <height>191</height>
+         <x>390</x>
+         <y>20</y>
+         <width>501</width>
+         <height>361</height>
         </rect>
        </property>
        <property name="font">
         <font>
          <family>MS 33558</family>
-         <pointsize>8</pointsize>
+         <pointsize>12</pointsize>
          <weight>50</weight>
          <bold>false</bold>
         </font>
@@ -442,16 +407,18 @@
        <widget class="QGroupBox" name="groupBoxExperience">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>30</y>
-          <width>221</width>
-          <height>61</height>
+          <x>30</x>
+          <y>50</y>
+          <width>451</width>
+          <height>121</height>
          </rect>
         </property>
         <property name="font">
          <font>
           <family>MS 33558</family>
-          <pointsize>6</pointsize>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -468,27 +435,62 @@
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
-        <widget class="QPushButton" name="btn_mid">
+        <widget class="QPushButton" name="btn_mid_exp">
          <property name="geometry">
           <rect>
-           <x>90</x>
-           <y>30</y>
-           <width>51</width>
-           <height>23</height>
+           <x>175</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>Mid</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
         <widget class="QPushButton" name="btn_novice">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>30</y>
-           <width>61</width>
-           <height>23</height>
+           <x>20</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>Novice</string>
@@ -503,11 +505,27 @@
         <widget class="QPushButton" name="btn_ace">
          <property name="geometry">
           <rect>
-           <x>160</x>
-           <y>30</y>
-           <width>51</width>
-           <height>23</height>
+           <x>330</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>Ace</string>
@@ -520,16 +538,18 @@
        <widget class="QGroupBox" name="groupBox_10">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>120</y>
-          <width>221</width>
-          <height>71</height>
+          <x>30</x>
+          <y>210</y>
+          <width>451</width>
+          <height>121</height>
          </rect>
         </property>
         <property name="font">
          <font>
           <family>MS 33558</family>
-          <pointsize>6</pointsize>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
          </font>
         </property>
         <property name="styleSheet">
@@ -541,7 +561,7 @@
 </string>
         </property>
         <property name="title">
-         <string>Situation</string>
+         <string>Scenario</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -549,11 +569,27 @@
         <widget class="QPushButton" name="btn_land">
          <property name="geometry">
           <rect>
-           <x>160</x>
-           <y>30</y>
-           <width>51</width>
-           <height>23</height>
+           <x>330</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>Land</string>
@@ -565,11 +601,27 @@
         <widget class="QPushButton" name="btn_takeoff">
          <property name="geometry">
           <rect>
-           <x>90</x>
-           <y>30</y>
-           <width>51</width>
-           <height>23</height>
+           <x>20</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>T/O</string>
@@ -581,11 +633,27 @@
         <widget class="QPushButton" name="btn_level">
          <property name="geometry">
           <rect>
-           <x>10</x>
-           <y>30</y>
-           <width>61</width>
-           <height>23</height>
+           <x>175</x>
+           <y>40</y>
+           <width>101</width>
+           <height>46</height>
           </rect>
+         </property>
+         <property name="font">
+          <font>
+           <family>MS 33558</family>
+           <pointsize>8</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton:checked {
+    background-color: rgba(0, 51, 102, 1); /* Dark blue background */
+    color: white; /* White lettering */
+    border: 2px solid black; /* Black border */
+}
+</string>
          </property>
          <property name="text">
           <string>Level</string>
@@ -600,588 +668,743 @@
        </widget>
       </widget>
      </widget>
-     <widget class="QGroupBox" name="groupBox">
+     <widget class="QGroupBox" name="groupBox_11">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>190</y>
-        <width>331</width>
-        <height>151</height>
+        <y>0</y>
+        <width>1231</width>
+        <height>171</height>
        </rect>
       </property>
-      <property name="title">
-       <string>Transform levels</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <widget class="QSlider" name="sld_xform_0">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>40</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-       <property name="tickInterval">
-        <number>10</number>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_4">
-       <property name="geometry">
-        <rect>
-         <x>15</x>
-         <y>40</y>
-         <width>21</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>X</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_13">
-       <property name="geometry">
-        <rect>
-         <x>15</x>
-         <y>58</y>
-         <width>21</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Y</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_14">
-       <property name="geometry">
-        <rect>
-         <x>15</x>
-         <y>76</y>
-         <width>20</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Z</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_15">
-       <property name="geometry">
-        <rect>
-         <x>5</x>
-         <y>130</y>
-         <width>41</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Yaw</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_16">
-       <property name="geometry">
-        <rect>
-         <x>5</x>
-         <y>94</y>
-         <width>41</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Roll</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_17">
-       <property name="geometry">
-        <rect>
-         <x>5</x>
-         <y>112</y>
-         <width>51</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Pitch</string>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_xform_1">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>58</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_xform_2">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>76</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_xform_3">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>94</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_xform_4">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>112</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_xform_5">
-       <property name="geometry">
-        <rect>
-         <x>60</x>
-         <y>130</y>
-         <width>250</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="autoFillBackground">
-        <bool>false</bool>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::handle:horizontal { 
-	background-color: grey; 
-	border: 1px solid grey; 
-	width: 4px; 
-	height: 12px; 
-	line-height: 20px; 
-	margin-top: -5px; 
-	margin-bottom: -5px; 
-	border-radius: 5px; 
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_18">
-       <property name="geometry">
-        <rect>
-         <x>280</x>
-         <y>20</y>
-         <width>31</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>100</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_19">
-       <property name="geometry">
-        <rect>
-         <x>50</x>
-         <y>20</y>
-         <width>41</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>-100</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_20">
-       <property name="geometry">
-        <rect>
-         <x>175</x>
-         <y>20</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>0</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_2">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>381</width>
-        <height>151</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>MS 33558</family>
-        <pointsize>10</pointsize>
-        <weight>50</weight>
-        <bold>false</bold>
-       </font>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: 2px solid lightgrey;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
       </property>
       <property name="title">
-       <string>Safety Interlocks</string>
+       <string/>
       </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-      <widget class="QLabel" name="ico_left_dock">
+      <widget class="QGroupBox" name="groupBox_2">
        <property name="geometry">
         <rect>
-         <x>20</x>
-         <y>40</y>
-         <width>50</width>
-         <height>50</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_23">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>100</y>
-         <width>51</width>
-         <height>41</height>
+         <x>40</x>
+         <y>10</y>
+         <width>381</width>
+         <height>151</height>
         </rect>
        </property>
        <property name="font">
         <font>
          <family>MS 33558</family>
-         <pointsize>6</pointsize>
+         <pointsize>10</pointsize>
          <weight>50</weight>
          <bold>false</bold>
         </font>
        </property>
-       <property name="text">
-        <string>Left Dock</string>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    border: 2px solid lightgrey;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
+       </property>
+       <property name="title">
+        <string>Safety Interlocks</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
+       <widget class="QLabel" name="ico_left_dock">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_23">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>100</y>
+          <width>71</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Left Dock</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="ico_right_dock">
+        <property name="geometry">
+         <rect>
+          <x>115</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_25">
+        <property name="geometry">
+         <rect>
+          <x>100</x>
+          <y>100</y>
+          <width>71</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Right Dock</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="ico_winch">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_27">
+        <property name="geometry">
+         <rect>
+          <x>210</x>
+          <y>100</y>
+          <width>70</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Winch</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_36">
+        <property name="geometry">
+         <rect>
+          <x>295</x>
+          <y>100</y>
+          <width>81</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Chair Locked</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="ico_wheelchair_docked">
+        <property name="geometry">
+         <rect>
+          <x>310</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
       </widget>
-      <widget class="QLabel" name="ico_right_dock">
+      <widget class="QGroupBox" name="groupBox_3">
        <property name="geometry">
         <rect>
-         <x>115</x>
-         <y>40</y>
-         <width>50</width>
-         <height>50</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_25">
-       <property name="geometry">
-        <rect>
-         <x>110</x>
-         <y>100</y>
-         <width>51</width>
-         <height>41</height>
+         <x>470</x>
+         <y>10</y>
+         <width>331</width>
+         <height>151</height>
         </rect>
        </property>
        <property name="font">
         <font>
          <family>MS 33558</family>
-         <pointsize>6</pointsize>
+         <pointsize>10</pointsize>
          <weight>50</weight>
          <bold>false</bold>
         </font>
        </property>
-       <property name="text">
-        <string>Right Dock</string>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    border: 2px solid lightgrey;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
+       </property>
+       <property name="title">
+        <string>Sim Status</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
+       <widget class="QLabel" name="ico_connection">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_29">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>100</y>
+          <width>111</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Connected</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="ico_data">
+        <property name="geometry">
+         <rect>
+          <x>220</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_31">
+        <property name="geometry">
+         <rect>
+          <x>200</x>
+          <y>100</y>
+          <width>81</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Data</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
       </widget>
-      <widget class="QLabel" name="ico_winch">
+      <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>220</x>
-         <y>40</y>
-         <width>50</width>
-         <height>50</height>
+         <x>880</x>
+         <y>10</y>
+         <width>331</width>
+         <height>151</height>
         </rect>
        </property>
-       <property name="text">
-        <string/>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    border: 2px solid lightgrey;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
        </property>
-       <property name="pixmap">
-        <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_27">
-       <property name="geometry">
-        <rect>
-         <x>210</x>
-         <y>100</y>
-         <width>70</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>MS 33558</family>
-         <pointsize>6</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Winch</string>
+       <property name="title">
+        <string>Transform levels</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-      </widget>
-      <widget class="QLabel" name="label_36">
-       <property name="geometry">
-        <rect>
-         <x>300</x>
-         <y>100</y>
-         <width>71</width>
-         <height>41</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <family>MS 33558</family>
-         <pointsize>6</pointsize>
-         <weight>50</weight>
-         <bold>false</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Chair Locked</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-       <property name="wordWrap">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QLabel" name="ico_wheelchair_docked">
-       <property name="geometry">
-        <rect>
-         <x>310</x>
-         <y>40</y>
-         <width>50</width>
-         <height>50</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>true</bool>
-       </property>
+       <widget class="QSlider" name="sld_xform_0">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>40</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="tickPosition">
+         <enum>QSlider::NoTicks</enum>
+        </property>
+        <property name="tickInterval">
+         <number>10</number>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_4">
+        <property name="geometry">
+         <rect>
+          <x>15</x>
+          <y>40</y>
+          <width>21</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>X</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_13">
+        <property name="geometry">
+         <rect>
+          <x>15</x>
+          <y>58</y>
+          <width>21</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Y</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_14">
+        <property name="geometry">
+         <rect>
+          <x>15</x>
+          <y>76</y>
+          <width>20</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Z</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_15">
+        <property name="geometry">
+         <rect>
+          <x>5</x>
+          <y>130</y>
+          <width>41</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Yaw</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_16">
+        <property name="geometry">
+         <rect>
+          <x>5</x>
+          <y>94</y>
+          <width>41</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Roll</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_17">
+        <property name="geometry">
+         <rect>
+          <x>5</x>
+          <y>112</y>
+          <width>51</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>10</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>Pitch</string>
+        </property>
+       </widget>
+       <widget class="QSlider" name="sld_xform_1">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>58</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="sld_xform_2">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>76</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="sld_xform_3">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>94</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="sld_xform_4">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>112</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QSlider" name="sld_xform_5">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>130</y>
+          <width>250</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QSlider::handle:horizontal { 
+	background-color: grey; 
+	border: 1px solid grey; 
+	width: 4px; 
+	height: 12px; 
+	line-height: 20px; 
+	margin-top: -5px; 
+	margin-bottom: -5px; 
+	border-radius: 5px; 
+}</string>
+        </property>
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_18">
+        <property name="geometry">
+         <rect>
+          <x>280</x>
+          <y>20</y>
+          <width>31</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_19">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>20</y>
+          <width>41</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>-100</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_20">
+        <property name="geometry">
+         <rect>
+          <x>175</x>
+          <y>20</y>
+          <width>21</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
       </widget>
      </widget>
     </widget>
@@ -2534,9 +2757,9 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>440</y>
-      <width>951</width>
-      <height>81</height>
+      <y>600</y>
+      <width>1231</width>
+      <height>121</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -2551,10 +2774,10 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>660</x>
+       <x>920</x>
        <y>0</y>
        <width>270</width>
-       <height>71</height>
+       <height>111</height>
       </rect>
      </property>
      <property name="minimumSize">
@@ -2575,11 +2798,17 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>70</x>
-        <y>14</y>
-        <width>100</width>
-        <height>50</height>
+        <x>50</x>
+        <y>9</y>
+        <width>200</width>
+        <height>91</height>
        </rect>
+      </property>
+      <property name="font">
+       <font>
+        <family>MS 33558</family>
+        <pointsize>10</pointsize>
+       </font>
       </property>
       <property name="styleSheet">
        <string notr="true">QPushButton {
@@ -2589,13 +2818,10 @@
     padding: 5px;
 }
 QPushButton:checked {
-    background-color: green;
+     background-color: rgba(0, 51, 102, 1); /* Dark blue background */;
     color: white;
 }
-QPushButton:unchecked {
-    background-color: red;
-    color: white;
-}
+
 </string>
       </property>
       <property name="text">
@@ -2606,20 +2832,29 @@ QPushButton:unchecked {
       </property>
      </widget>
     </widget>
-    <widget class="QPushButton" name="btn_run">
+    <widget class="QPushButton" name="btn_fly">
      <property name="geometry">
       <rect>
-       <x>10</x>
+       <x>30</x>
        <y>20</y>
-       <width>81</width>
-       <height>41</height>
+       <width>150</width>
+       <height>75</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS Shell Dlg 2</family>
+       <pointsize>12</pointsize>
+       <weight>9</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
      </property>
      <property name="styleSheet">
       <string notr="true">font: 75 12pt &quot;MS Shell Dlg 2&quot;;</string>
      </property>
      <property name="text">
-      <string>Run</string>
+      <string>Fly</string>
      </property>
      <property name="checkable">
       <bool>true</bool>
@@ -2628,9 +2863,9 @@ QPushButton:unchecked {
     <widget class="QLabel" name="lbl_sim_status">
      <property name="geometry">
       <rect>
-       <x>240</x>
-       <y>20</y>
-       <width>451</width>
+       <x>410</x>
+       <y>40</y>
+       <width>491</width>
        <height>41</height>
       </rect>
      </property>
@@ -2663,11 +2898,20 @@ QPushButton:unchecked {
     <widget class="QPushButton" name="btn_pause">
      <property name="geometry">
       <rect>
-       <x>130</x>
+       <x>210</x>
        <y>20</y>
-       <width>71</width>
-       <height>41</height>
+       <width>150</width>
+       <height>75</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS Shell Dlg 2</family>
+       <pointsize>12</pointsize>
+       <weight>9</weight>
+       <italic>false</italic>
+       <bold>false</bold>
+      </font>
      </property>
      <property name="styleSheet">
       <string notr="true">font: 75 12pt &quot;MS Shell Dlg 2&quot;;</string>
@@ -2686,7 +2930,7 @@ QPushButton:unchecked {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1002</width>
+     <width>1278</width>
      <height>22</height>
     </rect>
    </property>
