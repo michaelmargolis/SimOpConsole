@@ -35,6 +35,7 @@ siminterface folder structure
 │   └── ...
 ├── common/
 │   ├── udp_tx_rx.py
+│   ├── serial_switch_reader.py
 │   └── ...
 └── ...
 """
@@ -281,6 +282,12 @@ class SimInterfaceCore(QtCore.QObject):
     def loadLevelChanged(self, load_level):
         print(f"load level changed to {load_level}, add code to pass this to output module")
 
+    def experienceLevelChanged(self, experience_level):
+        print(f"experience level changed to {experience_level}, add code to handle this")
+
+    def flightChanged(self, flight_id):
+        print(f"flight changed to {flight_id}, add code to handle this")
+        
     # --------------------------------------------------------------------------
     # Platform Movement
     # --------------------------------------------------------------------------
@@ -362,11 +369,6 @@ class SimInterfaceCore(QtCore.QObject):
         self.is_output_enabled = False
         # If needed, do slow_move from current transform to DISABLED_DISTANCES
 
-
-    def set_sim_scenario(self, scenario):
-        if self.sim_scenario != scenario:
-            self.sim_scenario = scenario
-            self.sim.set_scenario(scenario)
     # --------------------------------------------------------------------------
     # Error Handling
     # --------------------------------------------------------------------------
@@ -421,10 +423,11 @@ if __name__ == "__main__":
     log.info("Starting SimInterface with separated UI and Core")
 
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyle('Fusion')
     
-    app.setAttribute(Qt.AA_EnableHighDpiScaling)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
-    QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    # app.setAttribute(Qt.AA_EnableHighDpiScaling)
+    # app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    # QtWidgets.QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
 
     core = SimInterfaceCore()
@@ -432,5 +435,6 @@ if __name__ == "__main__":
 
     ui.show()
     core.setup()
+    ui.switches_begin("COM5")
     
     sys.exit(app.exec_())
