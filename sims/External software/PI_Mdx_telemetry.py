@@ -46,6 +46,8 @@ from collections import namedtuple
 from math import radians #, pi, degrees, sqrt
 from udp_tx_rx import UdpReceive
 import XPLMDataAccess
+from situation_loader import  SituationLoader
+# import scenario_manager no longer used
 
 transform_refs = namedtuple('transform_refs', \
                    ('DR_g_axil', 'DR_g_side', 'DR_g_nrml', \
@@ -56,7 +58,7 @@ transform_refs = namedtuple('transform_refs', \
 TARGET_PORT = 10022 # port of sim interface controller telemetry socket 
 
 xplm_key_pause = 0
-
+situation_loader = SituationLoader() # used to load a situation 'scenario' file based on flight mode and skill 
 
 class PythonInterface:
     def XPluginStart(self):
@@ -72,7 +74,7 @@ class PythonInterface:
         # Create our menu
         Item = xp.appendMenuItem(xp.findPluginsMenu(), "Flight transforms", 0)
         self.InputOutputMenuHandlerCB = self.InputOutputMenuHandler
-        self.Id = xp.createMenu("Platform Interface", xp.findPluginsMenu(), Item, self.InputOutputMenuHandlerCB, 0)
+        self.Id = xp.createMenu("MDX Platform Interface", xp.findPluginsMenu(), Item, self.InputOutputMenuHandlerCB, 0)
         xp.appendMenuItem(self.Id, "View Transforms", 1)
      
         self.IsWidgetVisible = 0  # Flag indicating if widget is being displayed.
@@ -161,6 +163,7 @@ class PythonInterface:
             cmd = msg[0]
             print(msg,cmd)
             if cmd == 'InitComs':
+                if addr[0] not in self.controller_addr:
                 self.controller_addr.append(addr[0])
                 print("Added controller IP address " + addr[0])              
             elif cmd == 'Run':
@@ -184,11 +187,17 @@ class PythonInterface:
                 filepath = msg[1]
                 # XPLMDataAccess.XPLMLoadDataFile(XPLMDataAccess.xplm_DataFile_Replay, filepath)
                 ret = xp.loadDataFile(xp.DataFile_Situation, filepath)
+                xp.log(f"loadDataFile request {msg} for file {filepath} returned {ret}")
                 print(ret, msg, filepath)
-                # XPLMDataAccess.XPLMSetDatai(self.replay_mode, 1)       
-            else:
-                print(msg)
-                
+                # XPLMDataAccess.XPLMSetDatai(self.replay_mode, 1)
+            elif cmd == 'Scenario':
+                try:
+                    flight_enum = int(msg[1].strip())
+                    experience_enum = int(msg[2].strip())
+                    situation_loader.load_situation(flight_enum, experience_enum)
+                except (ValueError, IndexError):
+                    xp.log(f"[ERROR] Invalid Scenario command format: {msg}")
+                    
         if self.IsWidgetVisible != 0:  # Don't update dialog if widget not visible
             for Item in range(len(telemetry_str)): 
                 xp.setWidgetDescriptor(self.OutputEdit[Item], telemetry_str[Item])

@@ -74,7 +74,8 @@ class SimInterfaceCore(QtCore.QObject):
 
         # Simulation references
         self.sim = None # the sim to run (xplane 11)
-        self.sim_scenario = None # this is the currently selected flight situation (or ride if roller coaster) 
+        self.current_skill_level = None
+        self.current_mode = None # this is the currently selected flight situation (or ride if roller coaster) 
         
 
         # Timer for periodic data updates
@@ -282,11 +283,18 @@ class SimInterfaceCore(QtCore.QObject):
     def loadLevelChanged(self, load_level):
         print(f"load level changed to {load_level}, add code to pass this to output module")
 
-    def experienceLevelChanged(self, experience_level):
-        print(f"experience level changed to {experience_level}, add code to handle this")
+    def skillLevelChanged(self, skill_level):
+        if skill_level != self.current_skill_level:
+            self.current_skill_level = skill_level
+            print(f"skill level changed to {skill_level}")
+            self.sim.set_scenario(self.current_mode, self.current_skill_level) 
 
-    def flightChanged(self, flight_id):
-        print(f"flight changed to {flight_id}, add code to handle this")
+    def modeChanged(self, mode_id):
+        if mode_id != self.current_mode:
+            self.current_mode =  mode_id
+            print(f"mode changed to {mode_id}")
+            self.sim.set_scenario(self.current_mode, self.current_skill_level) 
+       
         
     # --------------------------------------------------------------------------
     # Platform Movement

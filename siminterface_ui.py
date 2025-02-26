@@ -39,17 +39,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         
         # flight selection
         self.flight_button_group = QtWidgets.QButtonGroup(self)
-        self.flight_button_group.addButton(self.btn_level, 0)
-        self.flight_button_group.addButton(self.btn_takeoff, 1)
+        self.flight_button_group.addButton(self.btn_takeoff, 0)
+        self.flight_button_group.addButton(self.btn_level, 1)
         self.flight_button_group.addButton(self.btn_land, 2)
-        self.flight_button_group.buttonClicked[int].connect(self.on_flight_changed)
+        self.flight_button_group.buttonClicked[int].connect(self.on_flight_mode_changed)
    
         # experience levels
         self.exp_button_group = QtWidgets.QButtonGroup(self)
         self.exp_button_group.addButton(self.btn_novice, 0)
         self.exp_button_group.addButton(self.btn_mid_exp, 1)
         self.exp_button_group.addButton(self.btn_ace, 2)
-        self.exp_button_group.buttonClicked[int].connect(self.on_experience_changed)
+        self.exp_button_group.buttonClicked[int].connect(self.on_skill_level_changed)
 
         # Create load setting button Group
         self.load_button_group = QtWidgets.QButtonGroup(self)
@@ -68,13 +68,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.transfrm_levels = [self.sld_xform_0, self.sld_xform_1, self.sld_xform_2, self.sld_xform_3, self.sld_xform_4, self.sld_xform_5  ]
         
         # configure interface to hardware switches
-        #switch events: fly, pause, enable, intensity, load, experience, flight 
+        #switch events: fly, pause, enable, intensity, load, skill, flight 
         event_callbacks = [
             lambda state: self.on_btn_fly_clicked(state),  # Fly
             lambda state: self.on_btn_pause_clicked(state),  # Pause
             lambda state: self.on_activate_toggled(state),  # Activate
-            lambda level: self.on_experience_changed(level, from_hardware=True),  # Experience
-            lambda flight: self.on_flight_changed(flight, from_hardware=True),  # Flight
+            lambda level: self.on_skill_level_changed(level, from_hardware=True),  # Skill level
+            lambda flight: self.on_flight_mode_changed(flight, from_hardware=True),  # Flight
             lambda load: self.on_load_level_selected(load, from_hardware=True),  # Load
             lambda intensity: self.on_intensity_changed(intensity, from_hardware=True)  # Intensity
         ]
@@ -147,13 +147,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         )
         self.btn_pause.setChecked(True)
 
-    def on_experience_changed(self, level, from_hardware=False):
+    def on_skill_level_changed(self, level, from_hardware=False):
         """
-        Called when an experience level button is toggled from the UI or hardware.
+        Called when a skill level button is toggled from the UI or hardware.
         """
-        log.debug(f"Experience level changed to {level}")
+        log.debug(f"Skill level changed to {level}")
 
-        self.core.experienceLevelChanged(f"experience_{level}")
+        self.core.skillLevelChanged(level)
 
         # If triggered by hardware, update the UI button
         if from_hardware:
@@ -165,20 +165,20 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.btn_ace.setChecked(level == 2)
 
 
-    def on_flight_changed(self, flight_id, from_hardware=False):
+    def on_flight_mode_changed(self, mode_id, from_hardware=False):
         """
         Called when a flight selection button is changed, either from UI or hardware.
         """
-        log.debug(f"Flight mode changed to {flight_id}")
+        log.debug(f"Flight mode changed to {mode_id}")
 
-        self.core.flightChanged(flight_id)
+        self.core.modeChanged(mode_id)
 
         # If triggered by hardware, update the UI button
         if from_hardware:
             QtWidgets.QApplication.instance().postEvent(
                 self, QtCore.QEvent(QtCore.QEvent.User)
             )
-            self.flight_button_group.button(flight_id).setChecked(True)
+            self.flight_button_group.button(mode_id).setChecked(True)
 
 
     def on_intensity_changed(self, intensity_index, from_hardware=False):
