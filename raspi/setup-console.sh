@@ -2,7 +2,7 @@
 
 echo "?? Starting Raspberry Pi PyQt Console Setup..."
 echo "?? Updating package list..."
-sudo apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -yssudo nano seti
 
 # ? Add user "raes" to necessary groups
 echo "?? Adding 'raes' to required groups..."
@@ -59,7 +59,7 @@ cat <<EOF > /home/raes/start_console.sh
 cd /home/raes/OpsConsole || exit
 export DISPLAY=:0
 export QT_QPA_PLATFORM=xcb
-exec startx /usr/bin/python3 /home/raes/OpsConsole/siminterface_core.py -- :0 vt1
+xinit /usr/bin/python3 /home/raes/OpsConsole/siminterface_core.py -- :0 vt1 || bash
 EOF
 chmod +x /home/raes/start_console.sh
 chown raes:raes /home/raes/start_console.sh
