@@ -8,4 +8,6 @@ selected_sim =  \
     # ["MS FS2020", "fs2020", "fs2020.jpg", "127.0.0.1" ]    
     # ["NoLimits2 Coaster", "nolimits2", "nolimits2.jpg", "127.0.0.1" ]
 
-platform_config = "kinematics.cfg_SuspendedChair"
+#naming#platform_config = "kinematics.cfg_SuspendedChair"
+platform_config = "kinematics.new_cfg_SuspendedPlatform"
+switches_comport = "COM9"

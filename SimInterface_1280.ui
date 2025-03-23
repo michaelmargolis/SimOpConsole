@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1278</width>
+    <width>1261</width>
     <height>748</height>
    </rect>
   </property>
@@ -22,7 +22,7 @@
      <rect>
       <x>10</x>
       <y>4</y>
-      <width>1261</width>
+      <width>1241</width>
       <height>591</height>
      </rect>
     </property>
@@ -32,7 +32,7 @@
     <property name="currentIndex">
      <number>0</number>
     </property>
-    <widget class="QWidget" name="tab_load">
+    <widget class="QWidget" name="tab_main">
      <property name="accessibleName">
       <string>Main</string>
      </property>
@@ -82,53 +82,24 @@
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-       <widget class="QSlider" name="sld_intensity">
-        <property name="geometry">
-         <rect>
-          <x>130</x>
-          <y>50</y>
-          <width>41</width>
-          <height>281</height>
-         </rect>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QSlider::handle:vertical {
-    width: 60px; 
-    height: 60px; 
-    background: blue; 
-}
-</string>
-        </property>
-        <property name="minimum">
-         <number>0</number>
-        </property>
-        <property name="maximum">
-         <number>100</number>
-        </property>
-        <property name="value">
-         <number>100</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-        <property name="tickPosition">
-         <enum>QSlider::TicksBelow</enum>
-        </property>
-        <property name="tickInterval">
-         <number>10</number>
-        </property>
-       </widget>
        <widget class="QLabel" name="label_32">
         <property name="geometry">
          <rect>
-          <x>170</x>
-          <y>320</y>
-          <width>31</width>
-          <height>16</height>
+          <x>140</x>
+          <y>310</y>
+          <width>61</width>
+          <height>20</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
         <property name="text">
-         <string>0</string>
+         <string>0%</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -137,14 +108,21 @@
        <widget class="QLabel" name="label_33">
         <property name="geometry">
          <rect>
-          <x>160</x>
-          <y>50</y>
-          <width>41</width>
+          <x>140</x>
+          <y>45</y>
+          <width>61</width>
           <height>20</height>
          </rect>
         </property>
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
         <property name="text">
-         <string>100</string>
+         <string>100%</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -153,9 +131,9 @@
        <widget class="QPushButton" name="btn_intensity_motionless">
         <property name="geometry">
          <rect>
-          <x>30</x>
+          <x>50</x>
           <y>300</y>
-          <width>71</width>
+          <width>81</width>
           <height>41</height>
          </rect>
         </property>
@@ -178,13 +156,16 @@
         <property name="text">
          <string>Static</string>
         </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
        </widget>
        <widget class="QPushButton" name="btn_intensity_mild">
         <property name="geometry">
          <rect>
-          <x>30</x>
+          <x>50</x>
           <y>220</y>
-          <width>71</width>
+          <width>81</width>
           <height>41</height>
          </rect>
         </property>
@@ -207,12 +188,15 @@
         <property name="text">
          <string>Mild</string>
         </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
        </widget>
        <widget class="QPushButton" name="btn_intensity_full">
         <property name="geometry">
          <rect>
-          <x>20</x>
-          <y>40</y>
+          <x>50</x>
+          <y>36</y>
           <width>81</width>
           <height>41</height>
          </rect>
@@ -235,6 +219,119 @@
         </property>
         <property name="text">
          <string>Full</string>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_intensity_up">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>180</y>
+          <width>81</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>Monospac821 BT</family>
+          <pointsize>20</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">        QPushButton {
+            background-color: transparent;
+            border: none;
+            padding: 5px;
+            icon-size: 32px 32px;
+        }
+        QPushButton:focus {
+            outline: none;
+        }
+        QPushButton:pressed {
+            background-color: transparent;
+        }</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>M:/Documents/github/SimpleSimInterface/images/up1_transparent.png</normaloff>M:/Documents/github/SimpleSimInterface/images/up1_transparent.png</iconset>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="btn_intensity_down">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>260</y>
+          <width>81</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">        QPushButton {
+            background-color: transparent;
+            border: none;
+            padding: 5px;
+            icon-size: 32px 32px;
+        }
+        QPushButton:focus {
+            outline: none;
+        }
+        QPushButton:pressed {
+            background-color: transparent;
+        }</string>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset>
+          <normaloff>M:/Documents/github/SimpleSimInterface/images/down1_transparent.png</normaloff>M:/Documents/github/SimpleSimInterface/images/down1_transparent.png</iconset>
+        </property>
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QLabel" name="lbl_mild_value">
+        <property name="geometry">
+         <rect>
+          <x>140</x>
+          <y>230</y>
+          <width>61</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>11</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>30%</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
         </property>
        </widget>
       </widget>
@@ -404,7 +501,7 @@
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
-       <widget class="QGroupBox" name="groupBoxExperience">
+       <widget class="QGroupBox" name="groupBoxPilotAssist">
         <property name="geometry">
          <rect>
           <x>30</x>
@@ -430,12 +527,12 @@
 </string>
         </property>
         <property name="title">
-         <string>SKILL LEVEL</string>
+         <string>PILOT ASSIST</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
-        <widget class="QPushButton" name="btn_mid_exp">
+        <widget class="QPushButton" name="btn_assist_1">
          <property name="geometry">
           <rect>
            <x>175</x>
@@ -467,7 +564,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QPushButton" name="btn_novice">
+        <widget class="QPushButton" name="btn_assist_0">
          <property name="geometry">
           <rect>
            <x>20</x>
@@ -493,7 +590,7 @@
 </string>
          </property>
          <property name="text">
-          <string>Novice</string>
+          <string>HIGH</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -502,7 +599,7 @@
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QPushButton" name="btn_ace">
+        <widget class="QPushButton" name="btn_assist_2">
          <property name="geometry">
           <rect>
            <x>330</x>
@@ -528,7 +625,7 @@
 </string>
          </property>
          <property name="text">
-          <string>Ace</string>
+          <string>LOW</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -566,7 +663,7 @@
         <property name="alignment">
          <set>Qt::AlignCenter</set>
         </property>
-        <widget class="QPushButton" name="btn_land">
+        <widget class="QPushButton" name="btn_mode_2">
          <property name="geometry">
           <rect>
            <x>330</x>
@@ -592,13 +689,13 @@
 </string>
          </property>
          <property name="text">
-          <string>Land</string>
+          <string>CUSTOM</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QPushButton" name="btn_takeoff">
+        <widget class="QPushButton" name="btn_mode_0">
          <property name="geometry">
           <rect>
            <x>20</x>
@@ -624,13 +721,13 @@
 </string>
          </property>
          <property name="text">
-          <string>T/O</string>
+          <string>STANDARD</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
          </property>
         </widget>
-        <widget class="QPushButton" name="btn_level">
+        <widget class="QPushButton" name="btn_mode_1">
          <property name="geometry">
           <rect>
            <x>175</x>
@@ -656,7 +753,7 @@
 </string>
          </property>
          <property name="text">
-          <string>Level</string>
+          <string>SCENIC</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -693,7 +790,7 @@
         <rect>
          <x>40</x>
          <y>10</y>
-         <width>381</width>
+         <width>291</width>
          <height>151</height>
         </rect>
        </property>
@@ -732,7 +829,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/ok.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -778,7 +875,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/ok.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -811,53 +908,10 @@
          <bool>true</bool>
         </property>
        </widget>
-       <widget class="QLabel" name="ico_winch">
-        <property name="geometry">
-         <rect>
-          <x>220</x>
-          <y>40</y>
-          <width>50</width>
-          <height>50</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_27">
-        <property name="geometry">
-         <rect>
-          <x>210</x>
-          <y>100</y>
-          <width>70</width>
-          <height>41</height>
-         </rect>
-        </property>
-        <property name="font">
-         <font>
-          <family>MS 33558</family>
-          <pointsize>8</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string>Winch</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
        <widget class="QLabel" name="label_36">
         <property name="geometry">
          <rect>
-          <x>295</x>
+          <x>195</x>
           <y>100</y>
           <width>81</width>
           <height>41</height>
@@ -884,7 +938,7 @@
        <widget class="QLabel" name="ico_wheelchair_docked">
         <property name="geometry">
          <rect>
-          <x>310</x>
+          <x>210</x>
           <y>40</y>
           <width>50</width>
           <height>50</height>
@@ -894,7 +948,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/ok.png</pixmap>
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/ok.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -904,9 +958,9 @@
       <widget class="QGroupBox" name="groupBox_3">
        <property name="geometry">
         <rect>
-         <x>470</x>
+         <x>420</x>
          <y>10</y>
-         <width>331</width>
+         <width>411</width>
          <height>151</height>
         </rect>
        </property>
@@ -945,7 +999,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/warning.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -954,10 +1008,10 @@
        <widget class="QLabel" name="label_29">
         <property name="geometry">
          <rect>
-          <x>40</x>
+          <x>20</x>
           <y>100</y>
-          <width>111</width>
-          <height>16</height>
+          <width>131</width>
+          <height>20</height>
          </rect>
         </property>
         <property name="font">
@@ -969,7 +1023,7 @@
          </font>
         </property>
         <property name="text">
-         <string>Connected</string>
+         <string>Connection</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
@@ -978,7 +1032,7 @@
        <widget class="QLabel" name="ico_data">
         <property name="geometry">
          <rect>
-          <x>220</x>
+          <x>180</x>
           <y>40</y>
           <width>50</width>
           <height>50</height>
@@ -988,7 +1042,7 @@
          <string/>
         </property>
         <property name="pixmap">
-         <pixmap>distro/SimOpConsole/images/warning.png</pixmap>
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/warning.png</pixmap>
         </property>
         <property name="scaledContents">
          <bool>true</bool>
@@ -997,7 +1051,7 @@
        <widget class="QLabel" name="label_31">
         <property name="geometry">
          <rect>
-          <x>200</x>
+          <x>160</x>
           <y>100</y>
           <width>81</width>
           <height>16</height>
@@ -1016,6 +1070,52 @@
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_27">
+        <property name="geometry">
+         <rect>
+          <x>270</x>
+          <y>90</y>
+          <width>111</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS 33558</family>
+          <pointsize>8</pointsize>
+          <weight>50</weight>
+          <bold>false</bold>
+         </font>
+        </property>
+        <property name="text">
+         <string>AIRCRAFT</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="ico_aircraft">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="geometry">
+         <rect>
+          <x>300</x>
+          <y>40</y>
+          <width>50</width>
+          <height>50</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="pixmap">
+         <pixmap>M:/Documents/github/SimpleSimInterface/images/warning.png</pixmap>
+        </property>
+        <property name="scaledContents">
+         <bool>true</bool>
         </property>
        </widget>
       </widget>
@@ -1418,10 +1518,10 @@
      <widget class="QGroupBox" name="ControlGroupbox">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>30</y>
-        <width>601</width>
-        <height>331</height>
+        <x>40</x>
+        <y>20</y>
+        <width>681</width>
+        <height>451</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -1444,7 +1544,7 @@
          <x>94</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1466,7 +1566,7 @@
          <x>250</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1491,7 +1591,7 @@
          <x>150</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1516,7 +1616,7 @@
          <x>200</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1541,7 +1641,7 @@
          <x>320</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1566,7 +1666,7 @@
          <x>390</x>
          <y>68</y>
          <width>21</width>
-         <height>241</height>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1589,7 +1689,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>290</y>
+         <y>380</y>
          <width>46</width>
          <height>13</height>
         </rect>
@@ -1621,7 +1721,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>178</y>
+         <y>220</y>
          <width>31</width>
          <height>20</height>
         </rect>
@@ -1897,8 +1997,8 @@
         <rect>
          <x>490</x>
          <y>68</y>
-         <width>61</width>
-         <height>241</height>
+         <width>111</width>
+         <height>321</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1920,7 +2020,7 @@
       <widget class="QLabel" name="label_22">
        <property name="geometry">
         <rect>
-         <x>480</x>
+         <x>490</x>
          <y>16</y>
          <width>81</width>
          <height>20</height>
@@ -1936,11 +2036,14 @@
        <property name="text">
         <string>Master</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
       </widget>
       <widget class="QLabel" name="label_43">
        <property name="geometry">
         <rect>
-         <x>550</x>
+         <x>580</x>
          <y>65</y>
          <width>31</width>
          <height>20</height>
@@ -1956,8 +2059,8 @@
       <widget class="QLabel" name="label_44">
        <property name="geometry">
         <rect>
-         <x>540</x>
-         <y>295</y>
+         <x>570</x>
+         <y>370</y>
          <width>46</width>
          <height>13</height>
         </rect>
@@ -1973,783 +2076,447 @@
      <widget class="QGroupBox" name="groupBox_4">
       <property name="geometry">
        <rect>
-        <x>720</x>
-        <y>220</y>
-        <width>181</width>
-        <height>91</height>
+        <x>530</x>
+        <y>490</y>
+        <width>211</width>
+        <height>51</height>
        </rect>
       </property>
       <property name="title">
        <string/>
       </property>
-      <widget class="QCheckBox" name="chk_capture_csv">
+      <widget class="QLabel" name="label_21">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>30</x>
          <y>20</y>
-         <width>171</width>
-         <height>21</height>
+         <width>61</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>CSV Log Capture</string>
+        <string>Festo IP</string>
        </property>
       </widget>
-      <widget class="QLineEdit" name="txt_csv_fname">
+      <widget class="QLineEdit" name="txt_festo_ip">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
        <property name="geometry">
         <rect>
-         <x>3</x>
-         <y>70</y>
-         <width>151</width>
-         <height>21</height>
+         <x>90</x>
+         <y>20</y>
+         <width>111</width>
+         <height>20</height>
         </rect>
        </property>
        <property name="text">
-        <string>sim_xyzrpy.csv</string>
+        <string>192.168.0.10</string>
        </property>
       </widget>
      </widget>
-     <widget class="QLineEdit" name="txt_festo_ip">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
+     <widget class="QPushButton" name="pushButton">
       <property name="geometry">
        <rect>
-        <x>780</x>
-        <y>170</y>
-        <width>111</width>
-        <height>20</height>
+        <x>290</x>
+        <y>510</y>
+        <width>75</width>
+        <height>23</height>
        </rect>
       </property>
       <property name="text">
-       <string>192.168.0.10</string>
+       <string>Test</string>
       </property>
      </widget>
-     <widget class="QLabel" name="label_21">
+     <widget class="QWidget" name="widget" native="true">
       <property name="geometry">
        <rect>
-        <x>710</x>
-        <y>170</y>
-        <width>61</width>
-        <height>20</height>
+        <x>840</x>
+        <y>220</y>
+        <width>180</width>
+        <height>250</height>
        </rect>
       </property>
-      <property name="text">
-       <string>Festo IP</string>
+      <property name="minimumSize">
+       <size>
+        <width>180</width>
+        <height>250</height>
+       </size>
       </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tab_test">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <attribute name="title">
-      <string>Test</string>
-     </attribute>
-     <widget class="QGroupBox" name="transform_panel">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>40</x>
-        <y>20</y>
-        <width>641</width>
-        <height>361</height>
-       </rect>
-      </property>
-      <property name="title">
-       <string>Transform</string>
-      </property>
-      <property name="flat">
-       <bool>false</bool>
-      </property>
-      <widget class="QSlider" name="sld_test_0">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
+      <widget class="Line" name="line_10">
        <property name="geometry">
         <rect>
-         <x>60</x>
-         <y>60</y>
-         <width>61</width>
-         <height>221</height>
+         <x>30</x>
+         <y>41</y>
+         <width>118</width>
+         <height>3</height>
         </rect>
        </property>
-       <property name="minimum">
-        <number>-100</number>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
+      </widget>
+      <widget class="Line" name="line_11">
+       <property name="geometry">
+        <rect>
+         <x>85</x>
+         <y>5</y>
+         <width>20</width>
+         <height>241</height>
+        </rect>
        </property>
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksAbove</enum>
-       </property>
       </widget>
-      <widget class="QSlider" name="sld_test_3">
+      <widget class="Line" name="line_12">
        <property name="geometry">
         <rect>
-         <x>240</x>
-         <y>60</y>
-         <width>21</width>
-         <height>221</height>
+         <x>36</x>
+         <y>111</y>
+         <width>118</width>
+         <height>3</height>
         </rect>
        </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-      <widget class="QSlider" name="sld_test_1">
+      <widget class="Line" name="line_13">
        <property name="geometry">
         <rect>
-         <x>140</x>
-         <y>60</y>
-         <width>21</width>
-         <height>221</height>
+         <x>37</x>
+         <y>193</y>
+         <width>118</width>
+         <height>10</height>
         </rect>
        </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
-      <widget class="QSlider" name="sld_test_2">
+      <widget class="QLabel" name="lbl_front_view">
        <property name="geometry">
         <rect>
-         <x>190</x>
-         <y>60</y>
-         <width>21</width>
-         <height>221</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_test_4">
-       <property name="geometry">
-        <rect>
-         <x>290</x>
-         <y>60</y>
-         <width>21</width>
-         <height>221</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-      </widget>
-      <widget class="QSlider" name="sld_test_5">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>330</x>
-         <y>60</y>
-         <width>61</width>
-         <height>221</height>
-        </rect>
-       </property>
-       <property name="minimum">
-        <number>-100</number>
-       </property>
-       <property name="maximum">
-        <number>100</number>
-       </property>
-       <property name="value">
-        <number>0</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksBelow</enum>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_24">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>266</y>
-         <width>46</width>
-         <height>13</height>
+         <x>63</x>
+         <y>30</y>
+         <width>81</width>
+         <height>23</height>
         </rect>
        </property>
        <property name="text">
-        <string>-100</string>
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_rear.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-      <widget class="QLabel" name="label_26">
+      <widget class="QLabel" name="lbl_side_view">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>93</y>
+         <width>91</width>
+         <height>36</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_side.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_top_view">
+       <property name="geometry">
+        <rect>
+         <x>60</x>
+         <y>163</y>
+         <width>71</width>
+         <height>71</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_top.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>true</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="gb_actuator_percent">
+      <property name="geometry">
+       <rect>
+        <x>760</x>
+        <y>40</y>
+        <width>441</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="title">
+       <string>Muscle Lengths</string>
+      </property>
+      <widget class="Line" name="muscle_4">
        <property name="enabled">
         <bool>false</bool>
        </property>
        <property name="geometry">
         <rect>
          <x>30</x>
-         <y>56</y>
-         <width>31</width>
+         <y>110</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_actuator_frame">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>20</y>
+         <width>351</width>
+         <height>151</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+      <widget class="Line" name="muscle_5">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>130</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="muscle_0">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>30</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="muscle_1">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>50</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="muscle_2">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>70</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="muscle_3">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>30</x>
+         <y>90</y>
+         <width>250</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="lineWidth">
+        <number>8</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="txt_muscle_3">
+       <property name="geometry">
+        <rect>
+         <x>320</x>
+         <y>90</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
        <property name="text">
-        <string>100</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <string>Muscle 3</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_28">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QLabel" name="txt_muscle_0">
        <property name="geometry">
         <rect>
-         <x>40</x>
-         <y>156</y>
-         <width>21</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>0</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="chk_instant_move">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>10</y>
-         <width>121</width>
-         <height>18</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Defer Move</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_2">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>94</x>
-         <y>40</y>
-         <width>21</width>
+         <x>320</x>
+         <y>30</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
-        <string>X</string>
+        <string>Muscle 0</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_30">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QLabel" name="txt_muscle_4">
        <property name="geometry">
         <rect>
-         <x>143</x>
-         <y>40</y>
-         <width>21</width>
+         <x>320</x>
+         <y>110</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
-        <string>Y</string>
+        <string>Muscle 4</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_34">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QLabel" name="txt_muscle_5">
        <property name="geometry">
         <rect>
-         <x>195</x>
-         <y>40</y>
-         <width>20</width>
+         <x>320</x>
+         <y>130</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
-        <string>Z</string>
+        <string>Muscle 5</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_35">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QLabel" name="txt_muscle_1">
        <property name="geometry">
         <rect>
-         <x>236</x>
-         <y>40</y>
-         <width>41</width>
+         <x>320</x>
+         <y>50</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
-        <string>Roll</string>
+        <string>Muscle 1</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_38">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
+      <widget class="QLabel" name="txt_muscle_2">
        <property name="geometry">
         <rect>
-         <x>282</x>
-         <y>40</y>
-         <width>51</width>
+         <x>320</x>
+         <y>70</y>
+         <width>91</width>
          <height>16</height>
         </rect>
        </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
        <property name="text">
-        <string>Pitch</string>
+        <string>Muscle 2</string>
        </property>
       </widget>
-      <widget class="QLabel" name="label_39">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>337</x>
-         <y>40</y>
-         <width>41</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-         <weight>75</weight>
-         <bold>true</bold>
-        </font>
-       </property>
-       <property name="text">
-        <string>Yaw</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_centre">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>60</y>
-         <width>81</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Centre</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_40">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>24</x>
-         <y>27</y>
-         <width>51</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>percent</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="btn_load_pos">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>100</y>
-         <width>81</width>
-         <height>23</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Load Pos</string>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_6">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>94</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_7">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>144</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_8">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>244</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_9">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>194</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_10">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>345</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QProgressBar" name="pg_11">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>294</x>
-         <y>26</y>
-         <width>10</width>
-         <height>10</height>
-        </rect>
-       </property>
-       <property name="maximum">
-        <number>1</number>
-       </property>
-       <property name="value">
-        <number>1</number>
-       </property>
-       <property name="textVisible">
-        <bool>false</bool>
-       </property>
-      </widget>
-      <widget class="QGroupBox" name="groupBox_7">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="geometry">
-        <rect>
-         <x>80</x>
-         <y>300</y>
-         <width>251</width>
-         <height>51</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>Movement speed</string>
-       </property>
-       <widget class="QLabel" name="label_41">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>220</x>
-          <y>29</y>
-          <width>40</width>
-          <height>14</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Slow</string>
-        </property>
-       </widget>
-       <widget class="QSlider" name="sld_lag">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>30</x>
-          <y>20</y>
-          <width>194</width>
-          <height>20</height>
-         </rect>
-        </property>
-        <property name="minimum">
-         <number>20</number>
-        </property>
-        <property name="maximum">
-         <number>2000</number>
-        </property>
-        <property name="singleStep">
-         <number>20</number>
-        </property>
-        <property name="value">
-         <number>1000</number>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-       <widget class="QLabel" name="label_42">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>29</y>
-          <width>40</width>
-          <height>14</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Fast</string>
-        </property>
-       </widget>
-      </widget>
-      <widget class="QGroupBox" name="groupBox_8">
-       <property name="geometry">
-        <rect>
-         <x>530</x>
-         <y>160</y>
-         <width>131</width>
-         <height>51</height>
-        </rect>
-       </property>
-       <property name="title">
-        <string>Repeated Move</string>
-       </property>
-       <widget class="QComboBox" name="cmb_repeated_move">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>20</y>
-          <width>71</width>
-          <height>22</height>
-         </rect>
-        </property>
-        <item>
-         <property name="text">
-          <string>None</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Surge</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Sway</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Heave</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Roll</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Pitch</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>Yaw</string>
-         </property>
-        </item>
-        <item>
-         <property name="text">
-          <string>ALL</string>
-         </property>
-        </item>
-       </widget>
-      </widget>
+      <zorder>lbl_actuator_frame</zorder>
+      <zorder>muscle_0</zorder>
+      <zorder>muscle_1</zorder>
+      <zorder>muscle_3</zorder>
+      <zorder>muscle_2</zorder>
+      <zorder>muscle_5</zorder>
+      <zorder>muscle_4</zorder>
+      <zorder>txt_muscle_3</zorder>
+      <zorder>txt_muscle_0</zorder>
+      <zorder>txt_muscle_4</zorder>
+      <zorder>txt_muscle_5</zorder>
+      <zorder>txt_muscle_1</zorder>
+      <zorder>txt_muscle_2</zorder>
      </widget>
     </widget>
    </widget>
@@ -2768,70 +2535,6 @@
     <property name="frameShadow">
      <enum>QFrame::Raised</enum>
     </property>
-    <widget class="QWidget" name="widget_activate" native="true">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="geometry">
-      <rect>
-       <x>920</x>
-       <y>0</y>
-       <width>270</width>
-       <height>111</height>
-      </rect>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>180</width>
-       <height>0</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>270</width>
-       <height>16777215</height>
-      </size>
-     </property>
-     <widget class="QPushButton" name="chk_activate">
-      <property name="enabled">
-       <bool>true</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>50</x>
-        <y>9</y>
-        <width>200</width>
-        <height>91</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <family>MS 33558</family>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-    background-color: lightgray;
-    border: 2px solid gray;
-    border-radius: 15px;
-    padding: 5px;
-}
-QPushButton:checked {
-     background-color: rgba(0, 51, 102, 1); /* Dark blue background */;
-    color: white;
-}
-
-</string>
-      </property>
-      <property name="text">
-       <string>Activate</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </widget>
     <widget class="QPushButton" name="btn_fly">
      <property name="geometry">
       <rect>
@@ -2863,10 +2566,10 @@ QPushButton:checked {
     <widget class="QLabel" name="lbl_sim_status">
      <property name="geometry">
       <rect>
-       <x>410</x>
-       <y>40</y>
-       <width>491</width>
-       <height>41</height>
+       <x>720</x>
+       <y>8</y>
+       <width>501</width>
+       <height>81</height>
       </rect>
      </property>
      <property name="font">
@@ -2898,7 +2601,7 @@ QPushButton:checked {
     <widget class="QPushButton" name="btn_pause">
      <property name="geometry">
       <rect>
-       <x>210</x>
+       <x>260</x>
        <y>20</y>
        <width>150</width>
        <height>75</height>
@@ -2924,13 +2627,77 @@ QPushButton:checked {
      </property>
     </widget>
    </widget>
+   <widget class="QWidget" name="widget_activate" native="true">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>590</y>
+      <width>270</width>
+      <height>111</height>
+     </rect>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>180</width>
+      <height>0</height>
+     </size>
+    </property>
+    <property name="maximumSize">
+     <size>
+      <width>270</width>
+      <height>16777215</height>
+     </size>
+    </property>
+    <widget class="QPushButton" name="chk_activate">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>16</y>
+       <width>200</width>
+       <height>91</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <family>MS 33558</family>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton {
+    background-color: lightgray;
+    border: 2px solid gray;
+    border-radius: 15px;
+    padding: 5px;
+}
+QPushButton:checked {
+     background-color: rgba(0, 51, 102, 1); /* Dark blue background */;
+    color: white;
+}
+
+</string>
+     </property>
+     <property name="text">
+      <string>Activate</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1278</width>
+     <width>1261</width>
      <height>22</height>
     </rect>
    </property>

@@ -24,30 +24,27 @@ class SerialSwitchReader:
         
         :param port: Serial port string (e.g., "/dev/ttyUSB0").
         :param baud_rate: Baud rate for the serial connection.
-        :return: True if successful, False otherwise.
+        :raises serial.SerialException: If the serial port fails to open.
         """
         self.port = port  
-        try:
-            self.serial_port = serial.Serial(
-                port=port,
-                baudrate=baud_rate,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS,
-                timeout=0,  # ⬅ Non-blocking mode for polling
-            )
-            return True
-        except serial.SerialException as e:
-            self._log_status(f"{self.port}: Failed to open serial port: {e}", error=True)
-            return False
+        self.serial_port = serial.Serial(
+            port=port,
+            baudrate=baud_rate,
+            parity=serial.PARITY_NONE,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS,
+            timeout=0,  # ⬅ Non-blocking mode for polling
+        )
+
 
     def poll(self):
         """
         Reads and processes all available serial messages without blocking.
         Call this method in the UI's 50ms polling loop.
+        Returns True if the serial port is connected and readable
         """
         if not self.serial_port or not self.serial_port.is_open:
-            return
+            return False
 
         try:
             # Read all available bytes (or 1 byte if none are available)
@@ -60,9 +57,11 @@ class SerialSwitchReader:
 
                 for line in lines[:-1]:  # Process only full lines
                     self._process_line(line.strip())
+            return True        
 
         except Exception as e:
             self._log_status(f"{self.port}: Error while reading serial data: {e}", error=True)
+        return False    
 
     def _process_line(self, line):
         """

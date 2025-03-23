@@ -75,7 +75,6 @@ class Sim():
 
     def handle_initialized(self):
         self.report_state_cb("Initialized - Waiting for beacon...")
-        
         beacon = self.receive_beacon_message()
         if beacon:
             self.xplane_ip = beacon['ip']
@@ -278,18 +277,25 @@ class Sim():
             self.xplane_udp.send('Run', (self.xplane_ip, TELEMETRY_CMD_PORT))
         else:
             print("X-Plane is not connected")
-        
+
+    def play(self):
+        # start the preselected play file 
+        if self.state == State.RECEIVING_DATAREFS:
+            self.xplane_udp.send('Play', (self.xplane_ip, TELEMETRY_CMD_PORT))
+        else:
+            print("X-Plane is not connected")
+            
     def pause(self):
         if self.state == State.RECEIVING_DATAREFS:
             self.xplane_udp.send('Pause', (self.xplane_ip, TELEMETRY_CMD_PORT))
         else:    
             print("X-Plane is not connected")    
     
-    def reset(self):
+    def reset_playback(self):
         if self.state == State.RECEIVING_DATAREFS:
             #self.send_CMND('sim/replay/rep_end') # only needed because of bug in replay
             #self.send_CMND('sim/replay/rep_begin')
-            self.xplane_udp.send('Reset', (self.xplane_ip, TELEMETRY_CMD_PORT)) 
+            self.xplane_udp.send('Reset_playback', (self.xplane_ip, TELEMETRY_CMD_PORT)) 
         else:
             print("X-Plane is not connected")                 
  
@@ -301,6 +307,7 @@ class Sim():
             msg = f'Scenario,{mode},{skill_level}'
             print("sending:", msg)
             self.xplane_udp.send(msg, (self.xplane_ip, TELEMETRY_CMD_PORT))
+            # self.pause() # is this needed?
         else:
             print("Not connected to X-Plane, scenario not sent")
      

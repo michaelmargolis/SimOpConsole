@@ -30,10 +30,18 @@ sudo apt install --reinstall qt5-default qtwayland5 libxcb-xinerama0 libxkbcommo
 echo "Installing Geany..."
 sudo apt install geany -y
 
-# Enable DSI display support in /boot/config.txt
-echo "Enabling DSI Display Support..."
-CONFIG_FILE="/boot/config.txt"
+# Determine the correct config.txt path
+if [ -f "/boot/firmware/config.txt" ]; then
+    CONFIG_FILE="/boot/firmware/config.txt"
+elif [ -f "/boot/config.txt" ]; then
+    CONFIG_FILE="/boot/config.txt"
+else
+    echo "Error: config.txt file not found."
+    exit 1
+fi
 
+# Enable DSI display support in config.txt
+echo "Enabling DSI Display Support..."
 if ! grep -q "dtoverlay=vc4-kms-dsi-waveshare-panel,10_1_inch" "$CONFIG_FILE"; then
     echo "dtoverlay=vc4-kms-dsi-waveshare-panel,10_1_inch" | sudo tee -a "$CONFIG_FILE"
     echo "DSI overlay added."
@@ -41,7 +49,7 @@ else
     echo "DSI overlay already present."
 fi
 
-# Enable GPIO shutdown in /boot/config.txt
+# Enable GPIO shutdown in config.txt
 echo "Enabling GPIO Shutdown..."
 if ! grep -q "dtoverlay=gpio-shutdown" "$CONFIG_FILE"; then
     echo "dtoverlay=gpio-shutdown" | sudo tee -a "$CONFIG_FILE"
@@ -121,7 +129,7 @@ wallpaper_sprite.SetZ(-100);
 EOT
 
     sudo plymouth-set-default-theme -R falcon2
-    sudo sed -i 's/^#Disable Plymouth/#Disable Plymouth\nplymouth.enable=1/' /boot/cmdline.txt
+    sudo sed -i 's/^#Disable Plymouth/#Disable Plymouth\nplymouth.enable=1/' "$CONFIG_FILE"
     echo "Boot splash screen configured!"
 else
     echo "Warning: Splash image not found! Please add falcon2_splash.png to /home/raes"
@@ -129,10 +137,10 @@ fi
 
 # Final fix: Ensure kernel uses the correct cmdline.txt
 echo "Ensuring correct boot parameters..."
-sudo sed -i 's/rootwait/& quiet splash plymouth.enable=1/' /boot/cmdline.txt
-
-# Apply changes and reboot
-echo "Setup complete! Rebuilding initramfs and rebooting..."
-sudo update-initramfs -u
-sync
-sudo reboot
+CMDLINE_FILE="/boot/cmdline.txt"
+if [ -f "$CMDLINE_FILE" ]; then
+    sudo sed -i 's/rootwait/& quiet splash plymouth.enable=1/' "$CMDLINE_FILE"
+else
+    echo "Error: cmdline.txt file not found."
+    exit 1
+fi
