@@ -109,37 +109,18 @@ chown -R "$USER:$USER" "$HOME_DIR/.config"
 chmod -R u+rwx "$HOME_DIR/.config"
 
 # -------------------------------------------------
-# 8. Create OpsConsole folder and the test siminterface_core.py app.
+# 8. Use siminterface_core.py from the repository.
 # -------------------------------------------------
 OPS_DIR="$HOME_DIR/OpsConsole"
-mkdir -p "$OPS_DIR"
-SIMAPP="$OPS_DIR/siminterface_core.py"
-cat <<'EOF' > "$SIMAPP"
-#!/usr/bin/env python3
-"""
-A simple PyQt5 Hello World application for OpsConsole.
-"""
-import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
-
-def main():
-    app = QApplication(sys.argv)
-    window = QWidget()
-    window.setWindowTitle("OpsConsole Test")
-    layout = QVBoxLayout()
-    label = QLabel("Hello, World from OpsConsole!")
-    layout.addWidget(label)
-    window.setLayout(layout)
-    window.resize(400, 200)
-    window.show()
-    sys.exit(app.exec_())
-
-if __name__ == '__main__':
-    main()
-EOF
+# We assume the repository was cloned and the real siminterface_core.py is located in OPS_DIR/resources.
+SIMAPP="$OPS_DIR/resources/siminterface_core.py"
+if [ ! -f "$SIMAPP" ]; then
+    echo "Error: siminterface_core.py not found at $SIMAPP. Please ensure the repository is up to date."
+    exit 1
+fi
 chown "$USER:$USER" "$SIMAPP"
 chmod +x "$SIMAPP"
-echo "Test siminterface_core.py created in $OPS_DIR."
+echo "siminterface_core.py is located at $SIMAPP."
 
 # -------------------------------------------------
 # 9. Set up autostart for siminterface_core.py (user-level).
@@ -166,7 +147,7 @@ echo "Autostart entry for siminterface_core.py created at $SIMAPP_AUTOSTART."
 DESKTOP_DIR="$HOME_DIR/Desktop"
 mkdir -p "$DESKTOP_DIR"
 
-# OpsConsole Desktop Icon
+# OpsConsole Desktop Icon using the actual icon from the resources folder.
 OPS_ICON="$DESKTOP_DIR/OpsConsole.desktop"
 cat <<EOF > "$OPS_ICON"
 [Desktop Entry]
@@ -174,7 +155,7 @@ Version=1.0
 Type=Application
 Name=OpsConsole
 Exec=/usr/bin/python3 $SIMAPP
-Icon=utilities-terminal
+Icon=$HOME_DIR/OpsConsole/resources/falcon2_icon.png
 Terminal=false
 StartupNotify=true
 NoDisplay=false
@@ -215,7 +196,7 @@ cat <<EOF > "$WALLPAPER_AUTOSTART"
 [Desktop Entry]
 Type=Application
 Name=Set Wallpaper
-Exec=pcmanfm --set-wallpaper="$OPS_DIR/resources/Falcon2_splash.png" --wallpaper-mode=stretch
+Exec=pcmanfm --set-wallpaper="$OPS_DIR/resources/falcon2_splash.png" --wallpaper-mode=stretch
 Terminal=false
 X-GNOME-Autostart-enabled=true
 MimeType=application/x-desktop;
