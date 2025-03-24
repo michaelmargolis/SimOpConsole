@@ -38,8 +38,8 @@ cat <<EOF > "$AUTLOGIN_CONF"
 [Seat:*]
 autologin-user=$USER
 autologin-user-timeout=0
-user-session=LXDE-pi
-greeter-session=pi-greeter
+user-session=LXDE
+greeter-session=lightdm-gtk-greeter
 EOF
 echo "LightDM autologin configured in $AUTLOGIN_CONF."
 systemctl enable lightdm
@@ -66,9 +66,31 @@ for line in \
 done
 
 # -------------------------------------------------
-# 5. Remove any default Geany autostart entries.
+# 5. Ensure the global LXDE autostart file starts the desktop manager.
 # -------------------------------------------------
-# Check global autostart (if exists)
+GLOBAL_AUTOSTART="/etc/xdg/lxsession/LXDE/autostart"
+if [ ! -f "$GLOBAL_AUTOSTART" ]; then
+  echo "Global autostart file $GLOBAL_AUTOSTART not found. Creating it..."
+  mkdir -p "$(dirname "$GLOBAL_AUTOSTART")"
+  cat <<EOF > "$GLOBAL_AUTOSTART"
+@lxpanel --profile LXDE
+@pcmanfm --desktop --profile LXDE
+@xscreensaver -no-splash
+EOF
+  echo "Created global autostart file with PCManFM start command."
+else
+  if ! grep -q "pcmanfm --desktop" "$GLOBAL_AUTOSTART"; then
+    echo "@pcmanfm --desktop --profile LXDE" >> "$GLOBAL_AUTOSTART"
+    echo "Added PCManFM desktop command to global autostart."
+  else
+    echo "Global autostart file already includes PCManFM."
+  fi
+fi
+
+# -------------------------------------------------
+# 6. Remove any default Geany autostart entries.
+# -------------------------------------------------
+# Remove from global LXDE autostart if present.
 if [ -f /etc/xdg/lxsession/LXDE-pi/autostart ]; then
   sed -i '/geany/d' /etc/xdg/lxsession/LXDE-pi/autostart
   echo "Removed any default Geany autostart entry from /etc/xdg/lxsession/LXDE-pi/autostart."
@@ -80,14 +102,14 @@ if [ -f "$HOME_DIR/.config/autostart/geany.desktop" ]; then
 fi
 
 # -------------------------------------------------
-# 6. Ensure user configuration directory exists and is writable.
+# 7. Ensure user configuration directory exists and is writable.
 # -------------------------------------------------
 mkdir -p "$HOME_DIR/.config"
 chown -R "$USER:$USER" "$HOME_DIR/.config"
 chmod -R u+rwx "$HOME_DIR/.config"
 
 # -------------------------------------------------
-# 7. Create OpsConsole folder and the test siminterface_core.py app.
+# 8. Create OpsConsole folder and the test siminterface_core.py app.
 # -------------------------------------------------
 OPS_DIR="$HOME_DIR/OpsConsole"
 mkdir -p "$OPS_DIR"
@@ -120,7 +142,7 @@ chmod +x "$SIMAPP"
 echo "Test siminterface_core.py created in $OPS_DIR."
 
 # -------------------------------------------------
-# 8. Set up autostart for siminterface_core.py (user-level).
+# 9. Set up autostart for siminterface_core.py (user-level).
 # -------------------------------------------------
 AUTOSTART_DIR="$HOME_DIR/.config/autostart"
 mkdir -p "$AUTOSTART_DIR"
@@ -139,7 +161,7 @@ chmod +x "$SIMAPP_AUTOSTART"
 echo "Autostart entry for siminterface_core.py created at $SIMAPP_AUTOSTART."
 
 # -------------------------------------------------
-# 9. Create Desktop Icons for OpsConsole and (conditionally) LXTerminal.
+# 10. Create Desktop Icons for OpsConsole and (conditionally) LXTerminal.
 # -------------------------------------------------
 DESKTOP_DIR="$HOME_DIR/Desktop"
 mkdir -p "$DESKTOP_DIR"
@@ -185,7 +207,7 @@ else
 fi
 
 # -------------------------------------------------
-# 10. Set the desktop background to Falcon2_splash.png.
+# 11. Set the desktop background to Falcon2_splash.png.
 # -------------------------------------------------
 # Create an autostart entry to set the wallpaper using pcmanfm.
 WALLPAPER_AUTOSTART="$AUTOSTART_DIR/set-wallpaper.desktop"
@@ -208,7 +230,7 @@ echo "Autostart entry for setting desktop wallpaper created at $WALLPAPER_AUTOST
 echo "Test environment installation complete."
 echo " - System is set to boot to the graphical target with autologin (configured in $AUTLOGIN_CONF)."
 echo " - DTOverlay settings for the Waveshare DSI screen and power control have been appended to $CONFIG_TXT."
-echo " - OpsConsole (siminterface_core.py) is set to autostart via $AUTOSTART_DIR."
+echo " - OpsConsole (siminterface_core.py) is set to autostart via $HOME_DIR/.config/autostart."
 echo " - Desktop icons for OpsConsole and LXTerminal have been created in $DESKTOP_DIR."
 echo " - An autostart entry to set the desktop background to Falcon2_splash.png has been created."
 echo "Please reboot for all changes to take effect."
