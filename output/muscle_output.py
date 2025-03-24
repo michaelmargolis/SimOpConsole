@@ -1,99 +1,99 @@
-"""
-muscle_output.py
-  percents are movement of the actuators:
-    0 is the actuator position with no pressure
-    100 is the position with max pressure.
-  The non-linear relationship between pressure and movement is 
-    adjusted using previously collected data
-    
-  Supports Festo controllers using easyip port
-     see: https://github.com/kmpm/fstlib
-"""
-import sys
 import time
+import sys
 import numpy as np
+import logging
 import traceback
 
 import output.festo_itf as festo_itf
 
-import logging
 log = logging.getLogger(__name__)
 
 PLOT_PRESSURES = False
 
 class MuscleOutput(object):
-    def __init__(self, d_to_p_func, sleep_func, FST_ip = '192.168.0.10', max_actuator_range = 200):
-        self.distance_to_pressure = d_to_p_func
+    def __init__(self, d_to_p_func, sleep_func, FST_ip='192.168.0.10', max_muscle_length= 1000, muscle_length_range=250):
+        """ Initialize the muscle output control module. """
+        self.muscle_length_to_pressure = d_to_p_func
         self.sleep_func = sleep_func
         self.festo = festo_itf.Festo(FST_ip)
-        self.max_actuator_range = max_actuator_range # max contraction in mm
-        self.in_pressures = [0]*6
+        self.MAX_MUSCLE_LENGTH = max_muscle_length
+        self.MUSCLE_LENGTH_RANGE = muscle_length_range  # max change in muscle length (not actuator length)
+        self.muscle_lengths = [max_muscle_length] * 6 
+        self.muscle_percents = [100] * 6
+        self.in_pressures = [0] * 6
         self.progress_callback = None
-        self.percent_factor = self.max_actuator_range / 100 #  divide distance by this factor to get percent
+        # self.percent_factor = self.MUSCLE_LENGTH_RANGE / 100  # Divide muscle length by this factor to get percent
         self.is_enabled = False
-        self.loaded_weight = 100 # default payload in kg
+        self.loaded_payload_weight = 100  # Default payload in kg
         self.prev_time = time.perf_counter()
-        self.sent_pressures = [0]*6
+        self.sent_pressures = [0] * 6
+        
         if PLOT_PRESSURES:
             from common.plot_itf import PlotItf
             nbr_plots = 6
             traces_per_plot = 2
-            titles = ('Strut 0', 'Strut 1',  'Strut 2',  'Strut 3',  'Strut 4',  'Strut 5')                 
-            legends = ('Distance', 'Pressure')
-            main_title = "Distance and pressure values for platform actuators"
-            self.plotter = PlotItf(nbr_plots, traces_per_plot, main_title, titles, legends=legends,  minmax=(0,100), grouping= 'traces')
+            titles = ('Muscle 0', 'Muscle 1', 'Muscle 2', 'Muscle 3', 'Muscle 4', 'Muscle 5')                 
+            legends = ('Muscle Length', 'Pressure')
+            main_title = "Muscle Length and Pressure Values for Platform Actuators"
+            self.plotter = PlotItf(nbr_plots, traces_per_plot, main_title, titles, legends=legends, minmax=(0, 100), grouping='traces')
 
     def set_progress_callback(self, cb):
+        """ Set the progress callback function. """
         self.progress_callback = cb
 
     def send_pressures(self, pressures):
-        self.festo.send_pressures(pressures)
-        self.sent_pressures = pressures
-        # print("in output send pressures", pressures)
+        """ Send pressure commands to the Festo interface. """
+        try:
+            self.festo.send_pressures(pressures)
+            self.sent_pressures = pressures
+        except Exception as e:
+            print("error in send pressures", str(e), traceback.format_exc(),pressures)
 
     def get_pressures(self):
-        # returns actual pressures if available from festo, else returns sent pressure
+        """ Return actual pressures from Festo, or sent pressures if real values are unavailable. """
         self.in_pressures = self.festo.get_pressure()
-        if all(val == 0 for val in self.in_pressures ):
-            return self.sent_pressures 
-        else:    
-            return  self.in_pressures
+        if all(val == 0 for val in self.in_pressures):
+            return self.sent_pressures
+        else:
+            return self.in_pressures
         
     def set_brake(self, state):
-        # enables brakes on sliders to avoid unintended movement
+        """ Enable or disable brakes to prevent unintended movement. """
         if state:
-            print("todo turn brakes on")
+            print("TODO: Turn brakes on")
         else:
-            print("todo turn brakes off")
+            print("TODO: Turn brakes off")
 
     def enable_poll_pressures(self, state):
+        """ Enable or disable polling of pressure data from the Festo interface. """
         self.festo.enable_poll_pressure(state)
 
     def set_wait_ack(self, state):
+        """ Set whether the system should wait for Festo acknowledgment before proceeding. """
         self.festo.set_wait_ack(state)
-        log.debug("output module wait for festo pressure set to %d", state)
+        log.debug("MuscleOutput module: wait for Festo pressure set to %d", state)
 
-    def set_pistion_flag(self, state):
-        if state:
-            self.activate_piston_flag = 1
-        else:
-            self.activate_piston_flag = 0
+    def set_piston_flag(self, state):
+        """ Enable or disable the piston flag. """
+        self.activate_piston_flag = 1 if state else 0
 
     def set_payload(self, payload_kg):
-        #  set total weight in kilograms
-        #  Todo - was used on platforms without encoders, not yet supported in V3
-        self.loaded_weight = payload_kg
+        """ Set the payload weight in kilograms. """
+        self.loaded_payload_weight = payload_kg
 
     def set_enable(self, state, current_actuator_lengths, target_actuator_lengths):
         """
         enable platform if True, disable if False        
-        moves from (if disabled) or to (if enabled) actuator_lengths needed to achieve current client orientation
+        moves from (if disabled) or to (if enabled) actuator_lengths needed to achieve desired orientation
         """
         #fixme check if passed lengths are muscle lengths
         if self.is_enabled != state:
             self.is_enabled = state
             log.debug("Platform enabled state is %s", str(state))
-                
+   
+    def get_muscle_lengths(self):
+        return self.muscle_lengths
+        
     def get_output_status(self):
         #  return string describing output status
         if self.festo.wait:
@@ -170,32 +170,65 @@ class MuscleOutput(object):
         # print("in do_pressure_plot sent", msg)
         """
     
-    def move_distance(self, distances):
-        """ parm is list of muscle movements in mm from rest positions """ 
-        for idx, d in enumerate(distances):
-            distances[idx] = int(round(d))
+    def set_muscle_lengths(self, muscle_lengths):
+        """ parm is list of muscle lengths in mm """ 
         try:
-            out_pressures = self.distance_to_pressure(distances)
-            # print("in move_distance,", (','.join(str(d) for d in distances)), "pressures,", (','.join(str(p) for p in out_pressures)))
+            out_pressures = self.muscle_length_to_pressure(muscle_lengths)
+            # print("in set_muscle_lengths,", (','.join(str(d) for d in distances)), "pressures,", (','.join(str(p) for p in out_pressures)))
             self.send_pressures(out_pressures)
-            self.percents = []
-            for d in distances:
-                self.percents.append(d / self.percent_factor)
-            if PLOT_PRESSURES:
-                self.do_pressure_plot(distances, self.percents, out_pressures)    
+            self.muscle_lengths = muscle_lengths
         except Exception as e:
-            print("error in move distance", str(e), traceback.format_exc(),distances)
-            log.error("error in move_distance %s, %s", e, sys.exc_info()[0])
+            print("error in set_muscle_lengths", str(e), traceback.format_exc(),muscle_lengths)
+            log.error("error in set_muscle_lengths %s, %s", e, sys.exc_info()[0])
 
-    def move_percent(self, percents):
-        distances = [p * self.percent_factor for p in percents]
-        self.move_distance(distances) # note distances are the contraction amount in mm 
-        # print("percents:", percents, "contraction distances (mm)", distances)
+    def set_muscle_percents(self, percents):
+        # percents are list of contraction amount, 0% is max muscle length 
+        clamped_percents = [max(0, min(percent, 100)) for percent in percents]
+        muscle_lengths = [
+            self.MAX_MUSCLE_LENGTH * (0.75 + percent / 400)
+            for percent in clamped_percents
+        ]
+        self.set_muscle_lengths(muscle_lengths)
+        
+    def set_contraction_percents(self, percents):
+        # percents are list of contraction amount, 0% is max muscle length 
+        clamped_percents = [100 - max(0, min(percent, 100)) for percent in percents]
+        self.set_muscle_percents(clamped_percents)
 
     def calibrate(self):
         # moves platform to mid pressure to determine best d_to_p files
         self.slow_pressure_move(0,3000, 1000)
 
+    def slow_move(self, start_lengths, end_lengths, rate_cm_per_s, new_target):
+        rate_mm = rate_cm_per_s * 10
+        interval = 0.05  
+        muscle_length = max([abs(j - i) for i, j in zip(start_lengths, end_lengths)])
+        steps = int(muscle_length / rate_mm / interval)
+
+        if steps < 1:
+            self.set_muscle_lengths(end_lengths)
+        else:
+            current = start_lengths
+            delta = [float(e - s) / steps for s, e in zip(start_lengths, end_lengths)]
+
+            for step in range(steps):
+                new_end = new_target()
+                if new_end is not None:
+                    print(f"New target {new_end} detected, slowing down before switching.")
+                    for _ in range(5):  # Reduce speed before switching
+                        current = [x + (y * 0.2) for x, y in zip(current, delta)]
+                        self.set_muscle_lengths(current)
+                        self.sleep_func(interval)
+
+                    self.slow_move(current, new_end, rate_cm_per_s, new_target)
+                    return  
+
+                current = [x + y for x, y in zip(current, delta)]
+                current = np.clip(current, 0, 6000)
+                self.set_muscle_lengths(current)
+                self.sleep_func(interval)
+
+    """
     def slow_move(self, start, end, rate_cm_per_s):
         raise Exception("slow_move method now implimented in platform_controller")
         # moves from the given start to end lengths at the given duration
@@ -219,7 +252,7 @@ class MuscleOutput(object):
                 current = np.clip(current, 0, 6000)
                 self.move_distance(current)
                 self.sleep_func(interval)
-
+    """  
     def slow_pressure_move(self, start_pressure, end_pressure, duration_ms):
         #  caution, this moves even if disabled
         interval = 50  # time between steps in ms

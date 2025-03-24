@@ -45,11 +45,11 @@ siminterface folder structure
 from sim_config import selected_sim, platform_config, switches_comport
 from siminterface_ui import MainWindow
 #naming#from kinematics.kinematicsV2 import Kinematics
-from kinematics.kinematics_V2b import Kinematics
+from kinematics.kinematics_V2SP import Kinematics
 from kinematics.dynamics import Dynamics
 import output.d_to_p as d_to_p
 #naming#from output.muscle_output import MuscleOutput
-from output.muscle_output_new import MuscleOutput
+from output.muscle_output import MuscleOutput
 
 
 class SimInterfaceCore(QtCore.QObject):
@@ -143,6 +143,7 @@ class SimInterfaceCore(QtCore.QObject):
         self.DtoP = d_to_p.D_to_P(self.cfg.MUSCLE_LENGTH_RANGE, self.cfg.MAX_MUSCLE_LENGTH)
         self.muscle_output = MuscleOutput(self.DtoP.muscle_length_to_pressure, sleep_qt,
                             "192.168.0.10",self.cfg.MAX_MUSCLE_LENGTH, self.cfg.MUSCLE_LENGTH_RANGE ) 
+                
         # Hardcoded Festo IP in example above—change if needed or pass as param
 
         # Setup kinematics
@@ -378,7 +379,8 @@ class SimInterfaceCore(QtCore.QObject):
     def deactivate_platform(self):
         log.debug("Core: deactivating platform")
         self.is_output_enabled = False
-
+        if not self.muscle_output:
+            return # ignore this if output module has not yet been initialized
         start_pos = self.muscle_output.get_muscle_lengths()  # Get current position
         end_pos = self.cfg.DISABLED_MUSCLE_LENGTHS  # Target down position
         def new_target():

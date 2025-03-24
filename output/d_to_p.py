@@ -29,11 +29,12 @@ import logging
 
 log = logging.getLogger(__name__)
 
-NBR_DISTANCES = 201  # 0-200mm with precision of 1mm
+NBR_DISTANCES = 251  # 0-200mm with precision of 1mm
+MAX_PRESSURE = 6000
 
 class D_to_P(object):
-    def __init__(self, max_distance):
-        self.nbr_columns = max_distance + 1
+    def __init__(self, max_contraction, max_length):
+        self.nbr_columns = max_contraction + 1
         if self.nbr_columns != NBR_DISTANCES:
             raise ValueError(f"Expected {NBR_DISTANCES} distance values!")
         self.d_to_p_up = None  # up-going distance to pressure curves - muscles contract
@@ -43,9 +44,13 @@ class D_to_P(object):
         self.curve_set_direction = 1  # 1 uses up moving curves, -1 down curves
         self.rows = 0  # number of load values in the DtoP file
         self.prev_distances = [0] * 6
+        self.max_muscle_length = max_length
+        self.max_muscle_contraction = max_contraction
     
     def load(self, fname=os.path.join("output", "DtoP.csv")):
         log.info("Using distance to Pressure file: %s" , fname)
+        print("TODO impliment d to p file for new muscles")
+        return True
         try:
             d_to_p = np.loadtxt(fname, delimiter=',', dtype=int)
             if d_to_p.shape[1] != self.nbr_columns:
@@ -71,10 +76,25 @@ class D_to_P(object):
             self.down_curve_idx = [np.abs(distances_in_curves - distances[i]).argmin(axis=0) for i in range(6)]
         else:
             print("Invalid direction in set_index")
-    
+  
+    def muscle_length_to_pressure(self, muscle_lengths):
+        """
+        this code is for testing only.
+        it uses the polynomial 35x^2 + 15x + 0.03 to calulate the approx pressure for a given muscle length
+        the value is clamped to an integer value between 0 and MAX_PRESSURE (6000 millibars) 
+        replace this with Omars code.
+        """
+        pressures = [
+            max(0, min(int(35 * percent**2 + 15 * percent + 0.03), MAX_PRESSURE))
+            for percent in [(self.max_muscle_length - length) / (self.max_muscle_length * (1 - self.max_muscle_contraction / 100)) *
+            100 for length in muscle_lengths]
+        ]
+        return pressures
+          
+ 
     def distance_to_pressure(self, distances):
         distance_threshold = 5  # distances must be greater than this to trigger a direction change
-        pressures = []
+        pressures = [0]*6
         for i in range(6):
             delta = distances[i] - self.prev_distances[i]
             if abs(delta) > distance_threshold:
@@ -89,9 +109,10 @@ class D_to_P(object):
             curve_set = self.d_to_p_up if self.curve_set_direction == 1 else self.d_to_p_down
             index = self.up_curve_idx[i] if self.curve_set_direction == 1 else self.down_curve_idx[i]
             
+            
             try:
                 p = self.interpolate(index, distances[i], curve_set)
-                pressures.append(p)
+                pressures[i] = p
             except Exception as e:
                 log.error("Error in distance_to_pressure: %s\n%s", e, traceback.format_exc())
                 print("-> Has 'output/DtoP.csv' been loaded?")
