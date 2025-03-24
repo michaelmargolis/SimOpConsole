@@ -1,224 +1,214 @@
 #!/bin/bash
 set -euo pipefail
 
-USER="raes"
-HOME_DIR="/home/$USER"
+# -------------------------------------------------
+# 1. Determine the actual user and home directory.
+# -------------------------------------------------
+if [ "$EUID" -eq 0 ]; then
+  USER=$(logname)
+  HOME_DIR="/home/$USER"
+else
+  USER=$(whoami)
+  HOME_DIR="$HOME"
+fi
+echo "Using user: $USER"
+echo "Home directory: $HOME_DIR"
 
-# ------------------------------
-# 1. Install Core Desktop & Display Manager
-# ------------------------------
+# -------------------------------------------------
+# 2. Set default target to graphical and update/install packages.
+# -------------------------------------------------
+systemctl set-default graphical.target
 
-echo ">>> Updating system..."
 apt update && apt full-upgrade -y
 
-echo ">>> Installing desktop & display manager packages..."
-if ! dpkg -l | grep -qw lxde-core; then
-  apt install -y --no-install-recommends lxde-core lxappearance lxsession lightdm
-fi
+# Install minimal GUI components plus Python3 and required modules.
+apt install -y lxde-core lxsession lightdm geany lxterminal xinit \
+  python3 python3-numpy python3-serial python3-pyqt5
 
-echo ">>> Enabling graphical login..."
-systemctl set-default graphical.target
-mkdir -p "$(dirname /etc/lightdm/lightdm.conf.d/50-autologin.conf)"
-if ! grep -q "^autologin-user=$USER" /etc/lightdm/lightdm.conf.d/50-autologin.conf 2>/dev/null; then
-  cat <<EOF >/etc/lightdm/lightdm.conf.d/50-autologin.conf
+# -------------------------------------------------
+# 3. Configure LightDM for autologin.
+# -------------------------------------------------
+# Remove any conflicting LightDM config file.
+if [ -f /etc/lightdm/lightdm.conf ]; then
+  mv /etc/lightdm/lightdm.conf /etc/lightdm/lightdm.conf.bak
+fi
+AUTLOGIN_CONF="/etc/lightdm/lightdm.conf.d/50-autologin.conf"
+mkdir -p "$(dirname "$AUTLOGIN_CONF")"
+cat <<EOF > "$AUTLOGIN_CONF"
 [Seat:*]
 autologin-user=$USER
-autologin-session=LXDE
+autologin-user-timeout=0
+user-session=LXDE-pi
+greeter-session=pi-greeter
 EOF
-fi
+echo "LightDM autologin configured in $AUTLOGIN_CONF."
 systemctl enable lightdm
 
-# ------------------------------
-# 2. Install Additional Components (Python, lxterminal, etc.)
-# ------------------------------
-
-echo ">>> Installing Python3, pyserial, and additional packages..."
-apt install -y python3 python3-serial
-
-echo ">>> Installing Python modules, editor, and lxterminal..."
-for pkg in python3-pyqt5 python3-numpy python3-serial geany; do
-  dpkg -l | grep -qw "$pkg" || apt install -y "$pkg"
-done
-
-if ! dpkg -l | grep -qw lxterminal; then
-  apt install -y lxterminal
-fi
-
-echo ">>> Adding user '$USER' to dialout group for serial access..."
-usermod -a -G dialout "$USER"
-
-# ------------------------------
-# 3. Update Boot & Configuration Files for Serial/Overlay Settings
-# ------------------------------
-
-# Determine cmdline and config file paths
-if [ -f /boot/firmware/cmdline.txt ]; then
-  CMDLINE="/boot/firmware/cmdline.txt"
-else
-  CMDLINE="/boot/cmdline.txt"
-fi
-
+# -------------------------------------------------
+# 4. Configure DTOverlays for DSI screen and power settings.
+# -------------------------------------------------
 if [ -f /boot/firmware/config.txt ]; then
   CONFIG_TXT="/boot/firmware/config.txt"
 else
   CONFIG_TXT="/boot/config.txt"
 fi
-
-echo ">>> Disabling serial console if present..."
-if [ -f "$CMDLINE" ] && grep -q "console=serial0,115200" "$CMDLINE"; then
-    sed -i 's/console=serial0,115200//g' "$CMDLINE"
-fi
-
-echo ">>> Configuring DTOverlays and boot_delay... "
+echo "Configuring DTOverlay settings in $CONFIG_TXT..."
 for line in \
   "dtoverlay=vc4-kms-dsi-waveshare-panel,10_1_inch" \
   "dtoverlay=gpio-shutdown" \
   "dtoverlay=gpio-poweroff,active_low,gpiopin=2" \
   "boot_delay=1" \
   "enable_uart=1"; do
-  grep -qxF "$line" "$CONFIG_TXT" || echo "$line" | tee -a "$CONFIG_TXT"
+  if ! grep -qxF "$line" "$CONFIG_TXT"; then
+    echo "$line" >> "$CONFIG_TXT"
+    echo "Added: $line"
+  fi
 done
 
-
-# Only disable Bluetooth if it is using the UART.
-echo ">>> Checking if Bluetooth is using the UART..."
-if systemctl is-active --quiet hciuart; then
-    echo "Bluetooth UART is active, adding overlay to disable Bluetooth..."
-    OVERLAY_LINE="dtoverlay=disable-bt"
-    if [ -f "$CONFIG_TXT" ] && ! grep -qxF "$OVERLAY_LINE" "$CONFIG_TXT"; then
-        echo "$OVERLAY_LINE" | tee -a "$CONFIG_TXT"
-    fi
-else
-    echo "Bluetooth is not using the UART; leaving configuration unchanged."
+# -------------------------------------------------
+# 5. Remove any default Geany autostart entries.
+# -------------------------------------------------
+# Check global autostart (if exists)
+if [ -f /etc/xdg/lxsession/LXDE-pi/autostart ]; then
+  sed -i '/geany/d' /etc/xdg/lxsession/LXDE-pi/autostart
+  echo "Removed any default Geany autostart entry from /etc/xdg/lxsession/LXDE-pi/autostart."
+fi
+# Remove from user-level autostart folder.
+if [ -f "$HOME_DIR/.config/autostart/geany.desktop" ]; then
+  rm "$HOME_DIR/.config/autostart/geany.desktop"
+  echo "Removed geany.desktop from user autostart folder."
 fi
 
-echo ">>> Ensuring boot parameters include 'quiet splash plymouth.ignore-serial-consoles'..."
-if ! grep -q "quiet splash" "$CMDLINE"; then
-  sed -i '1 s/$/ quiet splash plymouth.ignore-serial-consoles/' "$CMDLINE"
-fi
-
-echo ">>> Disabling unnecessary services..."
-for svc in bluetooth triggerhappy; do
-  systemctl disable "${svc}.service" &>/dev/null || :
-done
-
-# ------------------------------
-# 4. Setup OpsConsole Application & Auto-Start Script
-# ------------------------------
-
-AUTOSTART_LXDE="$HOME_DIR/.config/lxsession/LXDE-pi/autostart"
-AUTOSTART_SCRIPT="$HOME_DIR/OpsConsole/start_console.sh"
-
-echo ">>> Creating OpsConsole directory & launcher script..."
-mkdir -p "$HOME_DIR/OpsConsole"
-chown -R "$USER:$USER" "$HOME_DIR/OpsConsole"
-
-if [ ! -f "$AUTOSTART_SCRIPT" ]; then
-  cat <<EOF >"$AUTOSTART_SCRIPT"
-#!/bin/bash
-cd "$HOME_DIR/OpsConsole" || exit
-exec python3 siminterface_core.py
-EOF
-  chmod +x "$AUTOSTART_SCRIPT"
-  chown "$USER:$USER" "$AUTOSTART_SCRIPT"
-fi
-
-mkdir -p "$(dirname "$AUTOSTART_LXDE")"
-grep -qxF "@bash $AUTOSTART_SCRIPT" "$AUTOSTART_LXDE" 2>/dev/null || echo "@bash $AUTOSTART_SCRIPT" >>"$AUTOSTART_LXDE"
+# -------------------------------------------------
+# 6. Ensure user configuration directory exists and is writable.
+# -------------------------------------------------
+mkdir -p "$HOME_DIR/.config"
 chown -R "$USER:$USER" "$HOME_DIR/.config"
+chmod -R u+rwx "$HOME_DIR/.config"
 
-# ------------------------------
-# 5. Setup Plymouth Splash
-# ------------------------------
+# -------------------------------------------------
+# 7. Create OpsConsole folder and the test siminterface_core.py app.
+# -------------------------------------------------
+OPS_DIR="$HOME_DIR/OpsConsole"
+mkdir -p "$OPS_DIR"
+SIMAPP="$OPS_DIR/siminterface_core.py"
+cat <<'EOF' > "$SIMAPP"
+#!/usr/bin/env python3
+"""
+A simple PyQt5 Hello World application for OpsConsole.
+"""
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QVBoxLayout
 
-PLY_THEME_DIR="/usr/share/plymouth/themes/falcon_splash"
-echo ">>> Setting up Plymouth splash..."
-apt install -y plymouth plymouth-themes
-if [ ! -d "$PLY_THEME_DIR" ]; then
-  mkdir -p "$PLY_THEME_DIR"
-  cp "$HOME_DIR/falcon2_splash.png" "$PLY_THEME_DIR"/falcon2_splash.png
-  cat <<EOF >"$PLY_THEME_DIR/falcon2_splash.plymouth"
-[Plymouth Theme]
-Name=Falcon2 Splash
-Description=Custom splash
-ModuleName=script
+def main():
+    app = QApplication(sys.argv)
+    window = QWidget()
+    window.setWindowTitle("OpsConsole Test")
+    layout = QVBoxLayout()
+    label = QLabel("Hello, World from OpsConsole!")
+    layout.addWidget(label)
+    window.setLayout(layout)
+    window.resize(400, 200)
+    window.show()
+    sys.exit(app.exec_())
 
-[script]
-ImageDir=$PLY_THEME_DIR
-ScriptFile=$PLY_THEME_DIR/falcon2_splash.script
+if __name__ == '__main__':
+    main()
 EOF
-  cat <<EOF >"$PLY_THEME_DIR/falcon2_splash.script"
-wallpaper_image("\${ImageDir}/falcon2_splash.png");
-EOF
-  update-alternatives --install /usr/share/plymouth/themes/default.plymouth default.plymouth "$PLY_THEME_DIR/falcon2_splash.plymouth" 200
-fi
-update-alternatives --set default.plymouth "$PLY_THEME_DIR/falcon2_splash.plymouth"
-update-initramfs -u
+chown "$USER:$USER" "$SIMAPP"
+chmod +x "$SIMAPP"
+echo "Test siminterface_core.py created in $OPS_DIR."
 
-# ------------------------------
-# 6. Create Desktop Launcher for Falcon2 Console
-# ------------------------------
- 
-LAUNCHER="$HOME_DIR/.local/share/applications/falcon2_console.desktop"
-echo ">>> Creating Falcon2 Console desktop launcher..."
-mkdir -p "$HOME_DIR/.local/share/applications"
-if [ ! -f "$LAUNCHER" ]; then
-  cat <<EOF > "$LAUNCHER"
+# -------------------------------------------------
+# 8. Set up autostart for siminterface_core.py (user-level).
+# -------------------------------------------------
+AUTOSTART_DIR="$HOME_DIR/.config/autostart"
+mkdir -p "$AUTOSTART_DIR"
+SIMAPP_AUTOSTART="$AUTOSTART_DIR/siminterface_core.desktop"
+cat <<EOF > "$SIMAPP_AUTOSTART"
 [Desktop Entry]
-Version=1.0
 Type=Application
-Name=Falcon2 Console
-Exec=/home/raes/start_console.sh
-Icon=/home/raes/OpsConsole/images/falcon2_icon.png
-Terminal=true
+Name=OpsConsole
+Exec=/usr/bin/python3 $SIMAPP
+Terminal=false
+X-GNOME-Autostart-enabled=true
+MimeType=application/x-desktop;
 EOF
-  chown "$USER:$USER" "$LAUNCHER"
-fi
+chown "$USER:$USER" "$SIMAPP_AUTOSTART"
+chmod +x "$SIMAPP_AUTOSTART"
+echo "Autostart entry for siminterface_core.py created at $SIMAPP_AUTOSTART."
 
-# ------------------------------
-# 7. Create Desktop Icons for Editor and Terminal
-# ------------------------------
-
+# -------------------------------------------------
+# 9. Create Desktop Icons for OpsConsole and (conditionally) LXTerminal.
+# -------------------------------------------------
 DESKTOP_DIR="$HOME_DIR/Desktop"
 mkdir -p "$DESKTOP_DIR"
 
-EDITOR_LAUNCHER="$HOME_DIR/.local/share/applications/falcon2_editor.desktop"
-if [ ! -f "$EDITOR_LAUNCHER" ]; then
-  cat <<EOF > "$EDITOR_LAUNCHER"
+# OpsConsole Desktop Icon
+OPS_ICON="$DESKTOP_DIR/OpsConsole.desktop"
+cat <<EOF > "$OPS_ICON"
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Falcon2 Editor
-Exec=geany
-Icon=geany
-Terminal=false
-X-GNOME-Autostart-enabled=true
-EOF
-  chown "$USER:$USER" "$EDITOR_LAUNCHER"
-  chmod +x "$EDITOR_LAUNCHER"
-fi
-
-TERMINAL_LAUNCHER="$HOME_DIR/.local/share/applications/falcon2_terminal.desktop"
-if [ ! -f "$TERMINAL_LAUNCHER" ]; then
-  cat <<EOF > "$TERMINAL_LAUNCHER"
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Falcon2 Terminal
-Exec=lxterminal
+Name=OpsConsole
+Exec=/usr/bin/python3 $SIMAPP
 Icon=utilities-terminal
 Terminal=false
-X-GNOME-Autostart-enabled=true
+StartupNotify=true
+NoDisplay=false
+MimeType=application/x-desktop;
 EOF
-  chown "$USER:$USER" "$TERMINAL_LAUNCHER"
-  chmod +x "$TERMINAL_LAUNCHER"
+chown "$USER:$USER" "$OPS_ICON"
+chmod +x "$OPS_ICON"
+
+# LXTerminal Desktop Icon: only create if it doesn't already exist.
+TERMINAL_ICON="$DESKTOP_DIR/Terminal.desktop"
+if [ ! -f "$TERMINAL_ICON" ]; then
+  cat <<EOF > "$TERMINAL_ICON"
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=LXTerminal
+Exec=/usr/bin/lxterminal
+TryExec=/usr/bin/lxterminal
+Icon=utilities-terminal
+Terminal=false
+StartupNotify=true
+NoDisplay=false
+MimeType=application/x-desktop;
+EOF
+  chown "$USER:$USER" "$TERMINAL_ICON"
+  chmod +x "$TERMINAL_ICON"
+  echo "LXTerminal desktop icon created in $DESKTOP_DIR."
+else
+  echo "LXTerminal desktop icon already exists in $DESKTOP_DIR; not overwriting."
 fi
 
-# Copy launchers to the Desktop folder so that they appear as icons.
-cp "$EDITOR_LAUNCHER" "$DESKTOP_DIR/"
-cp "$TERMINAL_LAUNCHER" "$DESKTOP_DIR/"
-chmod +x "$DESKTOP_DIR/falcon2_editor.desktop" "$DESKTOP_DIR/falcon2_terminal.desktop"
-chown "$USER:$USER" "$DESKTOP_DIR/falcon2_editor.desktop" "$DESKTOP_DIR/falcon2_terminal.desktop"
+# -------------------------------------------------
+# 10. Set the desktop background to Falcon2_splash.png.
+# -------------------------------------------------
+# Create an autostart entry to set the wallpaper using pcmanfm.
+WALLPAPER_AUTOSTART="$AUTOSTART_DIR/set-wallpaper.desktop"
+cat <<EOF > "$WALLPAPER_AUTOSTART"
+[Desktop Entry]
+Type=Application
+Name=Set Wallpaper
+Exec=pcmanfm --set-wallpaper="$OPS_DIR/resources/Falcon2_splash.png" --wallpaper-mode=stretch
+Terminal=false
+X-GNOME-Autostart-enabled=true
+MimeType=application/x-desktop;
+EOF
+chown "$USER:$USER" "$WALLPAPER_AUTOSTART"
+chmod +x "$WALLPAPER_AUTOSTART"
+echo "Autostart entry for setting desktop wallpaper created at $WALLPAPER_AUTOSTART."
 
-
-echo ">>> Setup complete — please reboot for all changes to take effect!"
+# -------------------------------------------------
+# Final Message
+# -------------------------------------------------
+echo "Test environment installation complete."
+echo " - System is set to boot to the graphical target with autologin (configured in $AUTLOGIN_CONF)."
+echo " - DTOverlay settings for the Waveshare DSI screen and power control have been appended to $CONFIG_TXT."
+echo " - OpsConsole (siminterface_core.py) is set to autostart via $AUTOSTART_DIR."
+echo " - Desktop icons for OpsConsole and LXTerminal have been created in $DESKTOP_DIR."
+echo " - An autostart entry to set the desktop background to Falcon2_splash.png has been created."
+echo "Please reboot for all changes to take effect."
