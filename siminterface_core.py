@@ -463,6 +463,8 @@ if __name__ == "__main__":
 
     ui.switches_begin(switches_comport)
     core.setup()
-    ui.show()
-    
+    if os.name == 'posix':
+        ui.showFullScreen()
+    else:    
+        ui.show()
     sys.exit(app.exec_())

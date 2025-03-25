@@ -26,6 +26,13 @@ apt install -y lxde-core lxsession lightdm geany lxterminal xinit \
   python3 python3-numpy python3-serial python3-pyqt5
 
 # -------------------------------------------------
+# X. Disable the serial-getty service on /dev/ttyS0 to free the serial port.
+# -------------------------------------------------
+echo "Disabling serial-getty on /dev/ttyS0..."
+sudo systemctl disable serial-getty@ttyS0.service
+sudo systemctl stop serial-getty@ttyS0.service
+
+# -------------------------------------------------
 # 3. Configure LightDM for autologin.
 # -------------------------------------------------
 # Remove any conflicting LightDM config file.
@@ -45,8 +52,22 @@ echo "LightDM autologin configured in $AUTLOGIN_CONF."
 systemctl enable lightdm
 
 # -------------------------------------------------
-# 4. Configure DTOverlays for DSI screen and power settings.
+# 4. Remove serial console parameter from cmdline and configure DTOverlays for DSI screen and power settings.
 # -------------------------------------------------
+# Remove console=serial0,115200 from cmdline.txt to free the serial port.
+if [ -f /boot/firmware/cmdline.txt ]; then
+  CMDLINE="/boot/firmware/cmdline.txt"
+else
+  CMDLINE="/boot/cmdline.txt"
+fi
+if grep -q "console=serial0,115200" "$CMDLINE"; then
+  sed -i 's/console=serial0,115200//g' "$CMDLINE"
+  echo "Removed console=serial0,115200 from $CMDLINE."
+else
+  echo "No console=serial0,115200 parameter found in $CMDLINE."
+fi
+
+# Configure DTOverlay settings.
 if [ -f /boot/firmware/config.txt ]; then
   CONFIG_TXT="/boot/firmware/config.txt"
 else
@@ -64,6 +85,7 @@ for line in \
     echo "Added: $line"
   fi
 done
+
 
 # -------------------------------------------------
 # 5. Ensure the global LXDE autostart file starts the desktop manager.
@@ -102,6 +124,26 @@ if [ -f "$HOME_DIR/.config/autostart/geany.desktop" ]; then
 fi
 
 # -------------------------------------------------
+# 6.5. Create Desktop Icon for Geany (manual launch)
+# -------------------------------------------------
+GEANY_DESKTOP_ICON="$HOME_DIR/Desktop/Geany.desktop"
+cat <<EOF > "$GEANY_DESKTOP_ICON"
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Geany
+Exec=geany
+Icon=accessories-text-editor
+Terminal=false
+StartupNotify=true
+NoDisplay=false
+MimeType=application/x-desktop;
+EOF
+chown "$USER:$USER" "$GEANY_DESKTOP_ICON"
+chmod 644 "$GEANY_DESKTOP_ICON"
+echo "Desktop icon for Geany created at $GEANY_DESKTOP_ICON."
+
+# -------------------------------------------------
 # 7. Ensure user configuration directory exists and is writable.
 # -------------------------------------------------
 mkdir -p "$HOME_DIR/.config"
@@ -112,8 +154,7 @@ chmod -R u+rwx "$HOME_DIR/.config"
 # 8. Use siminterface_core.py from the repository.
 # -------------------------------------------------
 OPS_DIR="$HOME_DIR/OpsConsole"
-# We assume the repository was cloned and the real siminterface_core.py is located in OPS_DIR/resources.
-SIMAPP="$OPS_DIR/resources/siminterface_core.py"
+SIMAPP="$OPS_DIR/siminterface_core.py"
 if [ ! -f "$SIMAPP" ]; then
     echo "Error: siminterface_core.py not found at $SIMAPP. Please ensure the repository is up to date."
     exit 1
@@ -122,9 +163,25 @@ chown "$USER:$USER" "$SIMAPP"
 chmod +x "$SIMAPP"
 echo "siminterface_core.py is located at $SIMAPP."
 
+# Ensure the entire OpsConsole directory and its contents are owned by the user.
+chown -R "$USER:$USER" "$OPS_DIR"
+
 # -------------------------------------------------
 # 9. Set up autostart for siminterface_core.py (user-level).
 # -------------------------------------------------
+
+# Create the start-console.sh script that changes directory and runs the app.
+START_CONSOLE_SCRIPT="$HOME_DIR/start-console.sh"
+cat <<EOF > "$START_CONSOLE_SCRIPT"
+#!/bin/bash
+cd /home/$USER/OpsConsole
+/usr/bin/python3 siminterface_core.py
+EOF
+chown "$USER:$USER" "$START_CONSOLE_SCRIPT"
+chmod 755 "$START_CONSOLE_SCRIPT"
+echo "Created start-console.sh in $HOME_DIR."
+
+# Set up the autostart entry to run the start-console.sh script.
 AUTOSTART_DIR="$HOME_DIR/.config/autostart"
 mkdir -p "$AUTOSTART_DIR"
 SIMAPP_AUTOSTART="$AUTOSTART_DIR/siminterface_core.desktop"
@@ -132,14 +189,14 @@ cat <<EOF > "$SIMAPP_AUTOSTART"
 [Desktop Entry]
 Type=Application
 Name=OpsConsole
-Exec=/usr/bin/python3 $SIMAPP
+Exec=$HOME_DIR/start-console.sh
 Terminal=false
 X-GNOME-Autostart-enabled=true
 MimeType=application/x-desktop;
 EOF
 chown "$USER:$USER" "$SIMAPP_AUTOSTART"
-chmod +x "$SIMAPP_AUTOSTART"
-echo "Autostart entry for siminterface_core.py created at $SIMAPP_AUTOSTART."
+chmod 644 "$SIMAPP_AUTOSTART"
+echo "Autostart entry for OpsConsole created at $SIMAPP_AUTOSTART."
 
 # -------------------------------------------------
 # 10. Create Desktop Icons for OpsConsole and (conditionally) LXTerminal.
@@ -154,7 +211,8 @@ cat <<EOF > "$OPS_ICON"
 Version=1.0
 Type=Application
 Name=OpsConsole
-Exec=/usr/bin/python3 $SIMAPP
+Exec=/usr/bin/python3 siminterface_core.py
+Path=/home/raes/OpsConsole
 Icon=$HOME_DIR/OpsConsole/resources/falcon2_icon.png
 Terminal=false
 StartupNotify=true
@@ -188,22 +246,61 @@ else
 fi
 
 # -------------------------------------------------
-# 11. Set the desktop background to Falcon2_splash.png.
+# 11. Set the desktop background to Falcon2_splash.png using a wrapper script.
 # -------------------------------------------------
-# Create an autostart entry to set the wallpaper using pcmanfm.
+WALLPAPER_WRAPPER="$OPS_DIR/resources/set_wallpaper.sh"
+cat <<'EOF' > "$WALLPAPER_WRAPPER"
+#!/bin/bash
+# Wait until PCManFM is active in desktop mode.
+while ! pgrep -f "pcmanfm --desktop" > /dev/null; do
+  sleep 0.5
+done
+# Set the wallpaper; redirect stderr to suppress error dialogs.
+pcmanfm --set-wallpaper="/home/$USER/OpsConsole/resources/falcon2_splash.png" --wallpaper-mode=stretch 2>/dev/null
+EOF
+chown "$USER:$USER" "$WALLPAPER_WRAPPER"
+chmod 644 "$WALLPAPER_WRAPPER"
+echo "Wallpaper wrapper script created at $WALLPAPER_WRAPPER."
+
 WALLPAPER_AUTOSTART="$AUTOSTART_DIR/set-wallpaper.desktop"
 cat <<EOF > "$WALLPAPER_AUTOSTART"
 [Desktop Entry]
 Type=Application
 Name=Set Wallpaper
-Exec=pcmanfm --set-wallpaper="$OPS_DIR/resources/falcon2_splash.png" --wallpaper-mode=stretch
+Exec=$WALLPAPER_WRAPPER
 Terminal=false
 X-GNOME-Autostart-enabled=true
 MimeType=application/x-desktop;
 EOF
 chown "$USER:$USER" "$WALLPAPER_AUTOSTART"
-chmod +x "$WALLPAPER_AUTOSTART"
+chmod 644 "$WALLPAPER_AUTOSTART"
 echo "Autostart entry for setting desktop wallpaper created at $WALLPAPER_AUTOSTART."
+
+# -------------------------------------------------
+# 12. Install the MS33558.ttf font from the repository.
+# -------------------------------------------------
+FONT_SRC="$OPS_DIR/resources/MS33558.ttf"
+FONT_DEST="$HOME_DIR/.local/share/fonts/MS33558.ttf"
+mkdir -p "$HOME_DIR/.local/share/fonts"
+if [ -f "$FONT_SRC" ]; then
+  cp "$FONT_SRC" "$FONT_DEST"
+  echo "Copied MS33558.ttf to $FONT_DEST."
+  fc-cache -f "$HOME_DIR/.local/share/fonts"
+  echo "Font cache updated."
+else
+  echo "Error: MS33558.ttf not found in $OPS_DIR/resources."
+fi
+
+# -------------------------------------------------
+# 13. Create ~/.Xresources with a larger cursor size if it doesn't exist.
+# -------------------------------------------------
+XRESOURCES="$HOME_DIR/.Xresources"
+if [ ! -f "$XRESOURCES" ]; then
+  echo "Xcursor.size: 48" > "$XRESOURCES"
+  echo "Created $XRESOURCES with Xcursor.size: 48"
+else
+  echo "$XRESOURCES already exists; not modifying."
+fi
 
 # -------------------------------------------------
 # Final Message

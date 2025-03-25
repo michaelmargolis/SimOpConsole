@@ -9,5 +9,5 @@ selected_sim =  \
     # ["NoLimits2 Coaster", "nolimits2", "nolimits2.jpg", "127.0.0.1" ]
 
 #naming#platform_config = "kinematics.cfg_SuspendedChair"
-platform_config = "kinematics.new_cfg_SuspendedPlatform"
-switches_comport = "COM9"
+platform_config = "kinematics.cfg_SuspendedPlatform"
+switches_comport = "COM11"
