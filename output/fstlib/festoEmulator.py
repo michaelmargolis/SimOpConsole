@@ -1,4 +1,4 @@
-import sys
+import sys,os
 import socket
 import logging
 import traceback
@@ -7,8 +7,9 @@ import time
 import easyip
 from festo_emulator_gui_defs import *
 
-sys.path.insert(0, '../../common')
-from streaming_moving_average import StreamingMovingAverage as MA
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..\..')))
+from common.streaming_moving_average import StreamingMovingAverage as MA
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for idx, p in enumerate(pressures):
             self.txt_muscles[idx].setText(str(p))
             rect =  self.pressure_bars[idx].rect()
-            width = pressures[idx] /20
+            width = int(pressures[idx] /20)
             if width <= 0: width = 1
             rect.setWidth(width)
             self.pressure_bars[idx].setFrameRect(rect)
@@ -78,9 +79,9 @@ class MainWindow(QtWidgets.QMainWindow):
                      packet = easyip.Factory.send_flagword(0, emulated_pressure)
                      self.send_response(packet, addr)
                 else:
-                    print("set pressure")
                     values = packet.decode_payload(easyip.Packet.DIRECTION_SEND)
-                    print "in emulator", packet, "values=", values
+                    # print("in emulator", packet)
+                    print("set pressure: values=", values)
                     self.show_pressures(values)
                 self.ui.lbl_connection.setText("Connected to " + addr[0])
                 if self.prev_message_time:
