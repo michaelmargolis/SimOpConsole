@@ -1,151 +1,114 @@
-# sim_interface_ui.py
-
-
 import os
 import platform
 import logging
-from PyQt5 import QtWidgets, uic, QtCore, QtGui 
+from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from typing import NamedTuple
 from common.serial_switch_reader import SerialSwitchReader
+from switch_ui_controller import SwitchUIController
+from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
+from ui_widgets import ActivationButton, ButtonGroupHelper 
 
 log = logging.getLogger(__name__)
 
 Ui_MainWindow, _ = uic.loadUiType("SimInterface_1280.ui")
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    """
-    GUI class that wires user actions to the core logic in SimInterfaceCore.
-    """
+# Constants
+XLATE_SCALE = 20
+ROTATE_SCALE = 10
 
-    def __init__(self, core, parent=None):
+# Utility Functions
+def load_icon_from_path(image_path):
+    if os.path.exists(image_path):
+        return QtGui.QIcon(image_path)
+    return None
+
+
+class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+    def __init__(self, core=None, parent=None):
         super().__init__(parent)
-        self.core = core  # reference to the business logic
+        self.core = core
         self.setupUi(self)
         self.state = None
+        self.MAX_ACTUATOR_RANGE = 100
+        self.activation_percent = 0 # steps between 0 and 100 in slow moves when activated/deactivated  
 
-        # connect signals from core to UI
+        # Replace chk_activate with ActivationButton
+        orig_btn = self.chk_activate
+        geometry = orig_btn.geometry()
+        style = orig_btn.styleSheet()
+        parent = orig_btn.parent()
+
+        from ui_widgets import ActivationButton
+        self.chk_activate = ActivationButton(parent)
+        self.chk_activate.setGeometry(geometry)
+        self.chk_activate.setStyleSheet(style)
+        self.chk_activate.setText("INACTIVE")
+        orig_btn.deleteLater()
+
+        self.connect_signals()
+        self.init_buttons()
+        self.initialize_intensity_controls()
+        self.init_images()
+        self.init_sliders()
+        self.configure_ui()
+
+        self.switch_controller = SwitchUIController(
+            self.core,
+            parent=self,
+            status_callback=self.status_message,
+            show_warning_callback=self.show_activate_warning_dialog,
+            close_warning_callback=self.close_activate_warning_dialog
+        )
+        self.switch_controller.activateStateChanged.connect(self.on_hardware_activate_toggled)
+        self.switch_controller.validActivateReceived.connect(self.on_valid_activate_received)
+        self.switch_controller.activate_switch_invalid.connect(self.show_activate_warning_dialog)
+
+
+    def connect_signals(self):
         self.core.simStatusChanged.connect(self.on_sim_status_changed)
         self.core.dataUpdated.connect(self.on_data_updated)
+        self.core.activationLevelUpdated.connect(self.on_activation_transition)
         self.core.platformStateChanged.connect(self.on_platform_state_changed)
-
-        # connect signals from UI to core methods
         self.btn_fly.clicked.connect(self.on_btn_fly_clicked)
         self.btn_pause.clicked.connect(self.on_btn_pause_clicked)
-        
-        self.initialize_intensity_controls()
-        
-        # flight mode selection
-        self.flight_button_group = QtWidgets.QButtonGroup(self)
-        self.flight_button_group.addButton(self.btn_mode_0, 0)
-        self.flight_button_group.addButton(self.btn_mode_1, 1)
-        self.flight_button_group.addButton(self.btn_mode_2, 2)
-        self.flight_button_group.buttonClicked[int].connect(self.on_flight_mode_changed)
-   
-        # experience levels
-        self.exp_button_group = QtWidgets.QButtonGroup(self)
-        self.exp_button_group.addButton(self.btn_assist_0, 0)
-        self.exp_button_group.addButton(self.btn_assist_1, 1)
-        self.exp_button_group.addButton(self.btn_assist_2, 2)
-        self.exp_button_group.buttonClicked[int].connect(self.on_pilot_assist_level_changed)
-
-        # Create load setting button Group
-        self.load_button_group = QtWidgets.QButtonGroup(self)
-        self.load_button_group.addButton(self.btn_light_load, 0)
-        self.load_button_group.addButton(self.btn_moderate_load, 1)
-        self.load_button_group.addButton(self.btn_heavy_load, 2)
-        self.load_button_group.buttonClicked[int].connect(self.on_load_level_selected)
-        
         self.chk_activate.clicked.connect(self.on_activate_toggled)
 
+    def init_buttons(self):
+        self.flight_button_group = ButtonGroupHelper(self, [(self.btn_mode_0, 0), (self.btn_mode_1, 1), (self.btn_mode_2, 2)], self.on_flight_mode_changed)
+        self.exp_button_group = ButtonGroupHelper(self, [(self.btn_assist_0, 0), (self.btn_assist_1, 1), (self.btn_assist_2, 2)], self.on_pilot_assist_level_changed)
+        self.load_button_group = ButtonGroupHelper(self, [(self.btn_light_load, 0), (self.btn_moderate_load, 1), (self.btn_heavy_load, 2)], self.on_load_level_selected)
+        self.intensity_button_group = ButtonGroupHelper(self, [(self.btn_intensity_motionless, 0), (self.btn_intensity_mild, 1), (self.btn_intensity_full, 2)], self.on_intensity_changed)
+
+    def init_images(self):
+        self.front_pixmap = QtGui.QPixmap("images/cessna_rear.jpg")
+        self.side_pixmap = QtGui.QPixmap("images/cessna_side_2.jpg")
+        self.top_pixmap = QtGui.QPixmap("images/cessna_top.jpg")
+        self.front_pos = self.lbl_front_view.pos()
+        self.side_pos = self.lbl_side_view.pos()
+        self.top_pos = self.lbl_top_view.pos()
+        self.muscle_bars = [getattr(self, f"muscle_{i}") for i in range(6)]
+        self.txt_muscles = [getattr(self, f"txt_muscle_{i}") for i in range(6)]
+        self.cache_status_icons()
+        # store right edge of muscle bar display
+        self.muscle_base_right = []
+        for i in range(6):
+            line = getattr(self, f"muscle_{i}")
+            right_edge = line.x() + line.width()
+            self.muscle_base_right.append(right_edge)
+
+    def init_sliders(self):
+        self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
+        self.transform_blocks = [getattr(self, f'transform_block_{i}') for i in range(6)]
+
+        # gain sldiers
         slider_names = [f'sld_gain_{i}' for i in range(6)] + ['sld_gain_master']
         for name in slider_names:
             slider = getattr(self, name)
             slider.valueChanged.connect(lambda value, s=name: self.on_slider_value_changed(s, value))
-        self.transfrm_levels = [self.sld_xform_0, self.sld_xform_1, self.sld_xform_2, self.sld_xform_3, self.sld_xform_4, self.sld_xform_5  ]
-        
-        # configure interface to hardware switches
-        #switch events: fly, pause, enable, intensity, load, skill, flight 
-        event_callbacks = [
-            lambda state: self.on_btn_fly_clicked(state),  # Fly
-            lambda state: self.on_btn_pause_clicked(state),  # Pause
-            lambda state: self.on_hardware_activate_toggled(state),  # Activate
-            lambda level: self.on_pilot_assist_level_changed(level, from_hardware=True),  # Skill level
-            lambda flight: self.on_flight_mode_changed(flight, from_hardware=True),  # Flight
-            lambda load: self.on_load_level_selected(load, from_hardware=True),  # Load
-            lambda intensity: self.on_intensity_changed(intensity, from_hardware=True)  # Intensity
-        ]
-
-        self.switch_reader = SerialSwitchReader(event_callbacks, self.on_sim_status_changed)
-        self.hardware_activate_state = None # needed to detect state of physical activate switch at startup
-                
-        # Additional initialization
-        self.configure_ui_defaults()
-        # self.setWindowFlags(QtCore.Qt.Window | QtCore.Qt.FramelessWindowHint)  # If running in fullscreen
-        log.info("MainWindow: UI initialized")
-        
-
-    def on_hardware_activate_toggled(self, physical_state):
-        """
-        Called when the physical activation switch state changes.
-        Stores the hardware state and calls on_activate_toggled() to process it.
-        """
-        logging.info(f"DEBUG: hardware_activate_toggled() called - state = {physical_state}")
- 
-        self.hardware_activate_state = physical_state  # Store hardware switch state
-        self.on_activate_toggled(physical_state)  #  Call existing method to process it
-
-    def keyPressEvent(self, event):
-        # if event.key() == Qt.Key_Escape:  # Press Esc to exit
-        #     self.close()
-        if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Q:  # Ctrl+Q
-            self.close()
-
-    def closeEvent(self, event):
-        """ Overriding closeEvent to handle exit actions """
-        reply = QtWidgets.QMessageBox.question(
-            self,
-            "Exit Confirmation",
-            "Are you sure you want to exit?",
-            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
-            QtWidgets.QMessageBox.StandardButton.No
-        )
-
-        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
-            self.core.cleanup_on_exit()
-            event.accept()  # Proceed with closing
-        else:
-            event.ignore()  # Prevent closing
-    
-    def inform_button_selections(self):
-        # Get checked button ID for flight selection (mode)
-        mode_id = self.flight_button_group.checkedId()
-        if mode_id != -1:
-            self.core.modeChanged(mode_id)
-
-        # Get checked button ID for skill level
-        skill_level = self.exp_button_group.checkedId()
-        if skill_level != -1:
-            self.core.skillLevelChanged(skill_level)
-
-        # Get checked button ID for load level
-        load_level = self.load_button_group.checkedId()
-        if load_level != -1:
-            self.core.loadLevelChanged(load_level)
             
-    def configure_ui_defaults(self):
-        """
-        Setup initial states or text for the UI elements.
-        """
-        self.lbl_sim_status.setText("Starting ...")
 
     def initialize_intensity_controls(self):
-        """ Sets up intensity buttons, movement controls, and initial positions. """
-
-        # Intensity Button Group (for static, mild, and full)
-        self.intensity_button_group = QtWidgets.QButtonGroup(self)
-        self.intensity_button_group.addButton(self.btn_intensity_motionless, 0)
-        self.intensity_button_group.addButton(self.btn_intensity_mild, 1)
-        self.intensity_button_group.addButton(self.btn_intensity_full, 2)
-        self.intensity_button_group.buttonClicked[int].connect(self.on_intensity_changed)
+        """ Sets up Up/Down buttons and visual parameters for Mild intensity. """
 
         # Buttons to move the "Mild" intensity up and down
         self.btn_intensity_up.clicked.connect(lambda: self.move_mild_button(1))   # Move Up
@@ -165,119 +128,214 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mild_max_percent = 80
         self.mild_step = 10  # Moves by 10% each click
 
-        # Set mild initial  percent
-        self.mild_percent = 40
+        # Set mild initial percent
+        self.mild_percent = 30
         self.update_mild_button_position()
 
-        # muscle bars and position labels for platform tab
-        self.muscle_bars = [self.muscle_0,self.muscle_1,self.muscle_2,self.muscle_3,self.muscle_4,self.muscle_5]
-        # self.txt_muscles = [self.txt_muscle_0,self.txt_muscle_1,self.txt_muscle_2,self.txt_muscle_3,self.txt_muscle_4,self.txt_muscle_5]
-        
-        self.front_pos =  self.lbl_front_view.pos()
-        self.side_pos = self.lbl_side_view.pos()
-        self.top_pos = self.lbl_top_view.pos()
+    def configure_ui(self):
+        self.lbl_sim_status.setText("Starting ...")
 
+    def cache_status_icons(self):
+        self.status_icons = {}
+        images_dir = 'images'
+        for status in ['ok', 'warning', 'nogo']:
+            icon = load_icon_from_path(os.path.join(images_dir, f"{status}.png"))
+            if icon:
+                self.status_icons[status] = icon
 
+    def switches_begin(self, port):
+        if self.switch_controller.begin(port):
+
+            # Wait for valid state
+            logging.info("DEBUG: Waiting for valid activate switch state.")
+            state = self.get_hardware_activate_state()
+            while state is None:
+                self.switch_controller.poll()
+                QtWidgets.QApplication.processEvents()
+                state = self.get_hardware_activate_state()
+
+            # If switch is up (1), show warning and wait until flipped down
+            # todo, is this still needed, see switch_ui_contoller begin
+            if state == 1:
+                self.show_activate_warning_dialog()
+                while self.get_hardware_activate_state() != 0:
+                    self.switch_controller.poll()
+                    QtWidgets.QApplication.processEvents()
+                    log.debug(f"Waiting... Current switch state: {self.get_hardware_activate_state()}")
+
+                if self.activate_warning_dialog:
+                    self.activate_warning_dialog.accept()
+                    self.activate_warning_dialog = None
 
     # --------------------------------------------------------------------------
-    # UI -> Core Methods
+    # Status / Communication Utilities
+    # These relate to status messages or hardware startup messaging.
+    # --------------------------------------------------------------------------
+    
+    def status_message(self, msg):
+        """Forward status messages to the simStatusChanged signal."""
+        self.core.simStatusChanged.emit(msg)
+ 
+    def close_activate_warning_dialog(self):
+        if self.activate_warning_dialog:
+            self.activate_warning_dialog.accept()
+            self.activate_warning_dialog = None
+
+    @QtCore.pyqtSlot()
+    def show_hardware_connection_error(self):
+        QtWidgets.QMessageBox.critical(
+            self,
+            "Hardware Switch Coms Error",
+            "Failed to open serial port.\n\nPlease check the connection and restart the application "
+            "if you want the hardware switch interface."
+        )   
+
+    def show_activate_warning_dialog(self):
+        background_image_path = "images/activate_warning.png"
+        image_pixmap = QtGui.QPixmap(background_image_path)
+
+        self.activate_warning_dialog = QtWidgets.QDialog(self)
+        self.activate_warning_dialog.setWindowTitle("Initialization Warning")
+        self.activate_warning_dialog.setFixedSize(image_pixmap.width(), image_pixmap.height())
+
+        label_background = QtWidgets.QLabel(self.activate_warning_dialog)
+        label_background.setPixmap(image_pixmap)
+        label_background.setScaledContents(True)
+        label_background.setGeometry(0, 0, image_pixmap.width(), image_pixmap.height())
+
+        label_text = QtWidgets.QLabel("Flip the Activate switch down to proceed.", self.activate_warning_dialog)
+        label_text.setAlignment(QtCore.Qt.AlignCenter)
+        label_text.setStyleSheet("font-size: 18px; color: red; font-weight: bold;")
+        label_text.setGeometry(0, 24, image_pixmap.width(), 40)
+
+        self.activate_warning_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.activate_warning_dialog.show()
+
+    @QtCore.pyqtSlot()
+    def on_valid_activate_received(self):
+        log.info("Hardware activate switch in valid state.")
+        # Optionally proceed with initialization or UI updates
+
+    def get_status_icon(self, status):
+        return self.status_icons.get(status)
+    
+    
+    # --------------------------------------------------------------------------
+    # Button / UI Interaction Handlers
+    # These respond to user interactions with GUI widgets (buttons, checkboxes, sliders).
     # --------------------------------------------------------------------------
 
     def on_btn_fly_clicked(self, state=None):
-        """
-        Called when the "Fly" button is pressed (UI) or when the hardware switch state changes.
-
-        :param state: (Optional) Boolean representing the hardware switch state.
-        """
         if state is not None and not state:
-            return  # Ignore button release
-
-        log.debug("UI: user wants to run platform")
+            return
         self.core.update_state("running")
-
-        # Update UI button state
-        QtWidgets.QApplication.instance().postEvent(
-            self, QtCore.QEvent(QtCore.QEvent.User)
-        )
         self.btn_fly.setChecked(True)
 
-
     def on_btn_pause_clicked(self, state=None):
-        """
-        Called when the "Pause" button is pressed (UI) or when the hardware switch state changes.
-        """
         if state is not None and not state:
-            return  # Ignore button release
-
-        log.debug("UI: user wants to pause platform")
+            return
         self.core.update_state("paused")
-
-        # Update UI button state
-        QtWidgets.QApplication.instance().postEvent(
-            self, QtCore.QEvent(QtCore.QEvent.User)
-        )
         self.btn_pause.setChecked(True)
+    
+    @QtCore.pyqtSlot(bool)
+    def on_hardware_activate_toggled(self, state):
+        self.on_activate_toggled(state)
 
-    def on_pilot_assist_level_changed(self, level, from_hardware=False):
+    def on_activate_toggled(self, physical_state=None):
         """
-        Called when a skill level button is toggled from the UI or hardware.
+        Called when "Activated/Deactivated" GUI toggle is clicked OR when a physical toggle switch state changes.
         """
-        log.debug(f"Skill level changed to {level}")
+        print(f"State: {self.state}")
+        if not self.state or self.state == 'initialized': # only preceed when transitioned beyond init state
+            return
+        #  Ensure activation switch state is enforced correctly at startup
+        if physical_state is None:  # Only check at startup
+            actual_switch_state = self.get_hardware_activate_state()  #  Read actual physical switch state
+            logging.info(f"DEBUG: Hardware activation switch at startup = {actual_switch_state}")
 
-        self.core.skillLevelChanged(level)
+            if actual_switch_state:  #  Prevent initialization if switch is UP (activated)
+                self.activate_warning_dialog = QtWidgets.QMessageBox.warning(
+                    self,
+                    "Initialization Warning",
+                    "Activate switch must be DOWN for initialization. Flip switch down to proceed."
+                )
+                return  #  Do NOT override the switch state, just prevent proceeding!
 
-        # If triggered by hardware, update the UI button
-        if from_hardware:
-            QtWidgets.QApplication.instance().postEvent(
-                self, QtCore.QEvent(QtCore.QEvent.User)
-            )
-            self.btn_assist_0.setChecked(level == 0)
-            self.btn_assist_1.setChecked(level == 1)
-            self.btn_assist_2.setChecked(level == 2)
+        if physical_state is not None:
+            self.chk_activate.setChecked(physical_state)  #  Sync UI button with actual switch state
 
+        if self.chk_activate.isChecked():
+            #  System is now ACTIVATED
+            self.chk_activate.setText("ACTIVATED")
+            self.core.update_state("enabled")
+
+            #  Send the currently selected mode & skill to X-Plane
+            self.inform_button_selections()
+
+            #  Ensure X-Plane is paused after scenario load
+            if self.core.sim:
+                logging.info("DEBUG: Pausing X-Plane after scenario load.")
+                self.core.sim.pause()
+
+            #  Enable Pause and Fly buttons
+            self.btn_fly.setEnabled(True)
+            self.btn_pause.setEnabled(True)
+
+        else:
+            #  System is now DEACTIVATED
+            self.chk_activate.setText("INACTIVE")
+            self.core.update_state("disabled")
+
+            #  Pause X-Plane when deactivated
+            if self.core.sim:
+                logging.info("DEBUG: Pausing X-Plane due to deactivation.")
+                self.core.sim.pause()
+
+            #  Disable Pause and Fly buttons (unless override is enabled)
+            self.btn_fly.setEnabled(False)
+            self.btn_pause.setEnabled(False)
+            
+            # Sync UI & Sim with switch state
+            self.sync_ui_with_switches()
+
+
+    def on_slider_value_changed(self, slider_name, value):
+        index = 6 if slider_name == 'sld_gain_master' else int(slider_name.split('_')[-1])
+        self.core.update_gain(index, value)
 
     def on_flight_mode_changed(self, mode_id, from_hardware=False):
-        """
-        Called when a flight selection button is changed, either from UI or hardware.
-        """
-        log.debug(f"Flight mode changed to {mode_id}")
-
         self.core.modeChanged(mode_id)
-
-        # If triggered by hardware, update the UI button
         if from_hardware:
-            QtWidgets.QApplication.instance().postEvent(
-                self, QtCore.QEvent(QtCore.QEvent.User)
-            )
-            self.flight_button_group.button(mode_id).setChecked(True)
+            self.flight_button_group.set_checked(mode_id)
 
+    def on_pilot_assist_level_changed(self, level, from_hardware=False):
+        self.core.assistLevelChanged(level)
+        if from_hardware:
+            self.exp_button_group.set_checked(level)
+
+    def on_load_level_selected(self, load_level, from_hardware=False):
+        self.core.loadLevelChanged(load_level)
+        if from_hardware:
+            self.load_button_group.set_checked(load_level)
 
     def on_intensity_changed(self, intensity_index, from_hardware=False):
-        """
-        Called when an intensity selection button is changed, either from UI or hardware.
-
-        - Sends intensity value to `self.core.on_intensity_changed(value)`.
-        - The intensity slider no longer moves when an intensity button is clicked.
-        """
         log.debug(f"Intensity level changed to {intensity_index}")
 
-        # Determine intensity value
-        if intensity_index == 0:  # Static
+        if intensity_index == 0:
             intensity_value = 0
-        elif intensity_index == 2:  # Full
+        elif intensity_index == 2:
             intensity_value = 100
-        else:  # Mild, use stored value
-             intensity_value = self.mild_percent
+        else:
+            intensity_value = self.mild_percent
 
-        # Inform core about intensity change
         self.core.intensityChanged(intensity_value)
 
-        # If triggered by hardware, update the UI button
         if from_hardware:
             QtWidgets.QApplication.instance().postEvent(
                 self, QtCore.QEvent(QtCore.QEvent.User)
             )
-            self.intensity_button_group.button(intensity_index).setChecked(True)
+            self.intensity_button_group.set_checked(intensity_index)
+
 
     def update_mild_button_position(self):
         """ 
@@ -319,7 +377,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         
     def move_mild_button(self, direction):
         """ Moves the 'Mild' button up (+1) or down (-1) in 10% increments. """
-
         # Calculate new position
         new_percent = self.mild_percent + (self.mild_step * direction)
 
@@ -333,145 +390,43 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.on_intensity_changed(1)
 
 
-    def on_load_level_selected(self, load_level, from_hardware=False):
-        """
-        Called when a load level button is clicked, either from UI or hardware.
-        """
-        log.debug(f"Load level changed to {load_level}")
+    def inform_button_selections(self):
+        # Get checked button ID for flight selection (mode)
+        mode_id = self.flight_button_group.checked_id()
+        if mode_id != -1:
+            self.core.modeChanged(mode_id)
 
-        self.core.loadLevelChanged(load_level)
+        # Get checked button ID for pilot assist level
+        pilot_assist_level = self.exp_button_group.checked_id()
+        if pilot_assist_level != -1:
+            self.core.assistLevelChanged(pilot_assist_level)
 
-        # If triggered by hardware, update the UI button
-        if from_hardware:
-            QtWidgets.QApplication.instance().postEvent(
-                self, QtCore.QEvent(QtCore.QEvent.User)
-            )
-            self.load_button_group.button(load_level).setChecked(True)
+        # Get checked button ID for load level
+        load_level = self.load_button_group.checked_id()
+        if load_level != -1:
+            self.core.loadLevelChanged(load_level)
 
-
-    def on_slider_value_changed(self, slider_name, value):
-        """
-        Handles the gain slider value change event.
-        """
-        if slider_name == 'sld_gain_master':
-            index = 6
-        else:
-            index = int(slider_name.split('_')[-1])
-
-        # send the slider index and value to the core
-        # note value range is +- 100 and is converted to +-1 in core
-        self.core.update_gain(index, value)
- 
-    # code to display transforms and muscles
-    def do_transform(self, widget, pixmap, pos,  x, y, angle):
-        widget.move(x + pos.x(), y + pos.y())
-        xform = QtGui.QTransform().rotate(angle)  # front view: roll
-        xformed_pixmap = pixmap.transformed(xform, QtCore.Qt.SmoothTransformation)
-        widget.setPixmap(xformed_pixmap)
-        # widget.adjustSize()
-        
-    def show_transform(self, transform):
-        print("in ui, xform=", transform)
-        # front, side and top views of current transform in platform tab
-        """
-        for idx, x in enumerate(transform):
-            if idx < 3:
-                self.txt_xforms[idx].setText(format("%d" % x))
-            else:
-                angle = x * 57.3
-                self.txt_xforms[idx].setText(format("%0.1f" % angle))
-        """    
-        x = int(transform[0] / 4) 
-        y = int(transform[1] / 4)
-        z = -int(transform[2] / 4)
-
-        self.do_transform(self.ui.lbl_front_view, self.front_pixmap, self.front_pos, y,z, transform[3] * 57.3) # front view: roll
-        self.do_transform(self.ui.lbl_side_view, self.side_pixmap, self.side_pos, x,z, transform[4] * 57.3) # side view: pitch
-        self.do_transform(self.ui.lbl_top_view, self.top_pixmap, self.top_pos,  y,x, transform[5] * 57.3)  # top view: yaw
-
-    def show_muscles(self, transform, muscles, processing_percent):  # was passing  pressure_percent
+    def update_transform_blocks(self, values):
         for i in range(6):
-           rect =  self.actuator_bars[i].rect()
-           width = muscles[i]            
-           rect.setWidth(width)
-           self.actuator_bars[i].setFrameRect(rect)
-           contraction = self.MAX_ACTUATOR_RANGE - width
-           self.txt_muscles[i].setText(format("%d mm" % contraction ))
-        self.show_transform(transform) 
-        #  processing_dur = int(time.time() % 20) # for testing, todo remove
-        self.ui.txt_processing_dur.setText(str(processing_percent))
-        rect =  self.ui.rect_dur.rect()
-        rect.setWidth(max(2*processing_percent,1) )
-        if processing_percent < 50:
-            self.ui.rect_dur.setStyleSheet("color: rgb(85, 255, 127)")
-        elif processing_percent < 75:
-            self.ui.rect_dur.setStyleSheet("color: rgb(255, 170, 0)")
-        else:
-            self.ui.rect_dur.setStyleSheet("color: rgb(255, 0, 0)")
-        self.ui.rect_dur.setFrameRect(rect)
-        
+            track = self.transform_tracks[i]
+            block = self.transform_blocks[i]
+            value = max(-1.0, min(1.0, values[i]))  # Clamp value to [-1, 1]
 
-    # --------------------------------------------------------------------------
-    # Core -> UI Methods (slots)
-    # --------------------------------------------------------------------------
-    @QtCore.pyqtSlot(str)
-    def on_sim_status_changed(self, status_msg):
-        self.lbl_sim_status.setText(status_msg)
+            # Detect orientation
+            is_vertical = track.height() > track.width()
 
-    @QtCore.pyqtSlot(object)
+            # Move block relative to track position
+            if is_vertical:
+                track_height = track.height()
+                block_y = track.y() + int((1 - (value + 1) / 2) * track_height) - block.height() // 2
+                block.move(block.x(), block_y)
+            else:
+                track_width = track.width()
+                block_x = track.x() + int(((value + 1) / 2) * track_width) - block.width() // 2
+                block.move(block_x, block.y())
 
-    def on_data_updated(self, data):
-        """
-        Called every time the core's data_update fires (every 50 ms if running).
-        This method now also polls the serial reader for new switch states.
 
-        Args:
-            data (tuple): Contains (x, y, z, roll, pitch, yaw) values.
-        """
-        # Call the serial reader to process all available messages
-        self.switch_reader.poll()
-                  
-        # Existing transform update logic
-        transform, conn_status, data_status, system_state = data
-        tab_index = self.tabWidget.currentIndex()
-        current_tab = self.tabWidget.widget(tab_index).objectName()
-        if current_tab == 'tab_main':
-            for idx in range(6): 
-                self.transfrm_levels[idx].setValue(round(transform[idx] * 100))
-        elif current_tab == 'tab_platform':
-            print("tab platform todo")
 
-        images_dir = 'images'
-        status_to_image = {
-            'ok': 'ok.png',
-            'warning': 'warning.png',
-            'nogo': 'nogo.png'
-        }
-
-        def load_icon(status):
-            image_file = status_to_image.get(status)
-            if image_file:
-                image_path = os.path.join(images_dir, image_file)
-                if os.path.exists(image_path):
-                    return QtGui.QIcon(image_path)
-            return None
-
-        connection_icon = load_icon(conn_status)
-        if connection_icon:
-            self.ico_connection.setPixmap(connection_icon.pixmap(32, 32))
-
-        data_icon = load_icon(data_status)
-        if data_icon:
-            self.ico_data.setPixmap(data_icon.pixmap(32, 32))
-            self.ico_aircraft.setPixmap(data_icon.pixmap(32, 32)) # HACK to get aircraft to follow data icon, repalce with check for C172
-            
-        # hack to load the status icons
-        status_icon = load_icon('ok')
-        self.ico_left_dock.setPixmap(status_icon.pixmap(32, 32))
-        self.ico_right_dock.setPixmap(status_icon.pixmap(32, 32))
-        self.ico_wheelchair_docked.setPixmap(status_icon.pixmap(32, 32))
-        
-        
     def update_button_style(self, button, state, base_color, text_color, border_color):
         """
         Dynamically updates a button's appearance based on its state.
@@ -526,6 +481,152 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             """
 
         button.setStyleSheet(style)
+        
+    def sync_ui_with_switches(self):
+        if not self.switch_controller:
+            return
+
+        # Sync UI buttons
+        self.flight_button_group.set_checked(self.switch_controller.get_flight_mode())
+        self.exp_button_group.set_checked(self.switch_controller.get_assist_level())
+        self.load_button_group.set_checked(self.switch_controller.get_load_level())
+        self.intensity_button_group.set_checked(self.switch_controller.get_intensity_level())
+
+        # Call corresponding slots to sync sim state
+        self.on_flight_mode_changed(self.switch_controller.get_flight_mode(), from_hardware=True)
+        self.on_pilot_assist_level_changed(self.switch_controller.get_assist_level(), from_hardware=True)
+        self.on_load_level_selected(self.switch_controller.get_load_level(), from_hardware=True)
+        self.on_intensity_changed(self.switch_controller.get_intensity_level(), from_hardware=True)
+   
+        
+    # --------------------------------------------------------------------------
+    # Visual Updates
+    # Methods that update graphical UI elements (labels, pixmaps, etc.)
+    # --------------------------------------------------------------------------
+    
+    def apply_icon(self, label, key):
+        icon = self.status_icons.get(key)
+        if icon:
+            label.setPixmap(icon.pixmap(32, 32))
+
+    def do_transform(self, widget, pixmap, base_pos, dx, dy, angle_deg):
+        center = QtCore.QPointF(pixmap.width() / 2, pixmap.height() / 2)
+        transform = QtGui.QTransform()
+        transform.translate(center.x(), center.y())
+        transform.rotate(angle_deg)
+        transform.translate(-center.x(), -center.y())
+        rotated = pixmap.transformed(transform, QtCore.Qt.SmoothTransformation)
+        widget.move(base_pos.x() + dx, base_pos.y() + dy)
+        widget.setPixmap(rotated)
+
+    def show_transform(self, transform):
+        surge, sway, heave, roll, pitch, yaw = transform
+        self.do_transform(self.lbl_front_view, self.front_pixmap, self.front_pos,
+                          int(sway * XLATE_SCALE), int(-heave * XLATE_SCALE), -roll * ROTATE_SCALE)
+        self.do_transform(self.lbl_side_view, self.side_pixmap, self.side_pos,
+                          int(surge * XLATE_SCALE), int(-heave * XLATE_SCALE), -pitch * ROTATE_SCALE)
+        self.do_transform(self.lbl_top_view, self.top_pixmap, self.top_pos,
+                          int(sway * XLATE_SCALE), int(surge * XLATE_SCALE), yaw * ROTATE_SCALE)
+
+    def show_muscles(self, muscle_lengths):
+        for i in range(6):
+            line = getattr(self, f"muscle_{i}", None)
+            if line:
+                full_visual_width = 500
+                new_width = max(0, min(int(muscle_lengths[i] / 2), full_visual_width))
+
+                # Align right by adjusting the x position based on new width
+                new_x = self.muscle_base_right[i] - new_width
+                line.setGeometry(new_x, line.y(), new_width, line.height())
+                line.update()
+                
+    def show_performance_bars(self, processing_percent: int, jitter_percent: int):
+        """
+        Update UI bars representing processing usage and timer jitter.
+
+        :param processing_percent: CPU time spent in data_update as percent of frame (0–100)
+        :param jitter_percent: Deviation of actual frame interval vs. expected, as percent (0–100)
+        """
+        # Processing bar (0–100%, bar length in px up to 500)
+        if hasattr(self, "ln_processing_percent"):
+            width = min(int((processing_percent / 100.0) * 500), 500)
+            self.ln_processing_percent.setGeometry(
+                self.ln_processing_percent.x(),
+                self.ln_processing_percent.y(),
+                width,
+                self.ln_processing_percent.height()
+            )
+            self.ln_processing_percent.update()
+
+        # Jitter bar (0–100%, bar length in px up to 500)
+        if hasattr(self, "ln_jitter"):
+            jitter_clamped = min(jitter_percent, 100)
+            width = int((jitter_clamped / 100.0) * 500)
+            self.ln_jitter.setGeometry(
+                self.ln_jitter.x(),
+                self.ln_jitter.y(),
+                width,
+                self.ln_jitter.height()
+            )
+            self.ln_jitter.update()
+
+    
+    # --------------------------------------------------------------------------
+    # Core Callbacks / Slots
+    # These are connected to Qt signals or used by core.
+    # --------------------------------------------------------------------------
+
+    @QtCore.pyqtSlot(str)
+    def on_sim_status_changed(self, status_msg):
+        self.lbl_sim_status.setText(status_msg)
+
+    @QtCore.pyqtSlot(ActivationTransition)
+    def on_activation_transition(self, transition: ActivationTransition):
+        # Update activation fill on the button
+        self.activate_percent = transition.activation_percent
+        self.chk_activate.set_activation_percent(self.activate_percent)
+        self.chk_activate.setText("ACTIVATED" if self.activate_percent >= 50 else "INACTIVE")
+        # Update muscle display
+        self.show_muscles(transition.muscle_lengths)
+
+    @QtCore.pyqtSlot(object)
+    def on_data_updated(self, update):
+        """
+        Called every time the core's data_update fires (every 50 ms if running).
+        Also polls the serial reader for new switch states.
+
+        Args:
+            update (SimUpdate): A namedtuple containing all update info
+        """
+        self.switch_controller.poll()
+
+        tab_index = self.tabWidget.currentIndex()
+        current_tab = self.tabWidget.widget(tab_index).objectName()
+
+        if current_tab == 'tab_main':
+            xform = (-1, -.5, 0, .25, .5, 1)
+            for idx in range(6):
+                self.update_transform_blocks(update.transform)
+        else: 
+            if not self.cb_supress_graphics.isChecked():      
+                self.show_transform(update.transform)
+                self.show_muscles(update.muscle_lengths)
+            # Update performance metrics
+            if hasattr(update, "processing_percent") and hasattr(update, "jitter_percent"):
+                self.show_performance_bars(update.processing_percent, update.jitter_percent)
+
+        self.apply_icon(self.ico_connection, update.conn_status)
+        self.apply_icon(self.ico_data, update.data_status)
+        self.apply_icon(self.ico_aircraft, update.aircraft_info.status)
+        self.lbl_aircraft.setText(update.aircraft_info.name)
+ 
+        # Static status icons (placeholders)
+        self.apply_icon(self.ico_left_dock, "ok")
+        self.apply_icon(self.ico_right_dock, "ok")
+        self.apply_icon(self.ico_wheelchair_docked, "ok")
+
+        self.update_temperature_display(update.temperature)
+
 
     @QtCore.pyqtSlot(str)
     def on_platform_state_changed(self, new_state):
@@ -570,134 +671,48 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.update_button_style(self.btn_pause, "default", "orange", "orange", "orange")
 
-
-    def on_activate_toggled(self, physical_state=None):
-        """
-        Called when "Activated/Deactivated" GUI toggle is clicked OR when a physical toggle switch state changes.
-        """
-        print(self.state)
-        if not self.state or self.state == 'initialized': # only preceed when transitioned beyond init state
-            return
-        #  Ensure activation switch state is enforced correctly at startup
-        if physical_state is None:  # Only check at startup
-            actual_switch_state = self.get_hardware_activate_state()  #  Read actual physical switch state
-            logging.info(f"DEBUG: Hardware activation switch at startup = {actual_switch_state}")
-
-            if actual_switch_state:  #  Prevent initialization if switch is UP (activated)
-                self.activate_warning_dialog = QtWidgets.QMessageBox.warning(
-                    self,
-                    "Initialization Warning",
-                    "Activate switch must be DOWN for initialization. Flip switch down to proceed."
-                )
-                return  #  Do NOT override the switch state, just prevent proceeding!
-
-        if physical_state is not None:
-            self.chk_activate.setChecked(physical_state)  #  Sync UI button with actual switch state
-
-        if self.chk_activate.isChecked():
-            #  System is now ACTIVATED
-            self.chk_activate.setText("ACTIVATED")
-            self.core.update_state("enabled")
-
-            #  Send the currently selected mode & skill to X-Plane
-            mode_id = self.flight_button_group.checkedId()
-            skill_level = self.exp_button_group.checkedId()
-            if mode_id != -1 and skill_level != -1:
-                logging.info(f"DEBUG: Sending scenario mode={mode_id}, skill={skill_level}")
-                self.core.sim.set_scenario(mode_id, skill_level)
-
-            #  Ensure X-Plane is paused after scenario load
-            if self.core.sim:
-                logging.info("DEBUG: Pausing X-Plane after scenario load.")
-                self.core.sim.pause()
-
-            #  Enable Pause and Fly buttons
-            self.btn_fly.setEnabled(True)
-            self.btn_pause.setEnabled(True)
-
+    def get_hardware_activate_state(self):
+        return self.switch_controller.get_activate_state()
+        
+    @QtCore.pyqtSlot()
+    def update_temperature_display(self, temperature):
+        if temperature is None:
+            self.lbl_temperature.setVisible(False)
         else:
-            #  System is now DEACTIVATED
-            self.chk_activate.setText("INACTIVE")
-            self.core.update_state("disabled")
+            self.lbl_temperature.setVisible(True)
+            self.lbl_temperature.setText(f"{temperature:.1f} °C")
+            if temperature > 80:
+                self.lbl_temperature.setStyleSheet("background-color: red; color: white;")
+            elif temperature > 60:
+                self.lbl_temperature.setStyleSheet("background-color: yellow; color: black;")
+            else:
+                self.lbl_temperature.setStyleSheet("") 
 
-            #  Pause X-Plane when deactivated
-            if self.core.sim:
-                logging.info("DEBUG: Pausing X-Plane due to deactivation.")
-                self.core.sim.pause()
+    # --------------------------------------------------------------------------
+    # Event Handling
+    # Overrides for Qt's event methods.
+    # --------------------------------------------------------------------------
+    
+    def keyPressEvent(self, event):
+        # if event.key() == Qt.Key_Escape:  # Press Esc to exit
+        #     self.close()
+        if event.modifiers() == QtCore.Qt.ControlModifier and event.key() == QtCore.Qt.Key_Q:  # Ctrl+Q
+            self.close()
+        elif event.key() == QtCore.Qt.Key_W:
+            self.showNormal()  # Exit fullscreen and show windowed mode    
 
-            #  Disable Pause and Fly buttons (unless override is enabled)
-            self.btn_fly.setEnabled(False)
-            self.btn_pause.setEnabled(False)
+    def closeEvent(self, event):
+        """ Overriding closeEvent to handle exit actions """
+        reply = QtWidgets.QMessageBox.question(
+            self,
+            "Exit Confirmation",
+            "Are you sure you want to exit?",
+            QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No,
+            QtWidgets.QMessageBox.StandardButton.No
+        )
 
-
-    def switches_begin(self, port):
-        """
-        Starts switch polling and waits for valid hardware data before proceeding.
-        If the hardware is disconnected, it logs an error and prevents initialization.
-        """
-        logging.info(f"DEBUG: switches_begin() called - Searching for switches on {port}.")
-        self.core.simStatusChanged.emit(f"Searching for switches on port {port}...")  # send status message
-
-        # Start hardware switch reader
-        try:
-            self.switch_reader.begin(port)  # ✅ Start switch polling
-            logging.info("DEBUG: Hardware switch reader initialized.")
-        except Exception as e:
-            logging.error(f"ERROR: Failed to open serial port {port}. Hardware switches not connected.")
-            self.core.simStatusChanged.emit("Hardware switches not connected.")
-            QtWidgets.QMessageBox.critical(
-                self,
-                "Hardware Switch Coms Error",
-                f"Failed to open serial port {port}.\n\nPlease check the connection and restart the application"
-                " if you want the hardware switch interface."
-            )
-            return  # ❌ Prevents further execution
-
-        # ✅ Wait until a valid switch state (0 or 1) is received
-        logging.info("DEBUG: Waiting for valid activate switch state.")
-        self.activate_warning_dialog = None  # Store reference to dialog
-
-        while self.hardware_activate_state is None:
-            self.switch_reader.poll()  # ✅ Read initial switch state
-            QtWidgets.QApplication.processEvents()  # ✅ Keep UI responsive
-
-        # ✅ Now that we have a valid state, only show the dialog if the switch is UP (1)
-        if self.hardware_activate_state == 1:
-            logging.info("DEBUG: Showing activation warning dialog.")
-
-            # ✅ Load the background image
-            background_image_path = "images/activate_warning.png"  # Update with actual path
-
-            # ✅ Create a custom dialog
-            self.activate_warning_dialog = QtWidgets.QDialog(self)
-            self.activate_warning_dialog.setWindowTitle("Initialization Warning")
-
-            # ✅ Set the dialog size to match the image
-            image_pixmap = QtGui.QPixmap(background_image_path)
-            self.activate_warning_dialog.setFixedSize(image_pixmap.width(), image_pixmap.height())
-
-            # ✅ Create a QLabel to display the background image
-            label_background = QtWidgets.QLabel(self.activate_warning_dialog)
-            label_background.setPixmap(image_pixmap)
-            label_background.setScaledContents(True)
-            label_background.setGeometry(0, 0, image_pixmap.width(), image_pixmap.height())
-
-            # ✅ Create a QLabel for the warning text
-            label_text = QtWidgets.QLabel("Flip the Activate switch down to proceed.", self.activate_warning_dialog)
-            label_text.setAlignment(QtCore.Qt.AlignCenter)
-            label_text.setStyleSheet("font-size: 18px; color: red; font-weight: bold;")
-            label_text.setGeometry(0, 24, image_pixmap.width(), 40)
-
-            # ✅ Set the dialog to be modal
-            self.activate_warning_dialog.setWindowModality(QtCore.Qt.ApplicationModal)
-            self.activate_warning_dialog.show()
-
-            # ✅ Keep polling until the switch is flipped down (0)
-            while self.hardware_activate_state != 0:
-                self.switch_reader.poll()
-                QtWidgets.QApplication.processEvents()  # ✅ Keep UI responsive
-
-            # ✅ Close the warning dialog when the switch is flipped down
-            logging.info("DEBUG: Closing activation warning dialog.")
-            self.activate_warning_dialog.accept()
-            self.activate_warning_dialog = None
+        if reply == QtWidgets.QMessageBox.StandardButton.Yes:
+            self.core.cleanup_on_exit()
+            event.accept()  # Proceed with closing
+        else:
+            event.ignore()  # Prevent closing
