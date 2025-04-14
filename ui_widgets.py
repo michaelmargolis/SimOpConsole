@@ -22,8 +22,9 @@ class ActivationButton(QtWidgets.QPushButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._activation_percent = 0
-        self._background_color = QtGui.QColor("gray")
-        self._fill_color = QtGui.QColor("green")
+        self._background_color = QtCore.Qt.lightGray
+        self._fill_color = QtCore.Qt.green
+        
         self._border_radius = 15
         self.setCheckable(True)
         self.parse_stylesheet()
@@ -73,8 +74,8 @@ class ActivationButton(QtWidgets.QPushButton):
             painter.setBrush(QtGui.QBrush(self._fill_color))
             painter.drawRect(fill_rect)
 
-        # Optional: draw label manually over everything
-        painter.setPen(QtCore.Qt.white if self._activation_percent >= 50 else QtCore.Qt.yellow)
+        # draw label manually over everything
+        painter.setPen(QtCore.Qt.black if self._activation_percent >= 50 else QtCore.Qt.red)
         painter.setFont(self.font())
         painter.drawText(rect, QtCore.Qt.AlignCenter, self.text())
 

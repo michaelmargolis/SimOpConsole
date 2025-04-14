@@ -37,11 +37,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         geometry = orig_btn.geometry()
         style = orig_btn.styleSheet()
         parent = orig_btn.parent()
+        activate_font = orig_btn.font()
 
         from ui_widgets import ActivationButton
         self.chk_activate = ActivationButton(parent)
         self.chk_activate.setGeometry(geometry)
         self.chk_activate.setStyleSheet(style)
+        self.chk_activate.setFont(activate_font)
         self.chk_activate.setText("INACTIVE")
         orig_btn.deleteLater()
 
