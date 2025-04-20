@@ -247,7 +247,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         Called when "Activated/Deactivated" GUI toggle is clicked OR when a physical toggle switch state changes.
         """
-        print(f"State: {self.state}")
         if not self.state or self.state == 'initialized': # only preceed when transitioned beyond init state
             return
         #  Ensure activation switch state is enforced correctly at startup
@@ -610,7 +609,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for idx in range(6):
                 self.update_transform_blocks(update.transform)
         else: 
-            if not self.cb_supress_graphics.isChecked():      
+                       
+            if not self.cb_supress_graphics.isChecked():   
                 self.show_transform(update.transform)
                 self.show_muscles(update.muscle_lengths)
             # Update performance metrics

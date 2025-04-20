@@ -1571,7 +1571,7 @@
         <x>30</x>
         <y>20</y>
         <width>571</width>
-        <height>451</height>
+        <height>411</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -2131,19 +2131,6 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
-     </widget>
-     <widget class="QPushButton" name="pushButton">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>510</y>
-        <width>75</width>
-        <height>23</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>Test</string>
-      </property>
      </widget>
      <widget class="QGroupBox" name="gb_actuator_percent">
       <property name="geometry">
@@ -2723,7 +2710,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>95</y>
+         <y>110</y>
          <width>501</width>
          <height>18</height>
         </rect>
@@ -2829,14 +2816,22 @@
      <widget class="QLabel" name="label_21">
       <property name="geometry">
        <rect>
-        <x>220</x>
-        <y>510</y>
-        <width>61</width>
+        <x>180</x>
+        <y>530</y>
+        <width>91</width>
         <height>20</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>Festo IP</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
      <widget class="QLineEdit" name="txt_festo_ip">
@@ -2845,14 +2840,103 @@
       </property>
       <property name="geometry">
        <rect>
-        <x>280</x>
-        <y>510</y>
-        <width>111</width>
+        <x>290</x>
+        <y>530</y>
+        <width>131</width>
         <height>20</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
       <property name="text">
        <string>192.168.0.10</string>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txt_xplane_ip">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>490</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>192.168.0.100</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_28">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>490</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>X-Plane IP</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="txt_this_ip">
+      <property name="enabled">
+       <bool>false</bool>
+      </property>
+      <property name="geometry">
+       <rect>
+        <x>290</x>
+        <y>450</y>
+        <width>131</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>192.168.0.10</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_30">
+      <property name="geometry">
+       <rect>
+        <x>180</x>
+        <y>450</y>
+        <width>91</width>
+        <height>20</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+       </font>
+      </property>
+      <property name="text">
+       <string>This IP</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </widget>

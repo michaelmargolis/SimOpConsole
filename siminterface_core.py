@@ -44,7 +44,8 @@ siminterface folder structure
 """
 
 
-from sim_config import selected_sim, platform_config, switches_comport
+import sim_config
+# from sim_config import selected_sim, platform_config, switches_comport
 from siminterface_ui import MainWindow
 #naming#from kinematics.kinematicsV2 import Kinematics
 from kinematics.kinematics_V2SP import Kinematics
@@ -154,12 +155,12 @@ class SimInterfaceCore(QtCore.QObject):
         """
         try:
             import importlib
-            # platform configuration path (platform_config) is defined in sim_config.py
-            cfg_module = importlib.import_module(platform_config) 
+            selected_platform, description = sim_config.AVAILABLE_PLATFORMS[sim_config.DEFAULT_PLATFORM_INDEX]
+            cfg_module = importlib.import_module(selected_platform)       
             self.cfg = cfg_module.PlatformConfig()
-            log.info("Core: Imported cfg from %s", platform_config)
+            log.info(f"Core: Imported cfg from {selected_platform}: {description}")
         except Exception as e:
-            self.handle_error(e, f"Unable to import platform config from {platform_config}, check sim_config.py")
+            self.handle_error(e, f"Unable to import platform config from {cfg_module}, check sim_config.py")
             return
 
         # Initialize the distance->pressure converter
@@ -206,7 +207,7 @@ class SimInterfaceCore(QtCore.QObject):
         except Exception as e:
             self.handle_error(e, "Error loading Muscle pressure mapping table ")
 
-        log.info("Core: %s config data loaded", platform_config)
+        log.info("Core: %s config data loaded", description)
         self.simStatusChanged.emit("Config Loaded")
 
     # --------------------------------------------------------------------------
@@ -216,13 +217,13 @@ class SimInterfaceCore(QtCore.QObject):
         """
         Loads or re-loads a simulation by index from available_sims.
         """
-        self.sim_name, self.sim_class, self.sim_image, self.sim_ip_address = selected_sim # see sim_config.py for options
+        self.sim_name, self.sim_class, self.sim_image, self.sim_ip_address = sim_config.AVAILABLE_SIMS[sim_config.DEFAULT_SIM_INDEX]
         sim_path = "sims." + self.sim_class
 
         try:
             sim_module = importlib.import_module(sim_path)
             frame = None # this version does not allocate a UI frame
-            self.sim = sim_module.Sim(sleep_qt, frame, self.emit_status)
+            self.sim = sim_module.Sim(sleep_qt, frame, self.emit_status, self.sim_ip_address )
             if self.sim:
                 self.is_started = True
                 log.info("Core: Instantiated sim '%s' from class '%s'", self.sim.name, self.sim_class)
@@ -332,7 +333,7 @@ class SimInterfaceCore(QtCore.QObject):
 
         start_pos = self.muscle_output.get_muscle_lengths()
         end_pos = self.cfg.PLATFORM_NEUTRAL_MUSCLE_LENGTHS
-        # print("wha start and end pos", start_pos , end_pos)
+        # print("start and end pos", start_pos , end_pos)
         self.slow_move(start_pos, end_pos, True, rate_mm_per_sec=50)
         # print("at end of activate, lens = ", self.muscle_output.get_muscle_lengths())
 
@@ -577,7 +578,9 @@ if __name__ == "__main__":
     core = SimInterfaceCore()
     ui = MainWindow(core)
 
+    switches_comport = sim_config.get_switch_comport(os.name)
     ui.switches_begin(switches_comport)
+    
     core.setup()
     if os.name == 'posix':
         ui.showFullScreen()
