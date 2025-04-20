@@ -10,17 +10,19 @@ import logging
 from enum import Enum
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from common.udp_tx_rx import UdpReceive
 from . import xplane_cfg as config
-from .xplane_cfg import TELEMETRY_CMD_PORT, TELEMETRY_EVT_PORT, MCAST_GRP, MCAST_PORT, HEARTBEAT_PORT
-from .state_machine import SimStateMachine, SimState
+from .xplane_cfg import TELEMETRY_CMD_PORT, TELEMETRY_EVT_PORT, HEARTBEAT_PORT
+from .xplane_state_machine import SimStateMachine, SimState
 from .shared_types import AircraftInfo
+from .xplane_beacon import XplaneBeacon
+from .xplane_telemetry import XplaneTelemetry
+from common.heartbeat_client import HeartbeatClient
 
 log = logging.getLogger(__name__)
 
 
 class Sim:
-    def __init__(self, sleep_func, frame, report_state_cb):
+    def __init__(self, sleep_func, frame, report_state_cb, sim_ip=None):
         self.sleep_func = sleep_func
         self.frame = frame
         self.report_state_cb = report_state_cb
@@ -28,24 +30,25 @@ class Sim:
         self.prev_yaw = None
         self.norm_factors = config.norm_factors
         self.washout_callback = None
-        self.xplane_udp = UdpReceive(TELEMETRY_EVT_PORT)
-        self.beacon = UdpReceive(MCAST_PORT, None, MCAST_GRP)
-        self.BEACON_TIMEOUT = 2
-        self.state = SimState.INITIALIZED
-        self.last_beacon_time = None
-        self.xplane_ip = None
+        self.telemetry = XplaneTelemetry((sim_ip, TELEMETRY_EVT_PORT), config.norm_factors)
+        self.xplane_ip = sim_ip
         self.xplane_addr = None
         self.aircraft_info = AircraftInfo(status="nogo", name="Aircraft")
         self.state_machine = SimStateMachine(self)
-        self.heartbeat = UdpReceive(HEARTBEAT_PORT+1)
         self.heartbeat_ok = False
         self.xplane_running = False
-        self.last_heartbeat_recv_time = None
-        self.last_heartbeat_ping_time = 0
+        self.state = SimState.WAITING_HEARTBEAT
         self.HEARTBEAT_INTERVAL = 1.0  # seconds
-        self.HEARTBEAT_TIMEOUT = 2.0
- 
-    def service(self, washout_callback = None):
+        heartbeat_addr = (sim_ip, HEARTBEAT_PORT)
+        self.heartbeat = HeartbeatClient(heartbeat_addr, target_app="xplane_running", interval=self.HEARTBEAT_INTERVAL)
+        self.last_initcoms_time = 0
+        self.INITCOMS_INTERVAL = 1.0  # seconds
+        self.beacon = XplaneBeacon()
+
+        self.situation_load_started = False
+        self.pause_after_startup = True
+
+    def service(self, washout_callback=None):
         return self.state_machine.handle(washout_callback)
 
     def read(self):
@@ -70,89 +73,32 @@ class Sim:
         return True
 
     def get_connection_state(self):
-        self.query_heartbeat_status()
-
-        # Send heartbeat ping at interval
-        now = time.time()
-        if self.xplane_ip and now - self.last_heartbeat_ping_time > self.HEARTBEAT_INTERVAL:
-            try:
-                self.heartbeat.send("ping", (self.xplane_ip, HEARTBEAT_PORT))
-                self.last_heartbeat_ping_time = now
-            except Exception as e:
-                log.warning(f"Heartbeat send failed: {e}")
-
-        # Determine connection status
         if not self.heartbeat_ok:
-            connection_status = "nogo"      # Red
+            connection_status = "nogo"
         elif not self.xplane_running:
-            connection_status = "warning"   # Orange
+            connection_status = "warning"
         else:
-            connection_status = "ok"        # Green
+            connection_status = "ok"
 
-        # Determine data stream status (now includes 'warning' as spec'd)
-        if connection_status != "ok":
-            data_status = "nogo"
-        elif self.state != SimState.RECEIVING_DATAREFS:
+        if self.state == SimState.RECEIVING_DATAREFS:
+            data_status = "ok"
+        elif self.state == SimState.WAITING_DATAREFS:
             data_status = "warning"
         else:
-            data_status = "ok"
+            data_status = "nogo"
 
-        # Aircraft status and label
-        if connection_status != "ok":
+        if self.state != SimState.RECEIVING_DATAREFS:
             aircraft_info = AircraftInfo(status="nogo", name="Aircraft")
-        elif self.state != SimState.RECEIVING_DATAREFS:
-            aircraft_info = AircraftInfo(status="warning", name=self.aircraft_info.name)
         else:
             name = self.aircraft_info.name
-            status = "ok" if self.is_icao_supported(name) else "nogo"
+            status = "ok" if self.is_icao_supported() else "nogo"
             aircraft_info = AircraftInfo(status=status, name=name)
 
         return connection_status, data_status, aircraft_info
 
-    def is_icao_supported(self, icao):
+    def is_icao_supported(self):
+        icao = self.telemetry.get_icao()
         return icao.startswith("C172")  # Placeholder – replace with config-based check
-
-    def query_heartbeat_status(self):
-        try: 
-            if self.heartbeat.available():
-                while self.heartbeat.available():  # get most recent message
-                    addr, message = self.heartbeat.get()
-                self.heartbeat_ok = True
-                self.xplane_running = "xplane_running" in message
-                self.last_heartbeat_recv_time = time.time()
-            else:
-                # Check for timeout if no new message was received
-                if self.last_heartbeat_recv_time is None or (time.time() - self.last_heartbeat_recv_time) > self.HEARTBEAT_TIMEOUT:
-                    self.heartbeat_ok = False
-                    self.xplane_running = False
-        except Exception:
-            self.heartbeat_ok = False
-            self.xplane_running = False
-
-    def receive_beacon_message(self):
-        if self.beacon.available():
-            addr, message = self.beacon.get()
-            if message.startswith(b'BECN\0'):
-                message = message[5:21]
-                try:
-                    unpacked_data = struct.unpack('<BBiiI H', message)
-                    beacon_info = {
-                        'beacon_major_version': unpacked_data[0],
-                        'beacon_minor_version': unpacked_data[1],
-                        'application_host_id': unpacked_data[2],
-                        'version_number': unpacked_data[3],
-                        'role': unpacked_data[4],
-                        'port': unpacked_data[5],
-                        'ip': addr[0]
-                    }
-                    self.last_beacon_time = time.time()
-                    log.debug(f"Updated beacon timestamp: {self.last_beacon_time}")
-                    return beacon_info
-                except struct.error as e:
-                    log.error(f"Failed to unpack beacon message: {e}")
-            else:
-                log.warning("Received message with incorrect prologue.")
-        return None
 
     def run(self):
         self._send_command('Run')
@@ -167,6 +113,8 @@ class Sim:
         self._send_command('Reset_playback')
 
     def set_flight_mode(self, mode):
+        self.situation_load_started = True
+        self.pause()
         self._send_command(f'FlightMode,{mode}')
 
     def set_pilot_assist(self, level):
@@ -174,7 +122,7 @@ class Sim:
 
     def _send_command(self, msg):
         if self.state == SimState.RECEIVING_DATAREFS:
-            self.xplane_udp.send(msg, (self.xplane_ip, TELEMETRY_CMD_PORT))
+            self.telemetry.send(msg)
         else:
             log.warning("X-Plane is not connected")
 
@@ -189,7 +137,7 @@ class Sim:
     def set_situation(self, filename):
         msg = f"Situation,{filename}"
         print(f"sending {msg} to {self.xplane_ip}:{TELEMETRY_CMD_PORT}")
-        self.xplane_udp.send(msg, (self.xplane_ip, TELEMETRY_CMD_PORT))
+        self.telemetry.send(msg)
 
     def replay(self, filename):
         self.send_SIMO(3, filename)
@@ -198,7 +146,6 @@ class Sim:
         filename_bytes = filename.encode('utf-8') + b'\x00'
         filename_padded = filename_bytes.ljust(153, b'\x00')
         msg = struct.pack('<4s i 153s', b'SIMO', command, filename_padded)
-        print(len(msg))
         self.beacon.send_bytes(msg, self.xplane_addr)
         print(f"sent {filename} to {self.xplane_addr} encoded as {msg}")
 
@@ -207,7 +154,7 @@ class Sim:
         self.beacon.send_bytes(msg, self.xplane_addr)
 
     def fin(self):
-        self.xplane_udp.close()
+        self.telemetry.close()
         self.beacon.close()
         self.heartbeat.close()
 
@@ -219,7 +166,7 @@ class Sim:
         titles = ('x (surge)', 'y (sway)', 'z (heave)', 'roll', 'pitch', 'yaw')
         legends = ('from xplane', 'washed')
         main_title = "Translations and Rotation washouts from XPlane"
-        self.plotter = PlotItf(main_title, nbr_plots, titles, traces_per_plot, legends=legends, minmax=(-1,1), grouping='traces')
+        self.plotter = PlotItf(main_title, nbr_plots, titles, traces_per_plot, legends=legends, minmax=(-1, 1), grouping='traces')
         self.mca = motionCueing()
 
     def plot(self, raw, rates):

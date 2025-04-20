@@ -24,11 +24,18 @@ def is_program_running(program_name):
         return False
 
 
+def get_ipv4_address():
+        hostname = socket.gethostname()
+        ipv4_address = socket.gethostbyname(hostname)
+        return ipv4_address
+
+
 def main():
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(("0.0.0.0", HEARTBEAT_PORT))
     sock.settimeout(1.0)
-
+    
+    print(f"this PCs IPv4 Address: {ipv4_address}")
     print(f"[Heartbeat Server] Listening on UDP port {HEARTBEAT_PORT}...")
 
     xplane_state = is_program_running("X-Plane")
