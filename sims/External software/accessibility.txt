@@ -1,0 +1,37 @@
+# ===========================================================
+# Pilot Assistance Settings for Falcon2 - X-Plane DataRefs
+# ===========================================================
+# This file defines per-DataRef values for three pilot assistance levels:
+# HIGH, MODERATE, and NONE.
+# Each line contains a single DataRef followed by three comma-separated
+# values representing the setting for each level, in the order:
+#   HIGH, MODERATE, NONE
+#
+# IMPORTANT GUIDELINES FOR CONSISTENCY:
+# -----------------------------------------------------------
+# 1 Every DataRef must include three values (HIGH, MODERATE, NONE).
+# 2 Comments (#) can be placed at the end of a line.
+# 3 Values must match the expected type (integer or float).
+# 4  Lines with DataRefs that do not have 3 values will be ignored by the plugin,
+#  and a warning will be logged.
+#
+# Example:
+# sim/weather/wind_speed_kt=0,5,10   # Wind speeds for each level
+#
+# Always test changes in X-Plane to verify expected behavior.
+# ===========================================================
+
+sim/aircraft/controls/acf_stability_pitch=1.0,0.3,0.0
+sim/aircraft/controls/acf_stability_roll=1.0,0.3,0.0
+sim/aircraft/controls/acf_stability_yaw=1.0,0.3,0.0
+sim/operation/override/override_joystick_roll=1,0,0
+sim/operation/override/override_joystick_pitch=1,0,0
+sim/operation/override/override_joystick_yaw=1,0,0
+sim/joystick/axis_pitch_sens=0.0,0.5,1.0
+sim/joystick/axis_roll_sens=0.0,0.5,1.0
+sim/joystick/axis_yaw_sens=0.0,0.5,1.0
+sim/aircraft/controls/acf_auto_rudder=1,0,0
+sim/weather/wind_speed_kt=0,5,10
+sim/weather/turbulence=0,0.2,0.5
+sim/weather/wind_dir_degt=0,0,-999  # -999 = Variable wind direction
+
