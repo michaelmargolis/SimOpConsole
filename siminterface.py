@@ -230,6 +230,7 @@ class SimInterfaceCore(QtCore.QObject):
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
             self.sim.set_default_address(self.sim_ip_address)
+            log.info(f"Core: Preparing to connect to {self.sim_name} at {self.sim_ip_address}")    
         except Exception as e:
             self.handle_error(e, f"Unable to load sim from {sim_path}")
 
@@ -240,6 +241,7 @@ class SimInterfaceCore(QtCore.QObject):
         if not self.sim:
             self.simStatusChanged.emit("No sim loaded")
             return
+
         if not self.sim.is_Connected(): 
             try:
                 self.sim.connect()
