@@ -124,7 +124,7 @@ class Sim:
         if self.state == SimState.RECEIVING_DATAREFS:
             self.telemetry.send(msg)
         else:
-            log.warning("X-Plane is not connected")
+            log.warning(f"X-Plane not connected when sending {msg}")
 
     def ui_action(self, action):
         if action.endswith('sit'):

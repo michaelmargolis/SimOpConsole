@@ -120,7 +120,6 @@ class WaitingDatarefsState(BaseState):
                 logging.info("Flight mode load completed — pausing sim")
                 self.sim.pause()
                 self.sim.situation_load_started = False
-
             self.machine.transition_to(SimState.RECEIVING_DATAREFS)
 
         return (0, 0, 0, 0, 0, 0)
