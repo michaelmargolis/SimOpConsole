@@ -5,21 +5,14 @@ The module comprises runtime routines to convert platform kinematic distances to
 Previously obtained distance to pressure lookup tables for various loads are interrogated at runtime to determine
  the closest match to the current load.
 
-This version only supports the new platform as the chairs do not currently have real time distance measurement capability
 
-The D_to_P  class is instantiated with an argument specifying the number of distance values, currently 200 (for 0-199mm)
+The D_to_P  class is instantiated with an argument specifying the number of distance values (200 for old chairs, 250 for new platform)
 
     load_DtoP(fname) loads distance to pressure lookup tables
        returns True if valid data has been loaded 
        If successful, the lookup tables are available as class attributes named d_to_p_up  and d_to_p_down.
        It is expected that each up and down table will have six to ten rows containing data for the range of working loads 
        the set_index method described below is used to determine the curve that best fits the current platform load
-
-    set_index(self, pressure, distances, dir)
-       Finds closest curve matching the current distance and pressure, or none if data available
-       These curves should be passed to the festo output module for runtime conversion
-       
-Utility methods to create the distance to pressure files are in d_to_p_prep.py
 
 """
 import os
@@ -29,14 +22,11 @@ import logging
 
 log = logging.getLogger(__name__)
 
-NBR_DISTANCES = 251  # 0-200mm with precision of 1mm
 MAX_PRESSURE = 6000
 
 class D_to_P(object):
     def __init__(self, max_contraction, max_length):
         self.nbr_columns = max_contraction + 1
-        if self.nbr_columns != NBR_DISTANCES:
-            raise ValueError(f"Expected {NBR_DISTANCES} distance values!")
         self.d_to_p_up = None  # up-going distance to pressure curves - muscles contract
         self.d_to_p_down = None
         self.up_curve_idx = [0] * 6  # index of the up-going curve closest to the current load
@@ -91,8 +81,9 @@ class D_to_P(object):
         ]
         return pressures
           
- 
-    def distance_to_pressure(self, distances):
+    # code used for slider platform
+    def _distance_to_pressure(self, distances):
+
         distance_threshold = 5  # distances must be greater than this to trigger a direction change
         pressures = [0]*6
         for i in range(6):
