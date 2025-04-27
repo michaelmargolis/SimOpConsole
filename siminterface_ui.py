@@ -46,7 +46,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.chk_activate.setFont(activate_font)
         self.chk_activate.setText("INACTIVE")
         orig_btn.deleteLater()
-
+        
         self.connect_signals()
         self.init_buttons()
         self.initialize_intensity_controls()
@@ -285,7 +285,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             #  System is now DEACTIVATED
             self.chk_activate.setText("INACTIVE")
-            self.core.update_state("disabled")
+            self.core.update_state("deactivated")
 
             #  Pause X-Plane when deactivated
             if self.core.sim:
@@ -586,9 +586,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Update activation fill on the button
         self.activate_percent = transition.activation_percent
         self.chk_activate.set_activation_percent(self.activate_percent)
-        self.chk_activate.setText("ACTIVATED" if self.activate_percent >= 50 else "INACTIVE")
+        if self.activate_percent == 100:
+            self.chk_activate.setText("ACTIVATED")
+        elif self.activate_percent == 0:
+            self.chk_activate.setText("INACTIVE")
         # Update muscle display
         self.show_muscles(transition.muscle_lengths)
+
+       
 
     @QtCore.pyqtSlot(object)
     def on_data_updated(self, update):
@@ -609,7 +614,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for idx in range(6):
                 self.update_transform_blocks(update.transform)
         else: 
-                       
+            self.txt_this_ip.setText("todo")
+            self.txt_xplane_ip.setText(self.core.sim_ip_address)
+            self.txt_festo_ip.setText(self.core.FESTO_IP)
             if not self.cb_supress_graphics.isChecked():   
                 self.show_transform(update.transform)
                 self.show_muscles(update.muscle_lengths)
@@ -649,15 +656,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     "Activate switch must be DOWN for initialization. Flip switch down to proceed."
                 )
                 return
-            logging.info("UI: Activate switch is OFF. Transitioning to 'disabled' state.")
-            self.core.update_state("disabled")
+            logging.info("UI: Activate switch is OFF. Transitioning to 'deactivated' state.")
+            self.core.update_state("deactivated")
  
 
         # Enable/Disable Fly & Pause buttons
         if new_state == "enabled":
             self.btn_pause.setEnabled(True)
             self.btn_fly.setEnabled(True)
-        elif new_state == "disabled":
+        elif new_state == "deactivated":
             self.btn_pause.setEnabled(False)
             self.btn_fly.setEnabled(False)
 

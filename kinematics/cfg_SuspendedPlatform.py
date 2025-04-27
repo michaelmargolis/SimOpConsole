@@ -46,9 +46,9 @@ class PlatformConfig(object):
             80, 80, 80, math.radians(10), math.radians(10), math.radians(10)
         )
 
-        self.DISABLED_MUSCLE_LENGTHS = [self.MUSCLE_MAX_LENGTH] * 6
+        self.DEACTIVATED_MUSCLE_LENGTHS = [self.MUSCLE_MAX_LENGTH] * 6
         self.PROPPING_MUSCLE_LENGTHS = [self.MUSCLE_MAX_LENGTH * 0.08] * 6
-        self.DISABLED_TRANSFORM = [0, 0, -self.LIMIT_Z_TRANSLATION, 0, 0, 0]
+        self.DEACTIVATED_TRANSFORM = [0, 0, -self.LIMIT_Z_TRANSLATION -50, 0, 0, 0]
         self.PROPPING_TRANSFORM = [0, 0, -self.LIMIT_Z_TRANSLATION, 0, 0, 0]
 
         self.HAS_PISTON = False

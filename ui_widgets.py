@@ -75,7 +75,12 @@ class ActivationButton(QtWidgets.QPushButton):
             painter.drawRect(fill_rect)
 
         # draw label manually over everything
-        painter.setPen(QtCore.Qt.black if self._activation_percent >= 50 else QtCore.Qt.red)
+        # painter.setPen(QtCore.Qt.black if self._activation_percent >= 50 else QtCore.Qt.red)
+        if self._activation_percent == 100:
+            painter.setPen(QtCore.Qt.black)
+        elif self._activation_percent == 0: 
+            # else:    
+            painter.setPen(QtCore.Qt.red)
         painter.setFont(self.font())
         painter.drawText(rect, QtCore.Qt.AlignCenter, self.text())
 
