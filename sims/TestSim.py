@@ -128,7 +128,7 @@ class Dof_Oscilate():
             transform[self.current_dof] = self.current_level
             return transform
         elif self.current_dof  > 5:
-            print("todo sequential tranforms")
+            print("todo sequential transforms")
         return [0,0,0,0,0,0]    
             
  

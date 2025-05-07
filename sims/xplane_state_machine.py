@@ -74,7 +74,7 @@ class WaitingHeartbeatState(BaseState):
         if hb_ok:
             self.machine.transition_to(SimState.WAITING_XPLANE)
 
-        return (0, 0, 0, 0, 0, 0)
+        return None
 
 
 class WaitingXplaneState(BaseState):
@@ -91,7 +91,7 @@ class WaitingXplaneState(BaseState):
         elif app_running:
             self.machine.transition_to(SimState.WAITING_DATAREFS)
 
-        return (0, 0, 0, 0, 0, 0)
+        return None
 
 
 class WaitingDatarefsState(BaseState):
@@ -107,11 +107,11 @@ class WaitingDatarefsState(BaseState):
 
         if not hb_ok:
             self.machine.transition_to(SimState.WAITING_HEARTBEAT)
-            return (0, 0, 0, 0, 0, 0)
+            return None
 
         if not app_running:
             self.machine.transition_to(SimState.WAITING_XPLANE)
-            return (0, 0, 0, 0, 0, 0)
+            return None
 
         xyzrpy = self.sim.telemetry.get_telemetry()
         if xyzrpy:
@@ -122,7 +122,7 @@ class WaitingDatarefsState(BaseState):
                 self.sim.situation_load_started = False
             self.machine.transition_to(SimState.RECEIVING_DATAREFS)
 
-        return (0, 0, 0, 0, 0, 0)
+        return None
 
 
 class ReceivingDatarefsState(BaseState):
@@ -135,14 +135,13 @@ class ReceivingDatarefsState(BaseState):
 
             if not hb_ok or not app_running:
                 self.machine.transition_to(SimState.WAITING_HEARTBEAT)
-                return (0, 0, 0, 0, 0, 0)
+                return None
 
             xyzrpy = self.sim.telemetry.get_telemetry()
             supported = self.sim.is_icao_supported()
             self.sim.aircraft_info = AircraftInfo(
                 status="ok" if supported else "nogo",
                 name=self.sim.telemetry.get_icao()
-
             )
 
             if xyzrpy:
@@ -151,8 +150,8 @@ class ReceivingDatarefsState(BaseState):
                 return xyzrpy
             else:
                 self.machine.transition_to(SimState.WAITING_DATAREFS)
-                return (0, 0, 0, 0, 0, 0)
+                return None
 
         except Exception as e:
             logging.error("Exception in ReceivingDatarefsState:", exc_info=True)
-            return (0, 0, 0, 0, 0, 0)
+            return None
