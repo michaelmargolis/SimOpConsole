@@ -42,6 +42,8 @@ class MainWindow(QtWidgets.QMainWindow):
            self.show_timeout()
         else:
             try:
+                if not all(x == y for x, y in zip(pressures, self.requested_pressures)):           
+                    print("set pressure:", pressures)
                 self.display_pressure_bars(pressures)
                 self.requested_pressures = pressures
             except TypeError as e:
@@ -81,7 +83,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     values = packet.decode_payload(easyip.Packet.DIRECTION_SEND)
                     # print("in emulator", packet)
-                    print("set pressure: values=", values)
                     self.show_pressures(values)
                 self.ui.lbl_connection.setText("Connected to " + addr[0])
                 if self.prev_message_time:

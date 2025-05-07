@@ -1,147 +1,199 @@
-"""
-D_to_P.py  Distance to Pressure runtime routines
-
-The module comprises runtime routines to convert platform kinematic distances to festo pressures.
-Previously obtained distance to pressure lookup tables for various loads are interrogated at runtime to determine
- the closest match to the current load.
-
-
-The D_to_P  class is instantiated with an argument specifying the number of distance values (200 for old chairs, 250 for new platform)
-
-    load_DtoP(fname) loads distance to pressure lookup tables
-       returns True if valid data has been loaded 
-       If successful, the lookup tables are available as class attributes named d_to_p_up  and d_to_p_down.
-       It is expected that each up and down table will have six to ten rows containing data for the range of working loads 
-       the set_index method described below is used to determine the curve that best fits the current platform load
-
-"""
-import os
-import traceback
 import numpy as np
+import traceback
 import logging
 
 log = logging.getLogger(__name__)
 
-MAX_PRESSURE = 6000
+class DistanceToPressure:
+    def __init__(self, nbr_columns, max_length):
+        self.nbr_columns = nbr_columns
+        self.loads = None    # tuple of loads
+        self.previous_compressions = None
+        self.max_muscle_lengths = np.full(6, max_length, dtype=int)
+        self.table_indices = [0]*6 # default to up index
+        self.all_d_to_p_up = None  # numpy rows of all up values
+        self.all_d_to_p_down = None  # numpy rows of all down values
+        self.d_to_p_up = None  # numpy rows of interpolated up values
+        self.d_to_p_down = None  # numpy rows of interpolated down values
+        self.d_to_p = None # self.d_to_p[0] → up table, self.d_to_p[1] → down table
+        self.threshold = 5
 
-class D_to_P(object):
-    def __init__(self, max_contraction, max_length):
-        self.nbr_columns = max_contraction + 1
-        self.d_to_p_up = None  # up-going distance to pressure curves - muscles contract
-        self.d_to_p_down = None
-        self.up_curve_idx = [0] * 6  # index of the up-going curve closest to the current load
-        self.down_curve_idx = [0] * 6
-        self.curve_set_direction = 1  # 1 uses up moving curves, -1 down curves
-        self.rows = 0  # number of load values in the DtoP file
-        self.prev_distances = [0] * 6
-        self.max_muscle_length = max_length
-        self.max_muscle_contraction = max_contraction
-    
-    def load(self, fname=os.path.join("output", "DtoP.csv")):
-        log.info("Using distance to Pressure file: %s" , fname)
-        print("TODO impliment d to p file for new muscles")
-        return True
+    def _get_loads(self, csv_path):
+        # returns first data row, loads tuple (or none if invalid data)
+        with open(csv_path, 'r') as file:
+            skiped_lines = 0
+            for line in file:
+                skiped_lines += 1
+                if line.startswith('# weights'):
+                    fields = line.strip().split(',')[1:] # Extract fields after '# weights'
+                    last_non_empty_index = next((i for i in reversed(range(len(fields))) if fields[i] != ''), -1)
+                    fields = fields[:last_non_empty_index + 1]
+                    loads_tuple = tuple(map(int, fields))
+                    return skiped_lines, loads_tuple
+            return None, None
+   
+    def _interpolate_load(self, d_to_p, l):
+        """Interpolate d_to_p rows between two nearest loads."""
+        d_to_p = np.asarray(d_to_p)
+
+        # Handle edge cases
+        if l <= self.loads[0]:
+            return d_to_p[0]
+        if l >= self.loads[-1]:
+            return d_to_p[-1]
+
+        # Find lower/upper bounds 
+        idx_upper = np.searchsorted(self.loads, l)
+        idx_lower = idx_upper - 1
+
+        l_lower, l_upper = self.loads[idx_lower], self.loads[idx_upper]
+        d_lower, d_upper = d_to_p[idx_lower], d_to_p[idx_upper]
+
+        interpolation_factor = (l - l_lower) / (l_upper - l_lower)
+        interpolated = (1 - interpolation_factor) * d_lower + interpolation_factor * d_upper
+        return np.round(interpolated).astype(int)
+        
+    def load_data(self, csv_path):
+        log.info("Using distance to Pressure file: %s" , csv_path)
         try:
-            d_to_p = np.loadtxt(fname, delimiter=',', dtype=int)
-            if d_to_p.shape[1] != self.nbr_columns:
-                raise ValueError(f"Expected {self.nbr_columns} distance values, but found {d_to_p.shape[1]}")
-            self.d_to_p_up, self.d_to_p_down = np.split(d_to_p, 2)
-            if self.d_to_p_up.shape[0] != self.d_to_p_down.shape[0]:
-                raise ValueError("Up and down DtoP rows don't match")
-            self.rows = self.d_to_p_up.shape[0]
-            return True
+            skiped_lines, loads = self._get_loads(csv_path)
+            # print(skiped_lines, loads)
+            if loads:
+                self.loads = np.asarray(loads)
+                # Ensure sorted loads
+                if not np.all(np.diff(loads) > 0):
+                    raise ValueError("loads must be in strictly ascending order.")
+                d_to_p = np.loadtxt(csv_path, delimiter=',', skiprows=skiped_lines, dtype=int)
+                # print(d_to_p, d_to_p.shape[1])
+                if d_to_p.shape[1] != self.nbr_columns:
+                    raise ValueError(f"In {csv_path} expected {int(self.nbr_columns)} distance values, but found {d_to_p.shape[1]}")
+                self.all_d_to_p_up, self.all_d_to_p_down = np.split(d_to_p, 2)
+                # print( "up", self.all_d_to_p_up)
+                # print("down",  self.all_d_to_p_down)
+                if self.all_d_to_p_up.shape[0] != self.all_d_to_p_down.shape[0]:
+                    raise ValueError("Up and down DtoP rows don't match")
+                self.rows = self.all_d_to_p_up.shape[0]
+                if self.nbr_columns != self.all_d_to_p_up.shape[1]:
+                    print(f"number of columns {self.all_d_to_p_up.shape[1]}, expected {self.nbr_columns} " )
+                print(f"number of columns {self.all_d_to_p_up.shape[1]}")
+                return True
+            return False    
         except Exception as e:
             log.error("Error loading file: %s\n%s", e, traceback.format_exc())
             raise
-    
-    def set_index(self, pressure, distances, dir):
-        if self.d_to_p_up is None or self.d_to_p_down is None:
-            raise ValueError("Distance-to-pressure tables are not loaded")
-        
-        if dir == "up":
-            distances_in_curves = np.abs(self.d_to_p_up - pressure).argmin(axis=1)
-            self.up_curve_idx = [np.abs(distances_in_curves - distances[i]).argmin(axis=0) for i in range(6)]
-        elif dir == "down":
-            distances_in_curves = np.abs(self.d_to_p_down - pressure).argmin(axis=1)
-            self.down_curve_idx = [np.abs(distances_in_curves - distances[i]).argmin(axis=0) for i in range(6)]
-        else:
-            print("Invalid direction in set_index")
-  
+            
+    def set_load(self, load):
+        """Set load and calculate interpolation parameters."""
+        self.d_to_p_up = self._interpolate_load(self.all_d_to_p_up, load)
+        self.d_to_p_down = self._interpolate_load(self.all_d_to_p_down, load)
+        self.d_to_p = np.stack([self.d_to_p_up, self.d_to_p_down], axis=0)
+       #  print(f"in set_load, d_to_p stack is: {self.d_to_p}")
+
     def muscle_length_to_pressure(self, muscle_lengths):
-        """
-        this code is for testing only.
-        it uses the polynomial 35x^2 + 15x + 0.03 to calulate the approx pressure for a given muscle length
-        the value is clamped to an integer value between 0 and MAX_PRESSURE (6000 millibars) 
-        replace this with Omars code.
-        """
-        pressures = [
-            max(0, min(int(35 * percent**2 + 15 * percent + 0.03), MAX_PRESSURE))
-            for percent in [(self.max_muscle_length - length) / (self.max_muscle_length * (1 - self.max_muscle_contraction / 100)) *
-            100 for length in muscle_lengths]
-        ]
-        return pressures
-          
-    # code used for slider platform
-    def _distance_to_pressure(self, distances):
-
-        distance_threshold = 5  # distances must be greater than this to trigger a direction change
-        pressures = [0]*6
-        for i in range(6):
-            delta = distances[i] - self.prev_distances[i]
-            if abs(delta) > distance_threshold:
-                if np.sign(delta) != np.sign(self.curve_set_direction):
-                    if delta > 0:
-                        self.curve_set_direction = 1
-                        index = self.up_curve_idx[i]
-                    else:
-                        self.curve_set_direction = -1
-                        index = self.down_curve_idx[i]
-            
-            curve_set = self.d_to_p_up if self.curve_set_direction == 1 else self.d_to_p_down
-            index = self.up_curve_idx[i] if self.curve_set_direction == 1 else self.down_curve_idx[i]
-            
-            
-            try:
-                p = self.interpolate(index, distances[i], curve_set)
-                pressures[i] = p
-            except Exception as e:
-                log.error("Error in distance_to_pressure: %s\n%s", e, traceback.format_exc())
-                print("-> Has 'output/DtoP.csv' been loaded?")
-        
-        self.prev_distances = distances
-        return pressures
+        muscle_lengths = np.asarray(muscle_lengths, dtype=int)
+        if muscle_lengths.shape != self.max_muscle_lengths.shape:
+            raise ValueError("Invalid number of muscle lengths")
+        muscle_compressions =  self.max_muscle_lengths - muscle_lengths
+        return self.muscle_compression_to_pressure(muscle_compressions)
     
-    def interpolate(self, index, distance, curves):
-        """
-        Interpolates the pressure for a given distance using the lookup table.
-        Handles both integer and fractional index values for interpolation between curves.
-        """
-        if index < self.rows:
-            distance = int(distance)
-            if distance > 200:
-                distance = 200
-            if distance >= curves.shape[1]:
-                distance = curves.shape[1] - 1
-            if index >= curves.shape[0]:
-                index = curves.shape[0] - 1
-            
-            if index == int(index) or index >= self.rows - 1:
-                try:
-                    return curves[int(index)][distance]
-                except Exception as e:
-                    log.error("Interpolation error: %s", e)
-                    print(index, distance, len(curves[index]))
-            else:
-                # Linear interpolation between adjacent curves
-                frac = index - int(index)
-                delta = curves[int(index + 1)][distance] - curves[int(index)][distance]
-                return curves[int(index)][distance] + delta * frac
-        else:
-            log.error("Distance to pressure index value out of range")
+    """  
+    muscle_compression_to_pressure takes 6 muscle compression values and returns 6 pressures
+        Converts muscle compression to a numpy array.
+        If previous_compressions is not initialized, copy it and use down table (first reading).
+        Calculate change (delta) compared to last cycle.
+        If delta < -threshold, use up table (index 0), else down table (index 1).
+        Lookup pressures using numpy indexing.
+        Update only the previous_compressions where delta exceeds threshold.
 
-if __name__ == "__main__":
-    d_to_p = D_to_P(200)
-    curves = np.array([[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [11, 12, 13, 14, 15], [21, 22, 23, 24, 25]])
-    d_to_p.rows = len(curves)
-    print(d_to_p.interpolate(0.9, 1, curves))
+    def muscle_compression_to_pressure(self, muscle_compressions):
+        muscle_compressions = np.asarray(muscle_compressions, dtype=int)
+        muscle_compressions = np.clip(muscle_compressions, 0, self.nbr_columns-1).astype(int)
+         
+        if self.previous_compressions is None:
+            self.previous_compressions = muscle_compressions.copy()
+            return self.d_to_p[0][muscle_compressions]  # Use Up table for first lookup
+
+        delta = muscle_compressions - self.previous_compressions
+        if any(delta):
+            self.table_indices = np.where(delta > -self.threshold, 0, 1)
+            # print("delta:", delta, "delta indices", self.table_indices)
+        pressures = self.d_to_p[self.table_indices, muscle_compressions]
+
+        needs_update = np.abs(delta) >= self.threshold
+        self.previous_compressions[needs_update] = muscle_compressions[needs_update]
+        return pressures
+    """
+    def muscle_compression_to_pressure(self, compressions):
+        """
+        Convert six compression values (mm) to pressures using a 2-row hysteresis table.
+
+        self.d_to_p : shape [2, N]  (row 0 = up / increasing-pressure branch,
+                                     row 1 = down / decreasing-pressure branch)
+        self.threshold : int  ≥ 1   (hysteresis band, same for all muscles)
+
+        Returns
+        -------
+        pressures : np.ndarray  shape (6,)  – one pressure per muscle
+        """
+        # Convert to integer indices (truncating) and clip to [0, N-1]
+        compressions = np.asarray(compressions, dtype=int)
+        indices      = np.clip(compressions, 0, self.d_to_p.shape[1] - 1)
+
+        # First call – initialise state & use the up row (row 0)
+        if not hasattr(self, "prev_compressions"):
+            self.prev_compressions = compressions.copy()
+            self.active_row = np.zeros_like(compressions, dtype=int)   # all start on row 0
+            return self.d_to_p[0, indices]
+
+        # Subsequent calls – compute delta & apply symmetric hysteresis switching
+        delta      = compressions - self.prev_compressions
+        up_mask    = delta >= self.threshold      # switch to row 0
+        down_mask  = delta <= -self.threshold     # switch to row 1
+        self.active_row[up_mask]   = 0
+        self.active_row[down_mask] = 1
+
+        # Lookup pressures and update history
+        pressures = self.d_to_p[self.active_row, indices]
+        self.prev_compressions = compressions
+        # print(f"compressions: {compressions}\ndelta: {delta}\nactive ros: {self.active_row}\npressures: {pressures}")   
+        return pressures
+
+# ---------------------------------------------------------
+# Test harness
+# ---------------------------------------------------------
+if __name__ == '__main__':
+    max_range = 250
+    max_length = 1000
+    d2p = DistanceToPressure(max_range+1, max_length)
+    if d2p.load_data("wheelchair_DtoP.csv"):
+        d2p.set_load(24)  # Set test load
+
+    print(d2p.d_to_p) 
+    while True:
+        user_input = input("Enter 6 lengths separated by commas or 'l,<load>' to set load (empty input to quit): ").strip()
+
+        if not user_input:
+            break
+
+        if user_input.lower().startswith('l,'):
+            try:
+                load = int(user_input.split(',')[1])
+                d2p.set_load(load) 
+                print(f"Load updated to: {load}kg")
+            except (IndexError, ValueError):
+                print("Invalid load format. Use l,<number> (e.g., l,35)")
+            continue
+
+        try:
+            lengths = [int(val) for val in user_input.split(',')]
+            if len(lengths) != 6:
+                print("Please enter exactly 6 numbers.")
+                continue
+
+            pressures = d2p.muscle_length_to_pressure(lengths)
+            print(f"Input lengths: {lengths}")
+            print(f"Resulting pressures: {pressures}")
+
+        except ValueError:
+            print("Invalid input. Please enter numbers separated by commas.")
 

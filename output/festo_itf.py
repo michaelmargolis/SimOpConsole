@@ -70,10 +70,11 @@ class Festo(object):
     def send_pressures(self, muscle_pressures):
         # sends muscle pressures to Festo
         try:
+            pressures =  list(muscle_pressures)
             # print "sending pressures:", muscle_pressures
-            packet = easyip.Factory.send_flagword(0, muscle_pressures)
+            packet = easyip.Factory.send_flagword(0, pressures)
             self._output_festo_packet(packet, self.wait)
-            self.out_pressures = muscle_pressures
+            self.out_pressures = pressures
         except Exception as e: 
             log.error("error sending to Festo: %s, %s", e, traceback.format_exc())
         return None
