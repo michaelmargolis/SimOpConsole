@@ -88,6 +88,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.front_pos = self.lbl_front_view.pos()
         self.side_pos = self.lbl_side_view.pos()
         self.top_pos = self.lbl_top_view.pos()
+        print("xfrom ps:", self.front_pos, self.side_pos, self.top_pos)
         self.muscle_bars = [getattr(self, f"muscle_{i}") for i in range(6)]
         self.txt_muscles = [getattr(self, f"txt_muscle_{i}") for i in range(6)]
         self.cache_status_icons()
@@ -534,7 +535,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             line = getattr(self, f"muscle_{i}", None)
             if line:
                 full_visual_width = 500
-                new_width = max(0, min(int(muscle_lengths[i] / 2), full_visual_width))
+                contraction = 1000 - muscle_lengths[i] # todo remove hard coded muscle lengths
+                new_width = max(0, min(int(contraction * 2 ), full_visual_width))
 
                 # Align right by adjusting the x position based on new width
                 new_x = self.muscle_base_right[i] - new_width

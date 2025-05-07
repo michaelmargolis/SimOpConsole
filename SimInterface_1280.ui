@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1261</width>
-    <height>752</height>
+    <width>1259</width>
+    <height>748</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -2149,7 +2149,7 @@
        </font>
       </property>
       <property name="title">
-       <string>Muscle Lengths</string>
+       <string>Muscle Contractions</string>
       </property>
       <widget class="Line" name="muscle_4">
        <property name="enabled">
@@ -2394,6 +2394,46 @@
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
+      <widget class="Line" name="line_vert_10">
+       <property name="geometry">
+        <rect>
+         <x>260</x>
+         <y>20</y>
+         <width>20</width>
+         <height>141</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame {
+    border: 0;
+    border-left: 1px dotted black; /* For vertical line */
+}
+</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="line_vert_11">
+       <property name="geometry">
+        <rect>
+         <x>385</x>
+         <y>20</y>
+         <width>20</width>
+         <height>141</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame {
+    border: 0;
+    border-left: 1px dotted black; /* For vertical line */
+}
+</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
       <zorder>lbl_actuator_frame</zorder>
       <zorder>muscle_0</zorder>
       <zorder>muscle_1</zorder>
@@ -2408,208 +2448,8 @@
       <zorder>txt_muscle_1</zorder>
       <zorder>txt_muscle_2</zorder>
       <zorder>line_vert_4</zorder>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_7">
-      <property name="geometry">
-       <rect>
-        <x>630</x>
-        <y>190</y>
-        <width>560</width>
-        <height>220</height>
-       </rect>
-      </property>
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>560</width>
-        <height>220</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>560</width>
-        <height>220</height>
-       </size>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">GroupBox {
-    border: 2px solid black;
-    border-radius: 5px;
-    padding: 5px;
-}</string>
-      </property>
-      <property name="title">
-       <string>Transform</string>
-      </property>
-      <widget class="QLabel" name="lbl_front_view">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>70</y>
-         <width>160</width>
-         <height>80</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>images/cessna_rear.jpg</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>false</bool>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lbl_side_view">
-       <property name="geometry">
-        <rect>
-         <x>210</x>
-         <y>70</y>
-         <width>160</width>
-         <height>80</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>images/cessna_side_2.jpg</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>false</bool>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="QLabel" name="lbl_top_view">
-       <property name="geometry">
-        <rect>
-         <x>380</x>
-         <y>21</y>
-         <width>160</width>
-         <height>181</height>
-        </rect>
-       </property>
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-       <property name="pixmap">
-        <pixmap>images/cessna_top.jpg</pixmap>
-       </property>
-       <property name="scaledContents">
-        <bool>false</bool>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-      <widget class="Line" name="line_vert">
-       <property name="geometry">
-        <rect>
-         <x>100</x>
-         <y>20</y>
-         <width>20</width>
-         <height>181</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QFrame {
-    border: 0;
-    border-left: 1px dotted black; /* For vertical line */
-}
-</string>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-      <widget class="Line" name="line_top">
-       <property name="geometry">
-        <rect>
-         <x>20</x>
-         <y>112</y>
-         <width>511</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QFrame {
-    border: 0;
-    border-top: 1px dotted black; /* For horizontal line */
-}
-</string>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-      <widget class="Line" name="line_vert_2">
-       <property name="geometry">
-        <rect>
-         <x>270</x>
-         <y>20</y>
-         <width>20</width>
-         <height>181</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QFrame {
-    border: 0;
-    border-left: 1px dotted black; /* For vertical line */
-}
-</string>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-      <widget class="Line" name="line_vert_3">
-       <property name="geometry">
-        <rect>
-         <x>440</x>
-         <y>20</y>
-         <width>20</width>
-         <height>181</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QFrame {
-    border: 0;
-    border-left: 1px dotted black; /* For vertical line */
-}
-</string>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
+      <zorder>line_vert_10</zorder>
+      <zorder>line_vert_11</zorder>
      </widget>
      <widget class="QGroupBox" name="gb_sys_performance">
       <property name="geometry">
@@ -2939,6 +2779,198 @@
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
+     <widget class="QWidget" name="wdgt_transform" native="true">
+      <property name="geometry">
+       <rect>
+        <x>620</x>
+        <y>190</y>
+        <width>551</width>
+        <height>221</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QWidget {
+  background-color: white;
+}</string>
+      </property>
+      <widget class="Line" name="line_vert_7">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>18</y>
+         <width>20</width>
+         <height>181</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame {
+    border: 0;
+    border-left: 1px dotted black; /* For vertical line */
+}
+</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="line_vert_8">
+       <property name="geometry">
+        <rect>
+         <x>440</x>
+         <y>20</y>
+         <width>20</width>
+         <height>181</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame {
+    border: 0;
+    border-left: 1px dotted black; /* For vertical line */
+}
+</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="Line" name="line_vert_9">
+       <property name="geometry">
+        <rect>
+         <x>270</x>
+         <y>18</y>
+         <width>20</width>
+         <height>181</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame {
+    border: 0;
+    border-left: 1px dotted black; /* For vertical line */
+}
+</string>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_13">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>10</y>
+         <width>101</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>9</pointsize>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Transform</string>
+       </property>
+      </widget>
+      <widget class="Line" name="line_2">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>104</y>
+         <width>521</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_side_view">
+       <property name="geometry">
+        <rect>
+         <x>200</x>
+         <y>70</y>
+         <width>160</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_side_2.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>false</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_front_view">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>70</y>
+         <width>160</width>
+         <height>80</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_rear.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>false</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_top_view">
+       <property name="geometry">
+        <rect>
+         <x>370</x>
+         <y>23</y>
+         <width>160</width>
+         <height>181</height>
+        </rect>
+       </property>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+       <property name="pixmap">
+        <pixmap>images/cessna_top.jpg</pixmap>
+       </property>
+       <property name="scaledContents">
+        <bool>false</bool>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
    <widget class="QFrame" name="grp_platform_control">
@@ -3134,7 +3166,7 @@ QPushButton:checked {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1261</width>
+     <width>1259</width>
      <height>22</height>
     </rect>
    </property>

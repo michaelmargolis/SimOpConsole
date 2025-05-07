@@ -7,14 +7,15 @@ class PlatformConfig(object):
     PLATFORM_NAME = "Falcon chair"
     PLATFORM_TYPE = "Inverted Stewart Platform"
     PLATFORM_INVERTED = True
-    MUSCLE_PRESSURE_MAPPING_FILE = 'output/chair_DtoP.csv'
+    # MUSCLE_PRESSURE_MAPPING_FILE = 'output/chair_DtoP.csv'
+    MUSCLE_PRESSURE_MAPPING_FILE = "output/wheelchair_DtoP.csv"
 
     PLATFORM_CLEARANCE_OFFSET = 50  # Minimum clearance in mm between platform and base when active
     PLATFORM_LOWEST_Z = -1085       # Z offset of platform when muscles are at full extension (max length)
 
 
     def __init__(self):
-        self.UNLOADED_PLATFORM_WEIGHT = 25
+       
         DEFAULT_PAYLOAD_WEIGHT = 65
         PAYLOAD_WEIGHT_RANGE = (20, 90)
 
@@ -27,11 +28,12 @@ class PlatformConfig(object):
 
         self.MIN_ACTUATOR_LENGTH = self.MUSCLE_MIN_LENGTH + self.FIXED_HARDWARE_LENGTH
         self.MAX_ACTUATOR_LENGTH = self.MUSCLE_MAX_LENGTH + self.FIXED_HARDWARE_LENGTH
-
         self.MUSCLE_LENGTH_RANGE = self.MUSCLE_MAX_LENGTH - self.MUSCLE_MIN_LENGTH
 
+        self.UNLOADED_PLATFORM_WEIGHT = 25
+        self.PAYLOAD_WEIGHTS = (50, 60, 150) # light, medium, heavy
         self.MOTION_INTENSITY_RANGE = (10, 50, 150)
-        self.PAYLOAD_WEIGHT_RANGE = (5, 0, 100)
+
 
         self.INVERT_AXIS = (1, 1, -1, -1, 1, 1)
         self.SWAP_ROLL_PITCH = False

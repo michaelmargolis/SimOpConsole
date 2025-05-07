@@ -51,7 +51,9 @@ from siminterface_ui import MainWindow
 #naming#from kinematics.kinematicsV2 import Kinematics
 from kinematics.kinematics_V2SP import Kinematics
 from kinematics.dynamics import Dynamics
+
 import output.d_to_p as d_to_p
+
 #naming#from output.muscle_output import MuscleOutput
 from output.muscle_output import MuscleOutput
 from typing import NamedTuple
@@ -182,7 +184,7 @@ class SimInterfaceCore(QtCore.QObject):
             return
 
         # Initialize the distance->pressure converter
-        self.DtoP = d_to_p.D_to_P(self.cfg.MUSCLE_LENGTH_RANGE, self.cfg.MUSCLE_MAX_LENGTH)
+        self.DtoP = d_to_p.DistanceToPressure(self.cfg.MUSCLE_LENGTH_RANGE+1, self.cfg.MUSCLE_MAX_LENGTH)
         self.muscle_output = MuscleOutput(self.DtoP.muscle_length_to_pressure, sleep_qt,
                             self.FESTO_IP, self.cfg.MUSCLE_MAX_LENGTH, self.cfg.MUSCLE_LENGTH_RANGE ) 
                 
@@ -212,6 +214,9 @@ class SimInterfaceCore(QtCore.QObject):
             )
             self.is_slider = False
         
+        self.payload_weights = [int((w + self.cfg.UNLOADED_PLATFORM_WEIGHT) / 6) for w in self.cfg.PAYLOAD_WEIGHTS]
+        log.info(f"Core: Payload weights in kg per muscle: {self.payload_weights}")
+        
         self.invert_axis = self.cfg.INVERT_AXIS
         self.swap_roll_pitch = self.cfg.SWAP_ROLL_PITCH
 
@@ -221,8 +226,9 @@ class SimInterfaceCore(QtCore.QObject):
         
         # Load distance->pressure file
         try:
-            if self.DtoP.load(self.cfg.MUSCLE_PRESSURE_MAPPING_FILE):
+            if self.DtoP.load_data(self.cfg.MUSCLE_PRESSURE_MAPPING_FILE):
                 log.info("Core: Muscle pressure mapping table loaded.")
+                self.DtoP.set_load(self.payload_weights[1])  # default is middle weight 
         except Exception as e:
             self.handle_error(e, "Error loading Muscle pressure mapping table ")
 
@@ -302,13 +308,12 @@ class SimInterfaceCore(QtCore.QObject):
             transform = self.sim.read()
             if transform is None:
                 return
-
             for idx in range(6):
                 base_gain = self.gains[idx] * self.master_gain
                 attenuated_gain = base_gain * (self.intensity_percent / 100.0)
                 self.transform[idx] = transform[idx] * attenuated_gain
-
             self.move_platform(self.transform)
+            # print("in data update", self.transform)
 
         # Emit update for UI + Unity twin
         temperature = self.temperature
@@ -447,7 +452,10 @@ class SimInterfaceCore(QtCore.QObject):
         log.debug(f"Core: intensity set to {percent}%")
         
     def loadLevelChanged(self, load_level):
-        print(f"load level changed to {load_level}, add code to pass this to output module")
+        if load_level>=0 and load_level <=2:   
+            load = self.payload_weights[load_level]     
+            self.DtoP.set_load(load)            
+            log.info(f"load level changed to {load_level},({load})kg per muscle, {load*6}kg total inc platform")
 
     def modeChanged(self, mode_id):
         """
@@ -481,7 +489,12 @@ class SimInterfaceCore(QtCore.QObject):
             # swap roll/pitch
             request[0], request[1], request[3], request[4] = request[1], request[0], request[4], request[3]
 
-        self.muscle_lengths = self.k.muscle_lengths(request)
+        muscle_lengths = self.k.muscle_lengths(request)
+        if not all(x == y for x, y in zip(muscle_lengths, self.muscle_lengths)):
+            # print(f"Muscle Lengths: {muscle_lengths}")
+            self.muscle_lengths = muscle_lengths
+        #self.muscle_lengths = self.k.muscle_lengths(request)
+        
         # output actuator command (physical platform) only if enabled
         if not self.virtual_only_mode:
             self.muscle_output.set_muscle_lengths(self.muscle_lengths)
