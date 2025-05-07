@@ -46,7 +46,7 @@ Message Payload:
 Example:
     xplane_telemetry,-0.020,0.005,-0.980,-0.003,0.000,-0.002,0.087,-0.045,C172
 """
-
+import json
 from XPPython3 import xp
 from collections import namedtuple
 from math import radians
@@ -54,7 +54,6 @@ from udp_tx_rx import UdpReceive
 from situation_loader import SituationLoader
 from accessibility import load_accessibility_settings, set_accessibility
 
-ACCESSIBILITY_FILE = "Resources/plugins/PythonPlugins/accessibility.txt"
 
 transform_refs = namedtuple('transform_refs', (
     'DR_g_axil', 'DR_g_side', 'DR_g_nrml',
@@ -74,6 +73,7 @@ class PythonInterface:
         self.controller_addr = []
         self.udp = UdpReceive(10023)
         self.situation_loader = SituationLoader()
+        self.settings = load_accessibility_settings()
 
         self.init_drefs()
         xp.registerFlightLoopCallback(self.InputOutputLoopCallback, 1.0, 0)
@@ -118,8 +118,9 @@ class PythonInterface:
 
     def InputOutputLoopCallback(self, elapsedMe, elapsedSim, counter, refcon):
         try:
-            telemetry, icao = self.read_telemetry()
-            msg = "xplane_telemetry," + ",".join(f"{x:.3f}" for x in telemetry) + f",{icao}\n"
+            # telemetry, icao = self.read_telemetry()
+            # msg = "xplane_telemetry," + ",".join(f"{x:.3f}" for x in telemetry) + f",{icao}\n"
+            msg = self.read_telemetry()
             for addr in self.controller_addr:
                 self.udp.send(msg, (addr, TARGET_PORT))
         except Exception as e:
@@ -180,6 +181,7 @@ class PythonInterface:
                         if 0 <= level <= 2:
                             xp.log(f"[INFO] Assist level received: {level}")
                             set_accessibility(['HIGH', 'MODERATE', 'NONE'][level])
+                            xp.log(f"[INFO] Set Pilot Assist to: {['HIGH', 'MODERATE', 'NONE'][level]}")
                         else:
                             xp.log(f"[WARN] AssistLevel out of range: {level}")
                     except Exception as e:
@@ -190,6 +192,37 @@ class PythonInterface:
 
         return 0.025
 
+    def read_telemetry(self):
+        try:
+            if self.acf_icao_ref is not None:
+                icao_buf = [0] * 40
+                xp.getDatab(self.acf_icao_ref, icao_buf, 0, 40)
+                icao = bytes(icao_buf).decode('utf-8').strip('\x00')
+            else:
+                raise ValueError("acf_icao_ref is None")
+        except Exception as e:
+            # xp.log(f"[WARN] Failed to read ICAO: {e}")
+            icao = "unknown"
+            
+        data = [xp.getDataf(ref) for ref in self.OutputDataRef]
+        named = transform_refs._make(data)
+        
+        telemetry_dict = {
+            "header": "xplane_telemetry",
+            "g_axil":  -named.DR_Rrad,
+            "g_side":  -named.DR_Qrad,
+            "g_nrml":  -named.DR_Prad,
+            "Prad":    named.DR_g_nrml - 1.0,
+            "Qrad":    -named.DR_g_side,
+            "Rrad":    -named.DR_g_axil,
+            "phi":     radians(named.DR_phi),
+            "theta":   -radians(named.DR_theta),
+            "icao":     icao
+        }
+        telemetry_json = json.dumps(telemetry_dict)
+        return telemetry_json
+        
+    """
     def read_telemetry(self):
         try:
             data = [xp.getDataf(ref) for ref in self.OutputDataRef]
@@ -220,7 +253,7 @@ class PythonInterface:
         except Exception as e:
             xp.log(f"[ERROR] Telemetry read failed: {e}")
             return [0.0] * 8, "unknown"
-
+    """ 
 
 
 
