@@ -3,7 +3,7 @@ import platform
 import logging
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from typing import NamedTuple
-from common.serial_switch_reader import SerialSwitchReader
+from common.serial_switch_json_reader import SerialSwitchReader
 from switch_ui_controller import SwitchUIController
 from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
 from ui_widgets import ActivationButton, ButtonGroupHelper 
@@ -616,7 +616,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for idx in range(6):
                 self.update_transform_blocks(update.transform)
         else: 
-            self.txt_this_ip.setText("todo")
+            self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
             self.txt_festo_ip.setText(self.core.FESTO_IP)
             if not self.cb_supress_graphics.isChecked():   

@@ -53,6 +53,7 @@ from kinematics.kinematics_V2SP import Kinematics
 from kinematics.dynamics import Dynamics
 
 import output.d_to_p as d_to_p
+from common.get_local_ip import get_local_ip
 
 #naming#from output.muscle_output import MuscleOutput
 from output.muscle_output import MuscleOutput
@@ -146,7 +147,6 @@ class SimInterfaceCore(QtCore.QObject):
         self.processing_percent = 0
         self.jitter_percent = 0
 
-
     # --------------------------------------------------------------------------
     # set up configurations
     # --------------------------------------------------------------------------
@@ -164,6 +164,7 @@ class SimInterfaceCore(QtCore.QObject):
         
         self.echo_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.echo_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.local_ip = get_local_ip()
         
     # --------------------------------------------------------------------------
     # Platform Config
