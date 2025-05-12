@@ -29,7 +29,7 @@ FESTO_IP = "192.168.1.117"  # "192.168.0.10"
 def get_switch_comport(os_name: str) -> str:
     """Returns the correct COM port based on the operating system."""
     if os_name == 'nt':
-        return "COM11"
+        return "COM5"
     else:
         return "/dev/ttyUSB1"
 
