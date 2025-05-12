@@ -1,6 +1,6 @@
 import logging
 from PyQt5 import QtCore
-from common.serial_switch_reader import SerialSwitchReader, SwitchIndex
+from common.serial_switch_json_reader import SerialSwitchReader, SwitchIndex
 
 log = logging.getLogger(__name__)
 

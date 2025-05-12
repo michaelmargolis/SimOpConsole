@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- NEW: let phones use their real CSS‑pixel width -->
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>Flight Rig Control</title>
+
+  <style>
+    :root{
+      --inactive:#e4e4e4;
+      --active:#05345f;
+      --fly:#36b34b;
+      --pause:#ffeb00;
+      --border:#9dd4e3;
+      --danger:#ff4d4d;
+    }
+
+    /* ========== GLOBALS ========== */
+    *{box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;margin:0;padding:0}
+    body{display:flex;flex-direction:column;align-items:center;padding:1.5rem;background:#fafafa}
+    h2{letter-spacing:2px;margin-bottom:1.5rem;text-transform:uppercase}
+
+    /* ========== STACKED GROUPS ========== */
+    .group{
+      border:4px solid var(--border);
+      border-radius:6px;
+      padding:0.9rem 1rem;
+      margin-bottom:1.25rem;
+      width:100%;           /* fill the screen on mobile */
+      max-width:380px;      /* keep the desktop width */
+      text-align:center;
+    }
+    .group h4{
+      font-size:1rem;
+      font-weight:700;
+      letter-spacing:1px;
+      margin-bottom:0.75rem;
+      text-transform:uppercase;
+    }
+
+    /* ========== BUTTON ROWS ========== */
+    .btn-row{
+      display:flex;
+      justify-content:center;
+      gap:0.6rem;
+      flex-wrap:nowrap;              /* stay on one line by default */
+    }
+    .btn-row button{
+      flex:1 1 88px;                /* flex‑grow on small screens */
+      max-width:100px;               /* ideal desktop width */
+      padding:0.65rem 0.9rem;
+      border:2px solid #000;
+      border-radius:4px;
+      background:var(--inactive);
+      color:#000;
+      font-weight:600;
+      font-size:0.88rem;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      white-space:nowrap;
+      cursor:pointer;
+      transition:background 0.15s;
+    }
+    .btn-row button.active{
+      background:var(--active);
+      color:#fff;
+    }
+
+    /* ========== ACTION BUTTONS ========== */
+    .actions{
+      margin-top:2rem;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:1.5rem;
+      width:100%;
+      max-width:380px;
+    }
+    .row{display:flex;gap:1rem;width:100%}
+    .row button{
+      flex:1;
+      padding:1rem 1.25rem;
+      font-size:1.05rem;
+    }
+    #fly{background:var(--fly);color:#fff;border:none}
+    #pause{background:var(--pause);color:#000;border:none}
+    #activate{
+      width:100%;                    /* full‑width toggle */
+      background:#cfcfcf;
+      border:2px solid #666;
+      color:#000;
+      font-size:1.05rem;
+      font-weight:700;
+    }
+    button:active{opacity:0.8}
+
+    /* ===========================================================
+       OPTIONAL  —  allow wrapping only when the viewport is
+       narrower than 430 px (roughly iPhone SE width).
+       Delete this media‑query block if you never want wrapping.
+    =========================================================== */
+    @media (max-width: 430px) {
+      .btn-row{flex-wrap:wrap;}      /* permit 2‑line rows */
+      .btn-row button{
+        flex:1 1 110px;             /* minimum width each button tries for */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Console Switches</h2>
+
+  <!-- STACKED CONTROL GROUPS -->
+
+  <div class="group" data-group="flight-mode">
+    <h4>Flight Mode</h4>
+    <div class="btn-row">
+      <button data-cmd="FM_STANDARD" class="active">Norm</button>
+      <button data-cmd="FM_SCENIC">Scenic</button>
+      <button data-cmd="FM_CUSTOM">Custom</button>
+    </div>
+  </div>
+
+  <div class="group" data-group="pilot-assist">
+    <h4>Pilot Assist</h4>
+    <div class="btn-row">
+      <button data-cmd="PA_HIGH">High</button>
+      <button data-cmd="PA_MID" class="active">Mid</button>
+      <button data-cmd="PA_LOW">Low</button>
+    </div>
+  </div>
+
+  <div class="group" data-group="intensity">
+    <h4>Intensity</h4>
+    <div class="btn-row">
+      <button data-cmd="INT_STATIC">Static</button>
+      <button data-cmd="INT_MILD" class="active">Mild</button>
+      <button data-cmd="INT_FULL">Full</button>
+    </div>
+  </div>
+  
+  <div class="group" data-group="load">
+    <h4>Load</h4>
+    <div class="btn-row">
+      <button data-cmd="LOAD_LIGHT">Light</button>
+      <button data-cmd="LOAD_MODERATE" class="active">Mid</button>
+      <button data-cmd="LOAD_HEAVY">Heavy</button>
+    </div>
+  </div>
+  
+  <!-- ACTION BUTTONS -->
+  <div class="actions">
+    <div class="row">
+      <button id="fly" data-cmd="FLY">Fly</button>
+      <button id="pause" data-cmd="PAUSE">Pause</button>
+    </div>
+    <div class="row">
+      <button id="activate">Activate</button>
+    </div>
+  </div>
+
+  <script>
+    // === Radio‑style behaviour for the four groups ===
+    document.querySelectorAll('[data-group] .btn-row button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const groupEl = btn.closest('[data-group]');
+        groupEl.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        sendCommand(btn.dataset.cmd);
+      });
+    });
+
+    // === Fly & Pause ===
+    document.querySelectorAll('#fly,#pause').forEach(btn=>{
+      btn.addEventListener('click',()=>sendCommand(btn.dataset.cmd));
+    });
+
+    // === Activate / Deactivate toggle ===
+    const activateBtn = document.getElementById('activate');
+    let armed = false; // false → Activate shown; true → Deactivate shown
+
+    activateBtn.addEventListener('click',()=>{
+      armed = !armed;
+      if(armed){
+        activateBtn.textContent = 'Deactivate';
+        activateBtn.style.background = 'var(--danger)';
+        activateBtn.style.color = '#fff';
+        sendCommand('ACTIVATE'); // send 1
+      }else{
+        activateBtn.textContent = 'Activate';
+        activateBtn.style.background = '#cfcfcf';
+        activateBtn.style.color = '#000';
+        sendCommand('DEACTIVATE');  // send 0
+      }
+
+    });
+
+    function sendCommand(cmd){
+      if(!cmd) return;
+      fetch('/cmd',{
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body:cmd
+      }).catch(console.error);
+    }
+  </script>
+</body>
+</html>
