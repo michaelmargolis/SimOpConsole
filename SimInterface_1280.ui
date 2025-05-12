@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1259</width>
-    <height>748</height>
+    <width>1257</width>
+    <height>744</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -2552,7 +2552,7 @@
          <x>10</x>
          <y>110</y>
          <width>501</width>
-         <height>18</height>
+         <height>21</height>
         </rect>
        </property>
        <property name="font">
@@ -2563,7 +2563,7 @@
         </font>
        </property>
        <property name="text">
-        <string>Supress muscle and transform graphics</string>
+        <string>Supress graphics for muscles and transforms</string>
        </property>
       </widget>
       <widget class="Line" name="line_vert_5">
@@ -2656,9 +2656,9 @@
      <widget class="QLabel" name="label_21">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>130</x>
         <y>530</y>
-        <width>91</width>
+        <width>141</width>
         <height>20</height>
        </rect>
       </property>
@@ -2682,7 +2682,7 @@
        <rect>
         <x>290</x>
         <y>530</y>
-        <width>131</width>
+        <width>201</width>
         <height>20</height>
        </rect>
       </property>
@@ -2694,6 +2694,9 @@
       <property name="text">
        <string>192.168.0.10</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
      </widget>
      <widget class="QLineEdit" name="txt_xplane_ip">
       <property name="enabled">
@@ -2703,7 +2706,7 @@
        <rect>
         <x>290</x>
         <y>490</y>
-        <width>131</width>
+        <width>201</width>
         <height>20</height>
        </rect>
       </property>
@@ -2715,13 +2718,16 @@
       <property name="text">
        <string>192.168.0.100</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
      </widget>
      <widget class="QLabel" name="label_28">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>130</x>
         <y>490</y>
-        <width>91</width>
+        <width>141</width>
         <height>20</height>
        </rect>
       </property>
@@ -2745,7 +2751,7 @@
        <rect>
         <x>290</x>
         <y>450</y>
-        <width>131</width>
+        <width>201</width>
         <height>20</height>
        </rect>
       </property>
@@ -2757,13 +2763,16 @@
       <property name="text">
        <string>192.168.0.10</string>
       </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
      </widget>
      <widget class="QLabel" name="label_30">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>150</x>
         <y>450</y>
-        <width>91</width>
+        <width>121</width>
         <height>20</height>
        </rect>
       </property>
@@ -3166,7 +3175,7 @@ QPushButton:checked {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1259</width>
+     <width>1257</width>
      <height>22</height>
     </rect>
    </property>
