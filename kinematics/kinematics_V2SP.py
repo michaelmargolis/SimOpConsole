@@ -73,10 +73,18 @@ class Kinematics(object):
         return self.muscle_lengths_from_lengths(actuator_lengths)
 
     def muscle_lengths_from_lengths(self, actuator_lengths):
+        # return np.clip(actuator_lengths - self.FIXED_HARDWARE_LENGTH, 0, self.MAX_MUSCLE_LENGTH)
+        """
+        return [
+            min(int(round(length - self.FIXED_HARDWARE_LENGTH)), self.MAX_MUSCLE_LENGTH)
+            for length in actuator_lengths
+        ]
+        """     
         return [
             int(round(length - self.FIXED_HARDWARE_LENGTH))
             for length in actuator_lengths
         ]
+ 
 
     def muscle_lengths_from_pose(self, pose):
         actuator_lengths = np.linalg.norm(pose - self.base_coords, axis=1)
