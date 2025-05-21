@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-
-# sim_interface_core.py
+ 
+# sim_interface_core.py 
 
 import os
 import sys
@@ -16,30 +16,32 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QTimer, Qt
 
 """ directory structure
-siminterface folder structure 
 
-├── sim_interface_core.py 
-├── sim_interface_ui.py
-├── SimInterface.ui
-├── sim_config.py
+These modules provide the core source code for this application 
+
+├── siminterface.py                       # Core applicaiton logic (this module) 
+├── SimInterface_ui.py                    # user interface code
+├── SimInterface_1280.ui                  # user interface definitions and layout
+├── sim_config.py                         # runtime configuration options
 ├── sims/
-│   ├── xplane.py
-│   ├── xplane_itf.py
-│   ├── xplane_cfg.py
+│   ├── xplane.py                         # high level X-Plane interface
+│   ├── xplane_telemetry.py               # low level telemetry interface
+│   ├── xplane_state_machine.py           # manages x-plane state 
+│   ├── xplane_cfg.py                     # x-plane specific runtime configuration 
 │   └── ...
 ├── kinematics/
-│   ├── kinematicsV2.py
-│   ├── dynamics.py
-│   ├── cfg_SuspendedChair.py
-│   ├── cfg_SlidingActuators.py
+│   ├── kinematicsV2SP.py                 # converts sim transform and accelerations to actuator lengths 
+│   ├── dynamics.py                       # manages intensity and washout   
+│   ├── cfg_SuspendedPlatform.py          # platform configuration parameters used by kinematics
 │   └── ...
 ├── output/
-│   ├── d_to_p.py
-│   ├── muscle_output.py
+│   ├── muscle_output.py                  # provides drive to pneumatic actuators 
+│   ├── d_to_p.py                         # converts acutator lengths to pressures 
 │   └── ...
 ├── common/
-│   ├── udp_tx_rx.py
-│   ├── serial_switch_reader.py
+│   ├── udp_tx_rx.py                      # UDP helper class   
+│   ├── heartbeat_client.py               # receives heartbeat from heartbeat server running on x-plane PC 
+│   ├── serial_switch_json_reader.py      # switch press handler
 │   └── ...
 └── ...
 """
@@ -60,7 +62,7 @@ from output.muscle_output import MuscleOutput
 from typing import NamedTuple
 from sims.shared_types import SimUpdate, ActivationTransition
 
-echo_port = 10020 # port used by external Unity visualizer
+echo_port = 10020 # port used by optional external Unity visualizer
 
 class SimInterfaceCore(QtCore.QObject):
     """
@@ -77,6 +79,7 @@ class SimInterfaceCore(QtCore.QObject):
 
     # Signals to inform the UI
     simStatusChanged = QtCore.pyqtSignal(str)          # e.g., "Connected", "Not Connected", ...
+    fatal_error = QtCore.pyqtSignal(str)               # fatal error forcing exit of application
     logMessage = QtCore.pyqtSignal(str)                # general logs or warnings to display in UI
     dataUpdated = QtCore.pyqtSignal(object)            # passing transforms or status to the UI
     activationLevelUpdated = QtCore.pyqtSignal(object) # activation percent passed in slow moved  
@@ -389,14 +392,6 @@ class SimInterfaceCore(QtCore.QObject):
         log.info(f"[Init Transition] {mode}: {self.transition_steps} steps from {self.transition_start_lengths} to {self.transition_end_lengths}")
 
 
-    def activate_platform(self):
-        log.debug("Core: activating platform")
-        self._requested_motion_state = "activating"
-
-    def deactivate_platform(self):
-        log.debug("Core: deactivating platform")
-        self._requested_motion_state = "deactivating"
-
     def start_slow_move(self, start_lengths, end_lengths, mode):
         log.info(f"[Init Slow Move] {mode}: {self._slow_move_steps} steps from {start_lengths} to {end_lengths}")
         self._motion_state = mode
@@ -406,7 +401,16 @@ class SimInterfaceCore(QtCore.QObject):
         self._slow_move_muscle_len = list(start_lengths)
         self._delta_muscle_len = [(j - i) / self._slow_move_steps for i, j in zip(start_lengths, end_lengths)]
         self._block_sim_control = True
-    
+ 
+
+    def activate_platform(self):
+        log.debug("Core: activating platform")
+        self._requested_motion_state = "activating"
+
+    def deactivate_platform(self):
+        log.debug("Core: deactivating platform")
+        self._requested_motion_state = "deactivating"
+        
     def echo(self, transform, distances, pose):
         t = [""] * 6
         for idx, val in enumerate(transform):
@@ -449,30 +453,34 @@ class SimInterfaceCore(QtCore.QObject):
             self.gains[index] = value *.01
         
     def intensityChanged(self, percent):
-        self.intensity_percent = percent
-        log.debug(f"Core: intensity set to {percent}%")
+        if self.is_started:
+            self.intensity_percent = percent
+            log.debug(f"Core: intensity set to {percent}%")
         
     def loadLevelChanged(self, load_level):
-        if load_level>=0 and load_level <=2:   
-            load = self.payload_weights[load_level]     
-            self.DtoP.set_load(load)            
-            log.info(f"load level changed to {load_level},({load})kg per muscle, {load*6}kg total inc platform")
+        if self.is_started:
+            if load_level>=0 and load_level <=2:   
+                load = self.payload_weights[load_level]     
+                self.DtoP.set_load(load)            
+                log.info(f"load level changed to {load_level},({load})kg per muscle, {load*6}kg total inc platform")
 
     def modeChanged(self, mode_id):
         """
         Handles mode changes and ensures it is sent to X-Plane.
         """
-        self.current_mode = mode_id
-        log.debug(f"Flight mode changed to {mode_id}")
-        self.sim.set_flight_mode(self.current_mode)
+        if self.sim:
+            self.current_mode = mode_id
+            log.debug(f"Flight mode changed to {mode_id}")
+            self.sim.set_flight_mode(self.current_mode)
 
     def assistLevelChanged(self, pilotAssistLevel):
         """
         Handles assist level changes and ensures it is sent to X-Plane.
         """
-        self.current_pilot_assist_level = pilotAssistLevel
-        log.debug(f"Pilot assist level changed to {pilotAssistLevel}")
-        self.sim.set_pilot_assist(self.current_pilot_assist_level)
+        if self.sim:
+            self.current_pilot_assist_level = pilotAssistLevel
+            log.debug(f"Pilot assist level changed to {pilotAssistLevel}")
+            self.sim.set_pilot_assist(self.current_pilot_assist_level)
 
     # --------------------------------------------------------------------------
     # Platform Movement
@@ -575,6 +583,7 @@ class SimInterfaceCore(QtCore.QObject):
         msg = f"{context} - {exc}"
         log.error(msg)
         log.error(traceback.format_exc())
+        self.fatal_error.emit(msg)
         self.simStatusChanged.emit(msg)
 
     def emit_status(self, status):
@@ -640,7 +649,8 @@ if __name__ == "__main__":
     ui = MainWindow(core)
 
     switches_comport = sim_config.get_switch_comport(os.name)
-    ui.switches_begin(switches_comport)
+    if switches_comport != None:
+        ui.switches_begin(switches_comport)
     
     core.setup()
     if os.name == 'posix':
