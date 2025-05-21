@@ -85,6 +85,21 @@ class ActivationButton(QtWidgets.QPushButton):
         painter.drawText(rect, QtCore.Qt.AlignCenter, self.text())
 
 
+class FatalErrDialog(QtWidgets.QDialog):
+    def __init__(self):
+        super().__init__()
+
+    def fatal_err(self, error_message: str):
+        msg = QtWidgets.QMessageBox(self)
+        msg.setWindowTitle("Fatal Error")
+        msg.setText(f"{error_message}\n\nClick 'Exit' and resolve this error.")
+        msg.setIcon(QtWidgets.QMessageBox.Icon.Critical)
+        msg.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Close)
+        msg.button(QtWidgets.QMessageBox.StandardButton.Close).setText("Exit")
+
+        msg.exec()
+        sys.exit(1)  # Exit the application after the dialog is closed
+
 # ------------------------------------------------------------------------------
 # Test Harness
 # ------------------------------------------------------------------------------
