@@ -1,5 +1,6 @@
-import serial, json, logging, time                 # ← json added
+import serial, json, logging, time 
 from enum import IntEnum
+import traceback
 
 class SwitchIndex(IntEnum):
     FLY        = 0
@@ -41,14 +42,14 @@ class SerialSwitchReader:
                 parity   = serial.PARITY_NONE,
                 stopbits = serial.STOPBITS_ONE,
                 bytesize = serial.EIGHTBITS,
-                timeout  = 0        # non‑blocking
+                timeout  = .01        # non blocking
             )
             return True
         except serial.SerialException as e:
             self._log_status(f"{self.port}: Failed to open serial port: {e}", True)
             return False
 
-    # ---------- poll() tweaked for newline‑terminated JSON ----------
+    # ---------- poll() tweaked for newline terminated JSON ----------
     def poll(self):
         if not self.serial_port or not self.serial_port.is_open:
             return
@@ -59,6 +60,8 @@ class SerialSwitchReader:
                     self._process_json_line(line)
         except Exception as e:
             self._log_status(f"{self.port}: Error while reading serial data: {e}", True)
+            print(traceback.format_exc())
+            
 
     # ---------- NEW: parse JSON full & delta objects ----------
     def _process_json_line(self, line: str):

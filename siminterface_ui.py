@@ -3,10 +3,10 @@ import platform
 import logging
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from typing import NamedTuple
-from common.serial_switch_json_reader import SerialSwitchReader
+# from common.serial_switch_json_reader import SerialSwitchReader
 from switch_ui_controller import SwitchUIController
 from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
-from ui_widgets import ActivationButton, ButtonGroupHelper 
+from ui_widgets import ActivationButton, ButtonGroupHelper,  FatalErrDialog
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +26,7 @@ def load_icon_from_path(image_path):
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self, core=None, parent=None):
         super().__init__(parent)
+        self.error_dialog = FatalErrDialog()
         self.core = core
         self.setupUi(self)
         self.state = None
@@ -68,6 +69,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def connect_signals(self):
         self.core.simStatusChanged.connect(self.on_sim_status_changed)
+        self.core.fatal_error.connect(self.on_fatal_error)
         self.core.dataUpdated.connect(self.on_data_updated)
         self.core.activationLevelUpdated.connect(self.on_activation_transition)
         self.core.platformStateChanged.connect(self.on_platform_state_changed)
@@ -135,6 +137,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mild_percent = 30
         self.update_mild_button_position()
 
+    def on_fatal_error(self, err_context):
+        self.error_dialog.fatal_err(err_context)
+            
     def configure_ui(self):
         self.lbl_sim_status.setText("Starting ...")
 
@@ -487,7 +492,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def sync_ui_with_switches(self):
         if not self.switch_controller:
             return
-
         # Sync UI buttons
         self.flight_button_group.set_checked(self.switch_controller.get_flight_mode())
         self.exp_button_group.set_checked(self.switch_controller.get_assist_level())

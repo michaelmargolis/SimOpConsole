@@ -58,6 +58,7 @@ class SwitchUIController(QtCore.QObject):
             else:
                 if self.status_callback:
                     self.status_callback("Hardware switches not connected.")
+                    self.reader = None
                 parent = self.parent()
                 if parent:
                     QtCore.QTimer.singleShot(0, parent.show_hardware_connection_error)
