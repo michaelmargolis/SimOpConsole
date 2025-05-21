@@ -106,6 +106,8 @@ class PythonInterface:
             'sim/flightmodel/position/phi',
             'sim/flightmodel/position/groundspeed'
         ]
+        # note: consider use of 'sim/flightmodel/position/true_theta and 'sim/flightmodel/position/tru_phi'
+        
         self.OutputDataRef = [xp.findDataRef(ref) for ref in self.xform_drefs]
         self.NumberOfDatarefs = len(self.OutputDataRef)
         self.pauseCmd = xp.findCommand("sim/operation/pause_toggle")

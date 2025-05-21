@@ -26,8 +26,10 @@ class XplaneTelemetry:
                     telemetry_data["g_axil"] * nf[0],   # X translation
                     telemetry_data["g_side"] * nf[1],   # Y translation
                     telemetry_data["g_nrml"] * nf[2],   # Z translation
-                    telemetry_data["Prad"] * nf[3],     # Roll rate (angular velocity)
-                    telemetry_data["Qrad"] * nf[4],     # Pitch rate (angular velocity)
+                    # telemetry_data["Prad"] * nf[3],   # Roll rate (angular velocity)
+                    telemetry_data["phi"] * nf[3],      # Rollangle   
+                    # telemetry_data["Qrad"] * nf[4],   # Pitch rate (angular velocity)
+                    telemetry_data["theta"] * nf[4],    # pitch angle 
                     telemetry_data["Rrad"] * nf[5]      # Yaw rate (angular velocity)
                 ]
                 self.last_xyzrpy = tuple(xyzrpy)
