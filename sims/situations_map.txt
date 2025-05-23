@@ -1,0 +1,4 @@
+# flight mode, situation file name
+0,Standard.sit
+1,Scenic.sit
+2,Custom.sit
