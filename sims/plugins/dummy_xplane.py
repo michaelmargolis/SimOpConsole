@@ -14,6 +14,9 @@ TARGET_PORT = 10022
 HEARTBEAT_PORT = 10030
 TELEMETRY_PORT = 10023
 
+FRAME_DURATION_MS = 25
+SKIP_FRAMES = 0  # set to 1 to skip every other frame
+
 class DummyXPlaneApp(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -49,10 +52,11 @@ class DummyXPlaneApp(QMainWindow):
         self.heartbeat_udp = UdpReceive(HEARTBEAT_PORT)
         self.telemetry_udp = UdpReceive(TELEMETRY_PORT)
 
-        # Timer to call loop() every 25ms
+        # Timer to drive output frames
         self.timer = QTimer()
         self.timer.timeout.connect(self.loop)
-        self.timer.start(25)  # 25ms = 40Hz
+        self.timer.start(FRAME_DURATION_MS)  # 25ms = 40Hz, 50ms = 20hz
+        self.frame_count = 0
 
     def update_values(self):
         self.transform_values = [s.value() / 100.0 for s in self.sliders]
@@ -77,6 +81,7 @@ class DummyXPlaneApp(QMainWindow):
                 self.player.start_playback(fname)
                 self.icao_code  = self.player.vehicle
                 self.txt_icao.setText(self.icao_code)
+                self.frame_count = 0
             except TelemetryError as err:
                 print(f"Cannot start playback: {err}")
                 return
@@ -87,31 +92,33 @@ class DummyXPlaneApp(QMainWindow):
     def send_telemetry(self):
         if self.is_playing and not self.is_paused :
             rec = self.player.playback_service()
+            self.frame_count += 1
             for i in range(6):
                 if i == 2:
                     self.sliders[2].setValue(round(rec[2] * norm_factors[i] * 100))
                 else:    
                     self.sliders[i].setValue(round(rec[i] * norm_factors[i] * -100))
-        
+
         if self.enable_telemetry:
-            telemetry_dict = {
-                "header": "xplane_telemetry",
-                "g_axil": -self.transform_values[0] / norm_factors[0],
-                "g_side": -self.transform_values[1] / norm_factors[1],
-                "g_nrml": self.transform_values[2] / norm_factors[2],
-                "Prad": -self.transform_values[3] / norm_factors[3],
-                "Qrad": -self.transform_values[4] / norm_factors[4],
-                "Rrad": -self.transform_values[5] / norm_factors[5],
-                "phi": 0,
-                "theta": 0,
-                "icao": self.icao_code
-            }
-            telemetry_json = json.dumps(telemetry_dict)
-            try:
-                self.telemetry_udp.send(telemetry_json, (self.controller_addr, TARGET_PORT))
-                # print(f"[SEND] {telemetry_json} -> {self.controller_addr}:{TARGET_PORT}")
-            except Exception as e:
-                print(e)
+            if SKIP_FRAMES == 0 or (SKIP_FRAMES > 0 and self.frame_count % (SKIP_FRAMES + 1) == 0):  
+                telemetry_dict = {
+                    "header": "xplane_telemetry",
+                    "g_axil": -self.transform_values[0] / norm_factors[0],
+                    "g_side": -self.transform_values[1] / norm_factors[1],
+                    "g_nrml": self.transform_values[2] / norm_factors[2],
+                    "Prad": -self.transform_values[3] / norm_factors[3],
+                    "Qrad": -self.transform_values[4] / norm_factors[4],
+                    "Rrad": -self.transform_values[5] / norm_factors[5],
+                    "phi": 0,
+                    "theta": 0,
+                    "icao": self.icao_code
+                }
+                telemetry_json = json.dumps(telemetry_dict)
+                try:
+                    self.telemetry_udp.send(telemetry_json, (self.controller_addr, TARGET_PORT))
+                    # print(f"[SEND] frame {self.frame_count}: {telemetry_json} -> {self.controller_addr}:{TARGET_PORT}")
+                except Exception as e:
+                    print(e)
 
     def loop(self):
         # Handle heartbeat
