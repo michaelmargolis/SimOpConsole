@@ -21,7 +21,7 @@ class HeartbeatClient:
             self.sock.send("ping", self.heartbeat_addr)
             self.last_ping_time = time.time()
         except Exception as e:
-            logging.warning(f"[HeartbeatClient] Ping to {self.heartbeat_addr} failed: {e}")
+            logging.warning(f"[HeartbeatClient] Ping failed: {e}")
 
     def query_status(self, now):
         try:
@@ -45,5 +45,5 @@ class HeartbeatClient:
             logging.warning(f"[HeartbeatClient] Query failed: {e}")
             self._ok = False
             self._running = False
-        # print(f"heartbeat debug: ok {self._ok}, running {self._running}")  
+
         return self._ok, self._running
