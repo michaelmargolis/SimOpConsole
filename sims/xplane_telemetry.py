@@ -51,4 +51,7 @@ class XplaneTelemetry:
             print(f"Failed to send telemetry command: {e}")
 
     def close(self):
-        self.telemetry.close()
+        try:
+            self.telemetry.close()
+        except:
+            pass

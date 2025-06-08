@@ -164,8 +164,7 @@ class MuscleOutput(object):
             plot.append('{}:{}'.format('Pressure', str(round(out_pressures[i]/60))))                  
             trace_data.append(','.join(trace for trace in plot))
 
-        msg = prefix + '#' + ';'.join(trace for trace in trace_data)    
-        print("whaah", msg)       
+        msg = prefix + '#' + ';'.join(trace for trace in trace_data)   
         self.plot_socket.sendto(msg.encode('utf-8'), ('127.0.0.1', 10029))
         # print("in do_pressure_plot sent", msg)
         """

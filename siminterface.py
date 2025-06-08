@@ -54,7 +54,9 @@ from siminterface_ui import MainWindow
 from kinematics.kinematics_V2SP import Kinematics
 from kinematics.dynamics import Dynamics
 
-import output.d_to_p as d_to_p
+# d_to_p is now imported in load_config method
+# import output.d_to_p_ML as d_to_p
+
 from common.get_local_ip import get_local_ip
 
 #naming#from output.muscle_output import MuscleOutput
@@ -187,13 +189,6 @@ class SimInterfaceCore(QtCore.QObject):
             self.handle_error(e, f"Unable to import platform config from {cfg_module}, check sim_config.py")
             return
 
-        # Initialize the distance->pressure converter
-        self.DtoP = d_to_p.DistanceToPressure(self.cfg.MUSCLE_LENGTH_RANGE+1, self.cfg.MUSCLE_MAX_LENGTH)
-        self.muscle_output = MuscleOutput(self.DtoP.muscle_length_to_pressure, sleep_qt,
-                            self.FESTO_IP, self.cfg.MUSCLE_MAX_LENGTH, self.cfg.MUSCLE_LENGTH_RANGE ) 
-                
-        # Hardcoded Festo IP in example above—change if needed or pass as param
-
         # Setup kinematics
         self.k = Kinematics()
         self.cfg.calculate_coords()
@@ -228,9 +223,23 @@ class SimInterfaceCore(QtCore.QObject):
         self.dynam.begin(self.cfg.LIMITS_1DOF_TRANFORM, "shape.cfg")
         
         
+        # Initialize the distance->pressure converter
+        if self.cfg.MUSCLE_PRESSURE_MAPPING_FILE:
+            d_to_p_data = self.cfg.MUSCLE_PRESSURE_MAPPING_FILE
+            d_to_p = importlib.import_module("output.d_to_p")  
+            log.info(f"d_to_p using lookup table: {d_to_p_data}")
+        elif self.cfg.MUSCLE_PRESSURE_ML_MODEL:
+            d_to_p_data = self.cfg.MUSCLE_PRESSURE_ML_MODEL
+            d_to_p = importlib.import_module("output.d_to_p_ML")  
+            log.info(f"d_to_p using Machine Learning model: {d_to_p_data}")
+            
+        self.DtoP = d_to_p.DistanceToPressure(self.cfg.MUSCLE_LENGTH_RANGE+1, self.cfg.MUSCLE_MAX_LENGTH)
+        self.muscle_output = MuscleOutput(self.DtoP.muscle_length_to_pressure, sleep_qt,
+                            self.FESTO_IP, self.cfg.MUSCLE_MAX_LENGTH, self.cfg.MUSCLE_LENGTH_RANGE ) 
+                            
         # Load distance->pressure file
         try:
-            if self.DtoP.load_data(self.cfg.MUSCLE_PRESSURE_MAPPING_FILE):
+            if self.DtoP.load_data(d_to_p_data):
                 log.info("Core: Muscle pressure mapping table loaded.")
                 self.DtoP.set_load(self.payload_weights[1])  # default is middle weight 
         except Exception as e:
@@ -326,6 +335,7 @@ class SimInterfaceCore(QtCore.QObject):
         self.dataUpdated.emit(SimUpdate(
             transform=tuple(self.transform),
             muscle_lengths=tuple(self.muscle_lengths),
+            sent_pressures = tuple(self.muscle_output.sent_pressures),
             conn_status=conn_status,
             data_status=data_status,
             aircraft_info=aircraft_info,
@@ -333,7 +343,7 @@ class SimInterfaceCore(QtCore.QObject):
             processing_percent=self.processing_percent,
             jitter_percent=self.jitter_percent
         ))
-
+        
         # Performance monitoring
         loop_duration = time.perf_counter() - frame_start
         self.processing_percent = int((loop_duration / 0.050) * 100)
@@ -344,12 +354,18 @@ class SimInterfaceCore(QtCore.QObject):
     def handle_transition_step(self):
         if not self.transition_state:
             return False
-            
         if self.transition_step_index >= self.transition_steps:
+            # here if this is the final step of the slow move
             self.muscle_lengths = self.transition_end_lengths
             self.muscle_output.set_muscle_lengths(self.muscle_lengths)
-            ###  TODO need to echo transform outside of valid range 
-            final_percent = 100 if self.transition_state == "activating" else 0
+            ###  TODO need to echo transform outside of valid range?
+            if self.transition_state == "activating":
+                final_percent = 100 
+                if self.cfg.HAS_PISTON:
+                    self.muscle_output.set_piston_flag(False)  
+                    log.debug("Setting flag to activate piston to 0")                    
+            else:
+                final_percent = 0
             self.update_activate_transition(final_percent, self.muscle_lengths)
             self.transition_state = None
             self.block_sim_control = False
@@ -373,6 +389,7 @@ class SimInterfaceCore(QtCore.QObject):
 
 
     def start_transition(self, mode: str, end_lengths: list):
+        # initiates movement from current muscle length to the given end lengths
         self.transition_state = mode
         self.transition_step_index = 0
         self.transition_start_lengths = (
@@ -389,11 +406,11 @@ class SimInterfaceCore(QtCore.QObject):
         ]
 
         self.block_sim_control = True
-        log.info(f"[Init Transition] {mode}: {self.transition_steps} steps from {self.transition_start_lengths} to {self.transition_end_lengths}")
+        log.debug(f"[Init Transition] {mode}: {self.transition_steps} steps from {self.transition_start_lengths} to {self.transition_end_lengths}")
 
 
     def start_slow_move(self, start_lengths, end_lengths, mode):
-        log.info(f"[Init Slow Move] {mode}: {self._slow_move_steps} steps from {start_lengths} to {end_lengths}")
+        log.debug(f"[Init Slow Move] {mode}: {self._slow_move_steps} steps from {start_lengths} to {end_lengths}")
         self._motion_state = mode
         self._requested_motion_state = mode
         self._slow_move_step_index = 0
@@ -409,8 +426,42 @@ class SimInterfaceCore(QtCore.QObject):
 
     def deactivate_platform(self):
         log.debug("Core: deactivating platform")
+        if self.cfg.HAS_PISTON:
+            self.muscle_output.set_piston_flag(True)
+            log.debug("Setting flag to activate piston to 1")
         self._requested_motion_state = "deactivating"
+     
+    """ 
+    def swell_for_access(self):
+        if pfm.HAS_PISTON and not self.is_output_enabled:
+            #Briefly raises platform high enough to insert access stairs and activate piston
+            log.debug("Start swelling for access")
+            self.slow_move(pfm.DISABLED_DISTANCES, pfm.PROPPING_DISTANCES,  pfm.DISABLED_XFORM, pfm.PROPPING_XFORM, 100)
+            gutil.sleep_qt(3) # time in seconds in up pos
+            self.slow_move(pfm.PROPPING_DISTANCES, pfm.DISABLED_DISTANCES,  pfm.PROPPING_XFORM, pfm.DISABLED_XFORM, 100)
+            log.debug("Finished swelling for access")
+   
         
+    def park_platform(self, do_park):
+        if do_park:
+            if pfm.HAS_PISTON:
+                self.platform.set_pistion_flag(False)
+                log.debug("Setting flag to activate piston to 0")
+                log.debug("TODO check if festo msg sent before delay")
+                gutil.sleep_qt(0.5)
+            if pfm.HAS_BRAKE:
+               self.platform.set_brake(True)
+            self.ui.lbl_parked.setText("Parked")
+        else:  #  unpark
+            if pfm.HAS_PISTON:
+                self.platform.set_pistion_flag(True)
+                log.debug("setting flag to activate piston to 1")
+            if pfm.HAS_BRAKE:
+                self.platform.set_brake(False)
+            self.ui.lbl_parked.setText("")
+        log.debug("Platform park state changed to %s", "parked" if do_park else "unparked")
+    """
+    
     def echo(self, transform, distances, pose):
         t = [""] * 6
         for idx, val in enumerate(transform):
@@ -635,7 +686,7 @@ def setup_logging():
 if __name__ == "__main__":
     setup_logging()
     log = logging.getLogger(__name__)  
-    log.info("Starting SimInterface with separated UI and Core")
+    # log.info("Starting SimInterface with separated UI and Core")
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')

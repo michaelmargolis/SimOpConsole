@@ -8,7 +8,7 @@
 """
 from typing import List, Tuple
 
-XPLANE_11_IP_ADDRESS = '127.0.0.1'  # <== set this ip address
+XPLANE_11_IP_ADDRESS =  '127.0.0.1'  # <== set this ip address
 
 # Core config values
 AVAILABLE_SIMS: List[Tuple[str, str, str, str]] = [

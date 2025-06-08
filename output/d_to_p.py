@@ -57,7 +57,6 @@ class DistanceToPressure:
         log.info("Using distance to Pressure file: %s" , csv_path)
         try:
             skiped_lines, loads = self._get_loads(csv_path)
-            # print(skiped_lines, loads)
             if loads:
                 self.loads = np.asarray(loads)
                 # Ensure sorted loads
@@ -75,7 +74,6 @@ class DistanceToPressure:
                 self.rows = self.all_d_to_p_up.shape[0]
                 if self.nbr_columns != self.all_d_to_p_up.shape[1]:
                     print(f"number of columns {self.all_d_to_p_up.shape[1]}, expected {self.nbr_columns} " )
-                print(f"number of columns {self.all_d_to_p_up.shape[1]}")
                 return True
             return False    
         except Exception as e:
@@ -87,7 +85,6 @@ class DistanceToPressure:
         self.d_to_p_up = self._interpolate_load(self.all_d_to_p_up, load)
         self.d_to_p_down = self._interpolate_load(self.all_d_to_p_down, load)
         self.d_to_p = np.stack([self.d_to_p_up, self.d_to_p_down], axis=0)
-       #  print(f"in set_load, d_to_p stack is: {self.d_to_p}")
 
     def muscle_length_to_pressure(self, muscle_lengths):
         muscle_lengths = np.asarray(muscle_lengths, dtype=int)

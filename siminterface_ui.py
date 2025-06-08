@@ -90,16 +90,18 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.front_pos = self.lbl_front_view.pos()
         self.side_pos = self.lbl_side_view.pos()
         self.top_pos = self.lbl_top_view.pos()
-        print("xfrom ps:", self.front_pos, self.side_pos, self.top_pos)
+        # print("xfrom ps:", self.front_pos, self.side_pos, self.top_pos)
         self.muscle_bars = [getattr(self, f"muscle_{i}") for i in range(6)]
         self.txt_muscles = [getattr(self, f"txt_muscle_{i}") for i in range(6)]
         self.cache_status_icons()
         # store right edge of muscle bar display
         self.muscle_base_right = []
+        self.muscle_base_left = []
         for i in range(6):
             line = getattr(self, f"muscle_{i}")
             right_edge = line.x() + line.width()
             self.muscle_base_right.append(right_edge)
+            self.muscle_base_left.append(line.x())
 
     def init_sliders(self):
         self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
@@ -546,6 +548,16 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 new_x = self.muscle_base_right[i] - new_width
                 line.setGeometry(new_x, line.y(), new_width, line.height())
                 line.update()
+
+    def show_pressures(self, pressures):
+        for i in range(6):
+            line = getattr(self, f"muscle_{i}", None)
+            if line:
+                full_visual_width = 500
+                fraction = pressures[i] / 6000 # todo make this a constant              
+                width = max(1, min(int(fraction * full_visual_width ), full_visual_width))
+                line.setGeometry(self.muscle_base_left[i], line.y(), width, line.height())
+                line.update()
                 
     def show_performance_bars(self, processing_percent: int, jitter_percent: int):
         """
@@ -599,6 +611,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # Update muscle display
         self.show_muscles(transition.muscle_lengths)
 
+
        
 
     @QtCore.pyqtSlot(object)
@@ -623,9 +636,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
             self.txt_festo_ip.setText(self.core.FESTO_IP)
-            if not self.cb_supress_graphics.isChecked():   
+            if not self.cb_supress_graphics.isChecked():         
                 self.show_transform(update.transform)
-                self.show_muscles(update.muscle_lengths)
+                if self.rb_contractions.isChecked():    
+                    self.show_muscles(update.muscle_lengths)
+                else:    
+                    self.show_pressures(update.sent_pressures)
             # Update performance metrics
             if hasattr(update, "processing_percent") and hasattr(update, "jitter_percent"):
                 self.show_performance_bars(update.processing_percent, update.jitter_percent)
@@ -652,7 +668,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.state = new_state
 
         activate_state = self.chk_activate.isChecked()
-        logging.info(f"DEBUG: chk_activate state = {activate_state} (True = Activated, False = Deactivated)")
+        logging.debug(f"DEBUG: chk_activate state = {activate_state} (True = Activated, False = Deactivated)")
 
         if new_state == "initialized":
             if self.chk_activate.isChecked():
