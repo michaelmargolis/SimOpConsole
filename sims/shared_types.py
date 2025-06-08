@@ -10,7 +10,6 @@ class AircraftInfo(NamedTuple):
 class SimUpdate(NamedTuple):
     transform: tuple
     muscle_lengths: tuple
-    sent_pressures: tuple
     conn_status: str
     data_status: str
     aircraft_info: "AircraftInfo"
