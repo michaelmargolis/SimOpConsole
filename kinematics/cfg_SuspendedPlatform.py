@@ -7,14 +7,8 @@ class PlatformConfig(object):
     PLATFORM_NAME = "Falcon chair"
     PLATFORM_TYPE = "Inverted Stewart Platform"
     PLATFORM_INVERTED = True
-    """
-    When using d_to_p lookup, set MUSCLE_PRESSURE_MAPPING_FILE to csv lookup table, 
-       and set MUSCLE_PRESSURE_ML_MODEL to none
-    When using d_to_P using pretrained ML model, set  MUSCLE_PRESSURE_ML_MODEL to model file
-       and set MUSCLE_PRESSURE_MAPPING_FILE to None
-    """   
-    MUSCLE_PRESSURE_MAPPING_FILE = 'output/wheelchair_DtoP.csv'    
-    MUSCLE_PRESSURE_ML_MODEL = None# "output/inverse_model_scaled.pkl"
+    # MUSCLE_PRESSURE_MAPPING_FILE = 'output/chair_DtoP.csv'
+    MUSCLE_PRESSURE_MAPPING_FILE = "output/wheelchair_DtoP.csv"
 
     PLATFORM_CLEARANCE_OFFSET = 50  # Minimum clearance in mm between platform and base when active
     PLATFORM_LOWEST_Z = -1085       # Z offset of platform when muscles are at full extension (max length)
@@ -48,7 +42,7 @@ class PlatformConfig(object):
             90, 90, 100, math.radians(12), math.radians(10), math.radians(12)
         )
         self.LIMIT_Z_TRANSLATION = self.LIMITS_1DOF_TRANFORM[2]
-        # print("Note: Platform limits need verification, the file contains theoretical max values")
+        print("Note: Platform limits need verification, the file contains theoretical max values")
 
         self.LIMITS_6DOF_TRANSLATION_ROTATION = (
             80, 80, 80, math.radians(10), math.radians(10), math.radians(10)
