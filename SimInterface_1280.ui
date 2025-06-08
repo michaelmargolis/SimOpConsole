@@ -2136,7 +2136,7 @@
       <property name="geometry">
        <rect>
         <x>610</x>
-        <y>20</y>
+        <y>30</y>
         <width>611</width>
         <height>161</height>
        </rect>
@@ -2148,22 +2148,8 @@
         <bold>true</bold>
        </font>
       </property>
-      <property name="styleSheet">
-       <string notr="true">QGroupBox {
-    border: 2px solid lightgray;
-    border-radius: 5px;
-    padding: 10px;
-}
-
-QGroupBox::title {
-    background-color: transparent;
-    subcontrol-position: top left;
-    padding: 2px 10px;
-}
-</string>
-      </property>
       <property name="title">
-       <string/>
+       <string>Muscle Contractions</string>
       </property>
       <widget class="Line" name="muscle_4">
        <property name="enabled">
@@ -2172,7 +2158,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>115</y>
+         <y>110</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2207,7 +2193,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>135</y>
+         <y>130</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2229,7 +2215,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>35</y>
+         <y>30</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2251,7 +2237,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>55</y>
+         <y>50</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2273,7 +2259,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>75</y>
+         <y>70</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2295,7 +2281,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>95</y>
+         <y>90</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2314,7 +2300,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>95</y>
+         <y>90</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2327,7 +2313,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>35</y>
+         <y>30</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2340,7 +2326,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>115</y>
+         <y>110</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2353,7 +2339,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>135</y>
+         <y>130</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2366,7 +2352,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>55</y>
+         <y>50</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2379,7 +2365,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>75</y>
+         <y>70</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2448,113 +2434,6 @@ QGroupBox::title {
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
-      <widget class="QRadioButton" name="rb_contractions">
-       <property name="geometry">
-        <rect>
-         <x>50</x>
-         <y>5</y>
-         <width>191</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QGroupBox {
-    border: 2px solid gray;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 10px;  /* Ensures the title does not overlap the border */
-}
-
-QGroupBox::title {
-    background-color: white;
-    color: black;
-    subcontrol-origin: margin;  /* Positions the title properly */
-    subcontrol-position: top left;
-    padding: 2px 10px;
-}
-
-QRadioButton {
-    border: 2px solid gray;  /* Adds a border around the radio button itself */
-    border-radius: 5px;
-    padding: 5px;
-}
-
-QRadioButton::indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-}
-
-QRadioButton::indicator:checked {
-    background-color: red;
-    border: 2px solid white;
-}
-
-QRadioButton::indicator:unchecked {
-    background-color: white;
-    border: 2px solid gray;  /* Ensures the indicator border is visible */
-}
-</string>
-       </property>
-       <property name="text">
-        <string>Muscle Contractions</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-      <widget class="QRadioButton" name="rb_pressures">
-       <property name="geometry">
-        <rect>
-         <x>310</x>
-         <y>5</y>
-         <width>161</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QGroupBox {
-    border: 2px solid gray;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 10px;  /* Ensures the title does not overlap the border */
-}
-
-QGroupBox::title {
-    background-color: white;
-    color: black;
-    subcontrol-origin: margin;  /* Positions the title properly */
-    subcontrol-position: top left;
-    padding: 2px 10px;
-}
-
-QRadioButton {
-    border: 2px solid gray;  /* Adds a border around the radio button itself */
-    border-radius: 5px;
-    padding: 5px;
-}
-
-QRadioButton::indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 6px;
-}
-
-QRadioButton::indicator:checked {
-    background-color: red;
-    border: 2px solid white;
-}
-
-QRadioButton::indicator:unchecked {
-    background-color: white;
-    border: 2px solid gray;  /* Ensures the indicator border is visible */
-}
-</string>
-       </property>
-       <property name="text">
-        <string>Sent Pressures</string>
-       </property>
-      </widget>
       <zorder>lbl_actuator_frame</zorder>
       <zorder>muscle_0</zorder>
       <zorder>muscle_1</zorder>
@@ -2571,8 +2450,6 @@ QRadioButton::indicator:unchecked {
       <zorder>line_vert_4</zorder>
       <zorder>line_vert_10</zorder>
       <zorder>line_vert_11</zorder>
-      <zorder>rb_contractions</zorder>
-      <zorder>rb_pressures</zorder>
      </widget>
      <widget class="QGroupBox" name="gb_sys_performance">
       <property name="geometry">
