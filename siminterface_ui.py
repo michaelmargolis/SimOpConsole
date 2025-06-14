@@ -2,6 +2,7 @@ import os
 import platform
 import logging
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
+from PyQt5.QtGui import QMovie
 from typing import NamedTuple
 # from common.serial_switch_json_reader import SerialSwitchReader
 from switch_ui_controller import SwitchUIController
@@ -32,6 +33,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.state = None
         self.MAX_ACTUATOR_RANGE = 100
         self.activation_percent = 0 # steps between 0 and 100 in slow moves when activated/deactivated  
+        self.deferred_physical_toggle_state = None  # Tracks activation toggle that happened during transition
+
 
         # Replace chk_activate with ActivationButton
         orig_btn = self.chk_activate
@@ -53,6 +56,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.initialize_intensity_controls()
         self.init_images()
         self.init_sliders()
+        self.init_telemetry_format_string()
         self.configure_ui()
 
         self.switch_controller = SwitchUIController(
@@ -90,7 +94,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.front_pos = self.lbl_front_view.pos()
         self.side_pos = self.lbl_side_view.pos()
         self.top_pos = self.lbl_top_view.pos()
-        print("xfrom ps:", self.front_pos, self.side_pos, self.top_pos)
+        # print("xfrom ps:", self.front_pos, self.side_pos, self.top_pos)
         self.muscle_bars = [getattr(self, f"muscle_{i}") for i in range(6)]
         self.txt_muscles = [getattr(self, f"txt_muscle_{i}") for i in range(6)]
         self.cache_status_icons()
@@ -100,6 +104,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             line = getattr(self, f"muscle_{i}")
             right_edge = line.x() + line.width()
             self.muscle_base_right.append(right_edge)
+            
+        self.busy_spinner_movie = QMovie("images/busy_spinner.gif")
+        self.lbl_busy_spinner.setMovie(self.busy_spinner_movie)
+        self.lbl_busy_spinner.hide() 
+         
 
     def init_sliders(self):
         self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
@@ -137,6 +146,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mild_percent = 30
         self.update_mild_button_position()
 
+    def init_telemetry_format_string(self):    
+        font_metrics = QtGui.QFontMetrics(self.lbl_sim_status.font())
+        char_width = font_metrics.horizontalAdvance("5") # we assume fixed width font
+        avail_width = self.lbl_sim_status.width() - (char_width*6*5) # 6 values each 5 chars wide
+        avail_pixels = avail_width // 5 # 5 gaps between values
+        self.telem_str_spacing = 5 + (avail_pixels//char_width)
+        print(f"spacing: {self.telem_str_spacing},avail_pixels: {avail_pixels}, avail width {avail_width}, char width {char_width}, total width: {self.lbl_sim_status.width()}")
+        
+        
     def on_fatal_error(self, err_context):
         self.error_dialog.fatal_err(err_context)
             
@@ -251,58 +269,55 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def on_activate_toggled(self, physical_state=None):
         """
-        Called when "Activated/Deactivated" GUI toggle is clicked OR when a physical toggle switch state changes.
+        Handles activation toggle logic from UI or hardware.
+        - Blocks UI toggles during transitions.
+        - Defers hardware toggles during transitions.
+        - Enforces startup condition: switch must be OFF (DOWN).
         """
-        if not self.state or self.state == 'initialized': # only preceed when transitioned beyond init state
+        if not self.state or self.state == 'initialized':
             return
-        #  Ensure activation switch state is enforced correctly at startup
-        if physical_state is None:  # Only check at startup
-            actual_switch_state = self.get_hardware_activate_state()  #  Read actual physical switch state
+
+        # --- Enforce switch state at startup ---
+        if physical_state is None:
+            actual_switch_state = self.get_hardware_activate_state()
             logging.info(f"DEBUG: Hardware activation switch at startup = {actual_switch_state}")
 
-            if actual_switch_state:  #  Prevent initialization if switch is UP (activated)
+            if actual_switch_state:
                 self.activate_warning_dialog = QtWidgets.QMessageBox.warning(
                     self,
                     "Initialization Warning",
                     "Activate switch must be DOWN for initialization. Flip switch down to proceed."
                 )
-                return  #  Do NOT override the switch state, just prevent proceeding!
+                return
 
+        # --- Defer toggle during transition (activating or deactivating) ---
+        if self.state in ["activating", "deactivating"]:
+            if physical_state is not None:
+                self.deferred_physical_toggle_state = physical_state
+                logging.warning(f"Physical toggle deferred during '{self.state}' (queued = {physical_state})")
+
+                self.chk_activate.blockSignals(True)
+                self.chk_activate.setChecked(self.state == "activating")
+                self.chk_activate.blockSignals(False)
+            else:
+                logging.info("UI toggle attempt ignored during transition.")
+            return
+
+        # --- Sync toggle state if physical input given ---
         if physical_state is not None:
-            self.chk_activate.setChecked(physical_state)  #  Sync UI button with actual switch state
+            self.chk_activate.setChecked(physical_state)
 
+        # --- Trigger activation or deactivation ---
         if self.chk_activate.isChecked():
-            #  System is now ACTIVATED
-            self.chk_activate.setText("ACTIVATED")
-            self.core.update_state("enabled")
-
-            #  Send the currently selected mode & skill to X-Plane
-            self.inform_button_selections()
-
-            #  Ensure X-Plane is paused after scenario load
-            if self.core.sim:
-                logging.info("DEBUG: Pausing X-Plane after scenario load.")
-                self.core.sim.pause()
-
-            #  Enable Pause and Fly buttons
-            self.btn_fly.setEnabled(True)
-            self.btn_pause.setEnabled(True)
-
-        else:
-            #  System is now DEACTIVATED
-            self.chk_activate.setText("INACTIVE")
-            self.core.update_state("deactivated")
-
-            #  Pause X-Plane when deactivated
-            if self.core.sim:
-                logging.info("DEBUG: Pausing X-Plane due to deactivation.")
-                self.core.sim.pause()
-
-            #  Disable Pause and Fly buttons (unless override is enabled)
+            self.chk_activate.setText("ACTIVATING...")
             self.btn_fly.setEnabled(False)
             self.btn_pause.setEnabled(False)
-            
-            # Sync UI & Sim with switch state
+            self.core.update_state("activating")
+        else:
+            self.chk_activate.setText("DEACTIVATING...")
+            self.btn_fly.setEnabled(False)
+            self.btn_pause.setEnabled(False)
+            self.core.update_state("deactivating")
             self.sync_ui_with_switches()
 
 
@@ -526,26 +541,36 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         widget.setPixmap(rotated)
 
     def show_transform(self, transform):
-        surge, sway, heave, roll, pitch, yaw = transform
-        self.do_transform(self.lbl_front_view, self.front_pixmap, self.front_pos,
-                          int(sway * XLATE_SCALE), int(-heave * XLATE_SCALE), -roll * ROTATE_SCALE)
-        self.do_transform(self.lbl_side_view, self.side_pixmap, self.side_pos,
-                          int(surge * XLATE_SCALE), int(-heave * XLATE_SCALE), -pitch * ROTATE_SCALE)
-        self.do_transform(self.lbl_top_view, self.top_pixmap, self.top_pos,
-                          int(sway * XLATE_SCALE), int(surge * XLATE_SCALE), yaw * ROTATE_SCALE)
+        if transform and transform[0] != None:   
+            surge, sway, heave, roll, pitch, yaw = transform
+            self.do_transform(self.lbl_front_view, self.front_pixmap, self.front_pos,
+                              int(sway * XLATE_SCALE), int(-heave * XLATE_SCALE), -roll * ROTATE_SCALE)
+            self.do_transform(self.lbl_side_view, self.side_pixmap, self.side_pos,
+                              int(surge * XLATE_SCALE), int(-heave * XLATE_SCALE), -pitch * ROTATE_SCALE)
+            self.do_transform(self.lbl_top_view, self.top_pixmap, self.top_pos,
+                              int(sway * XLATE_SCALE), int(surge * XLATE_SCALE), yaw * ROTATE_SCALE)
 
-    def show_muscles(self, muscle_lengths):
-        for i in range(6):
-            line = getattr(self, f"muscle_{i}", None)
-            if line:
-                full_visual_width = 500
-                contraction = 1000 - muscle_lengths[i] # todo remove hard coded muscle lengths
-                new_width = max(0, min(int(contraction * 2 ), full_visual_width))
+    def show_muscles(self, muscle_lengths, sent_pressures):
+        if self.rb_contractions.isChecked():
+            for i in range(6):
+                line = getattr(self, f"muscle_{i}", None)
+                if line:
+                    full_visual_width = 500
+                    contraction = 1000 - muscle_lengths[i] # todo remove hard coded muscle lengths
+                    new_width = max(0, min(int(contraction * 2 ), full_visual_width))
 
-                # Align right by adjusting the x position based on new width
-                new_x = self.muscle_base_right[i] - new_width
-                line.setGeometry(new_x, line.y(), new_width, line.height())
-                line.update()
+                    # Align right by adjusting the x position based on new width
+                    new_x = self.muscle_base_right[i] - new_width
+                    line.setGeometry(new_x, line.y(), new_width, line.height())
+                    line.update()
+        elif self.rb_pressures.isChecked():   
+            for i in range(6):
+                line = getattr(self, f"muscle_{i}", None)
+                if line:
+                    full_visual_width = 500
+                    width =  int((sent_pressures[i] / 6000) * full_visual_width)
+                    line.setGeometry(0, line.y(), width, line.height())
+                    line.update()
                 
     def show_performance_bars(self, processing_percent: int, jitter_percent: int):
         """
@@ -589,15 +614,24 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @QtCore.pyqtSlot(ActivationTransition)
     def on_activation_transition(self, transition: ActivationTransition):
-        # Update activation fill on the button
+        """
+        Called during activation/deactivation transitions.
+        Updates progress fill and label text according to transition state.
+        """
         self.activate_percent = transition.activation_percent
         self.chk_activate.set_activation_percent(self.activate_percent)
+
         if self.activate_percent == 100:
             self.chk_activate.setText("ACTIVATED")
         elif self.activate_percent == 0:
             self.chk_activate.setText("INACTIVE")
-        # Update muscle display
-        self.show_muscles(transition.muscle_lengths)
+        else:
+            if self.core.transition_state == "activating":
+                self.chk_activate.setText(f"ACTIVATING...") #  {self.activate_percent}%")
+            elif self.core.transition_state == "deactivating":
+                self.chk_activate.setText(f"DEACTIVATING...") #  {self.activate_percent}%")
+
+        self.show_muscles(transition.muscle_lengths, transition.sent_pressures)
 
        
 
@@ -616,16 +650,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         current_tab = self.tabWidget.widget(tab_index).objectName()
 
         if current_tab == 'tab_main':
-            xform = (-1, -.5, 0, .25, .5, 1)
             for idx in range(6):
-                self.update_transform_blocks(update.transform)
+                self.update_transform_blocks(update.processed_transform)
         else: 
             self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
             self.txt_festo_ip.setText(self.core.FESTO_IP)
-            if not self.cb_supress_graphics.isChecked():   
-                self.show_transform(update.transform)
-                self.show_muscles(update.muscle_lengths)
+            if not self.cb_supress_graphics.isChecked():
+                self.show_transform(update.raw_transform)
+                self.show_muscles(update.muscle_lengths, update.sent_pressures)
             # Update performance metrics
             if hasattr(update, "processing_percent") and hasattr(update, "jitter_percent"):
                 self.show_performance_bars(update.processing_percent, update.jitter_percent)
@@ -641,18 +674,35 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.apply_icon(self.ico_wheelchair_docked, "ok")
 
         self.update_temperature_display(update.temperature)
-
+        
+        if update.aircraft_info.status != "ok":
+            if not self.lbl_busy_spinner.isVisible():
+                # color was mistyrose
+                self.lbl_sim_status.setStyleSheet("background-color:  papayawhip; color: black;")
+                self.lbl_busy_spinner.show()
+                self.busy_spinner_movie.start()
+        else:
+            if self.lbl_busy_spinner.isVisible():
+                self.lbl_busy_spinner.hide()
+                self.busy_spinner_movie.stop()
+                self.lbl_sim_status.setStyleSheet("background-color: lightgreen; color: black;")
+ 
+            if update.raw_transform[0] != None:   
+                self.lbl_sim_status.setText(" Receiving X-Plane telemetry") 
+                # self.lbl_sim_status.setText( " " + " ".join(f"{x:={self.telem_str_spacing}.2f}" for x in update.raw_transform))
+   
 
     @QtCore.pyqtSlot(str)
     def on_platform_state_changed(self, new_state):
         """
-        Reflect platform states in the UI (enabled, disabled, running, paused).
+        Reflect platform states in the UI, including intermediate transitions.
+        Reapplies any deferred physical toggle input once a transition completes.
         """
-        log.info("UI: platform state is now '%s'", new_state)
+        log.debug("UI: platform state is now '%s'", new_state)
         self.state = new_state
 
         activate_state = self.chk_activate.isChecked()
-        logging.info(f"DEBUG: chk_activate state = {activate_state} (True = Activated, False = Deactivated)")
+        logging.debug(f"DEBUG: chk_activate state = {activate_state} (True = Activated, False = Deactivated)")
 
         if new_state == "initialized":
             if self.chk_activate.isChecked():
@@ -662,29 +712,54 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     "Activate switch must be DOWN for initialization. Flip switch down to proceed."
                 )
                 return
-            logging.info("UI: Activate switch is OFF. Transitioning to 'deactivated' state.")
+            logging.debug("UI: Activate switch is OFF. Transitioning to 'deactivated' state.")
             self.core.update_state("deactivated")
- 
+            return
 
-        # Enable/Disable Fly & Pause buttons
-        if new_state == "enabled":
-            self.btn_pause.setEnabled(True)
-            self.btn_fly.setEnabled(True)
-        elif new_state == "deactivated":
-            self.btn_pause.setEnabled(False)
+        # Handle transition states
+        if new_state == "activating":
+            self.chk_activate.setText("ACTIVATING...")
             self.btn_fly.setEnabled(False)
+            self.btn_pause.setEnabled(False)
 
-        # Update Fly Button Style
+        elif new_state == "deactivating":
+            self.chk_activate.setText("DEACTIVATING...")
+            self.btn_fly.setEnabled(False)
+            self.btn_pause.setEnabled(False)
+
+        elif new_state == "enabled":
+            self.chk_activate.setText("ACTIVATED")
+            self.btn_fly.setEnabled(True)
+            self.btn_pause.setEnabled(True)
+
+        elif new_state == "deactivated":
+            self.chk_activate.setText("INACTIVE")
+            self.btn_fly.setEnabled(False)
+            self.btn_pause.setEnabled(False)
+
+        # Update Fly button style
         if new_state == "running":
             self.update_button_style(self.btn_fly, "active", "green", "white", "darkgreen")
         else:
             self.update_button_style(self.btn_fly, "default", "green", "green", "green")
 
-        # Update Pause Button Style
+        # Update Pause button style
         if new_state == "paused":
             self.update_button_style(self.btn_pause, "active", "orange", "black", "darkorange")
         else:
             self.update_button_style(self.btn_pause, "default", "orange", "orange", "orange")
+
+        # Reapply deferred physical toggle if needed
+        if new_state in ["enabled", "deactivated"] and self.deferred_physical_toggle_state is not None:
+            expected = self.deferred_physical_toggle_state
+            current_checked = self.chk_activate.isChecked()
+
+            if expected != current_checked:
+                log.info(f"[Deferred Toggle] Reapplying physical switch state: {expected}")
+                self.deferred_physical_toggle_state = None
+                self.on_activate_toggled(physical_state=expected)
+            else:
+                self.deferred_physical_toggle_state = None  # Clear if matched anyway
 
     def get_hardware_activate_state(self):
         return self.switch_controller.get_activate_state()

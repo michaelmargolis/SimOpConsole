@@ -2136,7 +2136,7 @@
       <property name="geometry">
        <rect>
         <x>610</x>
-        <y>30</y>
+        <y>20</y>
         <width>611</width>
         <height>161</height>
        </rect>
@@ -2148,8 +2148,22 @@
         <bold>true</bold>
        </font>
       </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: 2px solid lightgray;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+QGroupBox::title {
+    background-color: transparent;
+    subcontrol-position: top left;
+    padding: 2px 10px;
+}
+</string>
+      </property>
       <property name="title">
-       <string>Muscle Contractions</string>
+       <string/>
       </property>
       <widget class="Line" name="muscle_4">
        <property name="enabled">
@@ -2158,7 +2172,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>110</y>
+         <y>115</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2193,7 +2207,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>130</y>
+         <y>135</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2215,7 +2229,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>30</y>
+         <y>35</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2237,7 +2251,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>50</y>
+         <y>55</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2259,7 +2273,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>70</y>
+         <y>75</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2281,7 +2295,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>90</y>
+         <y>95</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2300,7 +2314,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>90</y>
+         <y>95</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2313,7 +2327,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>30</y>
+         <y>35</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2326,7 +2340,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>110</y>
+         <y>115</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2339,7 +2353,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>130</y>
+         <y>135</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2352,7 +2366,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>50</y>
+         <y>55</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2365,7 +2379,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>70</y>
+         <y>75</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2434,6 +2448,113 @@
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
+      <widget class="QRadioButton" name="rb_contractions">
+       <property name="geometry">
+        <rect>
+         <x>50</x>
+         <y>5</y>
+         <width>191</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;  /* Ensures the title does not overlap the border */
+}
+
+QGroupBox::title {
+    background-color: white;
+    color: black;
+    subcontrol-origin: margin;  /* Positions the title properly */
+    subcontrol-position: top left;
+    padding: 2px 10px;
+}
+
+QRadioButton {
+    border: 2px solid gray;  /* Adds a border around the radio button itself */
+    border-radius: 5px;
+    padding: 5px;
+}
+
+QRadioButton::indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+}
+
+QRadioButton::indicator:checked {
+    background-color: red;
+    border: 2px solid white;
+}
+
+QRadioButton::indicator:unchecked {
+    background-color: white;
+    border: 2px solid gray;  /* Ensures the indicator border is visible */
+}
+</string>
+       </property>
+       <property name="text">
+        <string>Muscle Contractions</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+      <widget class="QRadioButton" name="rb_pressures">
+       <property name="geometry">
+        <rect>
+         <x>310</x>
+         <y>5</y>
+         <width>161</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QGroupBox {
+    border: 2px solid gray;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 10px;  /* Ensures the title does not overlap the border */
+}
+
+QGroupBox::title {
+    background-color: white;
+    color: black;
+    subcontrol-origin: margin;  /* Positions the title properly */
+    subcontrol-position: top left;
+    padding: 2px 10px;
+}
+
+QRadioButton {
+    border: 2px solid gray;  /* Adds a border around the radio button itself */
+    border-radius: 5px;
+    padding: 5px;
+}
+
+QRadioButton::indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 6px;
+}
+
+QRadioButton::indicator:checked {
+    background-color: red;
+    border: 2px solid white;
+}
+
+QRadioButton::indicator:unchecked {
+    background-color: white;
+    border: 2px solid gray;  /* Ensures the indicator border is visible */
+}
+</string>
+       </property>
+       <property name="text">
+        <string>Sent Pressures</string>
+       </property>
+      </widget>
       <zorder>lbl_actuator_frame</zorder>
       <zorder>muscle_0</zorder>
       <zorder>muscle_1</zorder>
@@ -2450,6 +2571,8 @@
       <zorder>line_vert_4</zorder>
       <zorder>line_vert_10</zorder>
       <zorder>line_vert_11</zorder>
+      <zorder>rb_contractions</zorder>
+      <zorder>rb_pressures</zorder>
      </widget>
      <widget class="QGroupBox" name="gb_sys_performance">
       <property name="geometry">
@@ -2985,7 +3108,7 @@
    <widget class="QFrame" name="grp_platform_control">
     <property name="geometry">
      <rect>
-      <x>30</x>
+      <x>10</x>
       <y>600</y>
       <width>1231</width>
       <height>121</height>
@@ -3028,15 +3151,16 @@
     <widget class="QLabel" name="lbl_sim_status">
      <property name="geometry">
       <rect>
-       <x>720</x>
+       <x>730</x>
        <y>8</y>
-       <width>501</width>
+       <width>495</width>
        <height>81</height>
       </rect>
      </property>
      <property name="font">
       <font>
-       <pointsize>14</pointsize>
+       <family>MS 33558</family>
+       <pointsize>11</pointsize>
        <weight>50</weight>
        <bold>false</bold>
       </font>
@@ -3045,7 +3169,7 @@
       <bool>false</bool>
      </property>
      <property name="styleSheet">
-      <string notr="true">background-color: rgb(255, 255, 200);</string>
+      <string notr="true">background-color: rgb(223,255,214);</string>
      </property>
      <property name="text">
       <string>Status:</string>
@@ -3088,6 +3212,19 @@
       <bool>true</bool>
      </property>
     </widget>
+    <widget class="QLabel" name="lbl_busy_spinner">
+     <property name="geometry">
+      <rect>
+       <x>1140</x>
+       <y>8</y>
+       <width>80</width>
+       <height>80</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
    </widget>
    <widget class="QWidget" name="widget_activate" native="true">
     <property name="enabled">
@@ -3119,7 +3256,7 @@
      </property>
      <property name="geometry">
       <rect>
-       <x>50</x>
+       <x>30</x>
        <y>16</y>
        <width>200</width>
        <height>91</height>

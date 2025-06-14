@@ -24,10 +24,16 @@ class ActivationButton(QtWidgets.QPushButton):
         self._activation_percent = 0
         self._background_color = QtCore.Qt.lightGray
         self._fill_color = QtCore.Qt.green
+        self._label_text = self.text()  # cache for drawing
         
         self._border_radius = 15
         self.setCheckable(True)
         self.parse_stylesheet()
+
+    def setText(self, text: str):
+        super().setText(text)           # update QPushButton
+        self._label_text = text         # cache for paintEvent
+        self.update()                   # force repaint
 
     def set_activation_percent(self, percent: int):
         self._activation_percent = max(0, min(100, percent))
@@ -76,6 +82,8 @@ class ActivationButton(QtWidgets.QPushButton):
 
         # draw label manually over everything
         # painter.setPen(QtCore.Qt.black if self._activation_percent >= 50 else QtCore.Qt.red)
+        
+        """
         if self._activation_percent == 100:
             painter.setPen(QtCore.Qt.black)
         elif self._activation_percent == 0: 
@@ -83,8 +91,11 @@ class ActivationButton(QtWidgets.QPushButton):
             painter.setPen(QtCore.Qt.red)
         painter.setFont(self.font())
         painter.drawText(rect, QtCore.Qt.AlignCenter, self.text())
-
-
+        """
+        painter.setPen(QtCore.Qt.black if self._activation_percent >= 50 else QtCore.Qt.red)
+        painter.setFont(self.font())
+        painter.drawText(rect, QtCore.Qt.AlignCenter, self._label_text)
+ 
 class FatalErrDialog(QtWidgets.QDialog):
     def __init__(self):
         super().__init__()

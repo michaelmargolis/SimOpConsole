@@ -108,7 +108,7 @@ class SimInterfaceCore(QtCore.QObject):
         self.state = 'initialized'    # runtime platform states: disabled, enabled, running, paused
 
         # Default transforms
-        self.transform = [0, 0, -1, 0, 0, 0]
+        self.transform = [0, 0, 0, 0, 0, 0]
 
         # Kinematics, dynamics, distance->pressure references
         self.k = None
@@ -160,9 +160,9 @@ class SimInterfaceCore(QtCore.QObject):
         if self.is_started:
             # Start the data update timer if the sim interface class for xplane loaded successfully
             self.data_timer.start(self.data_period_ms)
-            log.info("Core: data timer started at %d ms period", self.data_period_ms)
+            log.debug("Core: data timer started at %d ms period", self.data_period_ms)
     
-        logging.info("Core: Initialization complete. Emitting 'initialized' state.")
+        logging.debug("Core: Initialization complete. Emitting 'initialized' state.")
         self.platformStateChanged.emit("initialized")  
         
         self.echo_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -219,7 +219,7 @@ class SimInterfaceCore(QtCore.QObject):
             self.is_slider = False
         
         self.payload_weights = [int((w + self.cfg.UNLOADED_PLATFORM_WEIGHT) / 6) for w in self.cfg.PAYLOAD_WEIGHTS]
-        log.info(f"Core: Payload weights in kg per muscle: {self.payload_weights}")
+        log.debug(f"Core: Payload weights in kg per muscle: {self.payload_weights}")
         
         self.invert_axis = self.cfg.INVERT_AXIS
         self.swap_roll_pitch = self.cfg.SWAP_ROLL_PITCH
@@ -231,12 +231,12 @@ class SimInterfaceCore(QtCore.QObject):
         # Load distance->pressure file
         try:
             if self.DtoP.load_data(self.cfg.MUSCLE_PRESSURE_MAPPING_FILE):
-                log.info("Core: Muscle pressure mapping table loaded.")
+                log.debug("Core: Muscle pressure mapping table loaded.")
                 self.DtoP.set_load(self.payload_weights[1])  # default is middle weight 
         except Exception as e:
             self.handle_error(e, "Error loading Muscle pressure mapping table ")
 
-        log.info("Core: %s config data loaded", description)
+        log.debug("Core: %s config data loaded", description)
         self.simStatusChanged.emit("Config Loaded")
 
     # --------------------------------------------------------------------------
@@ -255,37 +255,14 @@ class SimInterfaceCore(QtCore.QObject):
             self.sim = sim_module.Sim(sleep_qt, frame, self.emit_status, self.sim_ip_address )
             if self.sim:
                 self.is_started = True
-                log.info("Core: Instantiated sim '%s' from class '%s'", self.sim.name, self.sim_class)
+                log.debug("Core: Instantiated sim '%s' from class '%s'", self.sim.name, self.sim_class)
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
             self.sim.set_default_address(self.sim_ip_address)
-            log.info(f"Core: Preparing to connect to {self.sim_name} at {self.sim_ip_address}")    
+            log.info(f"Ready to connect to {self.sim_name} at {self.sim_ip_address}")    
         except Exception as e:
             self.handle_error(e, f"Unable to load sim from {sim_path}")
 
-    def connect_sim(self):
-        """
-        Connects to the loaded sim. 
-        """
-        if not self.sim:
-            self.simStatusChanged.emit("No sim loaded")
-            return
-
-        if not self.sim.is_Connected(): 
-            try:
-                self.sim.connect()
-                # self.simStatusChanged.emit("Sim connected")
-                self.state = "deactivated"  # default
-                # Possibly set washout times
-                washout_times = self.sim.get_washout_config()
-                for idx in range(6):
-                    self.dynam.set_washout(idx, washout_times[idx])
-                self.sim.set_washout_callback(self.dynam.get_washed_telemetry)
-                # self.sim.run()
-
-            except Exception as e:
-                self.handle_error(e, "Error connecting sim")
-                sleep_qt(1)
 
     # --------------------------------------------------------------------------
     # QTimer Update Loop
@@ -300,7 +277,6 @@ class SimInterfaceCore(QtCore.QObject):
             self.simStatusChanged.emit("Sim interface failed to start")
             print("Sim interface failed to start")
             return
-
         # Handle any platform motion state (activation/deactivation transitions)
         if self.handle_transition_step():
             return  # skip sim-driven control during transition
@@ -310,22 +286,22 @@ class SimInterfaceCore(QtCore.QObject):
             self.sim.service()
         else:
             transform = self.sim.read()
-            if transform is None:
-                return
-            for idx in range(6):
-                base_gain = self.gains[idx] * self.master_gain
-                attenuated_gain = base_gain * (self.intensity_percent / 100.0)
-                self.transform[idx] = transform[idx] * attenuated_gain
-            self.move_platform(self.transform)
-            # print("in data update", self.transform)
+            if transform:               
+                for idx in range(6):
+                    base_gain = self.gains[idx] * self.master_gain
+                    attenuated_gain = base_gain * (self.intensity_percent / 100.0)
+                    self.transform[idx] = transform[idx] * attenuated_gain
+                self.move_platform(self.transform)
 
         # Emit update for UI + Unity twin
         temperature = self.temperature
         conn_status, data_status, aircraft_info = self.sim.get_connection_state()
 
         self.dataUpdated.emit(SimUpdate(
-            transform=tuple(self.transform),
+            raw_transform=tuple(self.sim.raw_transform ),
+            processed_transform=tuple(self.transform),
             muscle_lengths=tuple(self.muscle_lengths),
+            sent_pressures=tuple(self.muscle_output.sent_pressures),
             conn_status=conn_status,
             data_status=data_status,
             aircraft_info=aircraft_info,
@@ -344,15 +320,27 @@ class SimInterfaceCore(QtCore.QObject):
     def handle_transition_step(self):
         if not self.transition_state:
             return False
-            
+
         if self.transition_step_index >= self.transition_steps:
+            # Capture mode BEFORE clearing state
+            mode = self.transition_state
+
             self.muscle_lengths = self.transition_end_lengths
             self.muscle_output.set_muscle_lengths(self.muscle_lengths)
-            ###  TODO need to echo transform outside of valid range 
-            final_percent = 100 if self.transition_state == "activating" else 0
+
+            final_percent = 100 if mode == "activating" else 0
             self.update_activate_transition(final_percent, self.muscle_lengths)
+
             self.transition_state = None
             self.block_sim_control = False
+
+            # Now use captured mode
+            if mode == "activating":
+                self.update_state("enabled")
+            elif mode == "deactivating":
+                self.update_state("deactivated")
+            log.info(f"[Transition Complete] {mode} → {self.state}")
+
             return False
 
         # Interpolate muscle lengths
@@ -360,7 +348,7 @@ class SimInterfaceCore(QtCore.QObject):
             s + self.transition_step_index * d
             for s, d in zip(self.transition_start_lengths, self.transition_delta_lengths)
         ]
-        
+
         if not self.virtual_only_mode:
             self.muscle_output.set_muscle_lengths(self.muscle_lengths)
 
@@ -370,6 +358,7 @@ class SimInterfaceCore(QtCore.QObject):
 
         self.transition_step_index += 1
         return True
+
 
 
     def start_transition(self, mode: str, end_lengths: list):
@@ -391,7 +380,22 @@ class SimInterfaceCore(QtCore.QObject):
         self.block_sim_control = True
         log.info(f"[Init Transition] {mode}: {self.transition_steps} steps from {self.transition_start_lengths} to {self.transition_end_lengths}")
 
+   
+    def update_activate_transition(self, percent,  muscle_lengths=None):
+        """
+        Emits activation progress including muscle lengths.
+        If muscle_lengths not provided, falls back to current physical state.
+        """
+        if muscle_lengths is None:
+            muscle_lengths = self.muscle_lengths
 
+        self.activationLevelUpdated.emit(ActivationTransition(
+            activation_percent = percent,
+            muscle_lengths=tuple(muscle_lengths),
+            sent_pressures=tuple(self.muscle_output.sent_pressures)
+        ))
+
+    """  
     def start_slow_move(self, start_lengths, end_lengths, mode):
         log.info(f"[Init Slow Move] {mode}: {self._slow_move_steps} steps from {start_lengths} to {end_lengths}")
         self._motion_state = mode
@@ -401,16 +405,18 @@ class SimInterfaceCore(QtCore.QObject):
         self._slow_move_muscle_len = list(start_lengths)
         self._delta_muscle_len = [(j - i) / self._slow_move_steps for i, j in zip(start_lengths, end_lengths)]
         self._block_sim_control = True
- 
+    """
 
-    def activate_platform(self):
-        log.debug("Core: activating platform")
-        self._requested_motion_state = "activating"
-
-    def deactivate_platform(self):
-        log.debug("Core: deactivating platform")
-        self._requested_motion_state = "deactivating"
-        
+    def read_temperature(self):
+        """Read CPU temperature on Raspberry Pi if available."""
+        try:
+            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+                raw = f.readline().strip()
+                self.temperature = round(int(raw) / 1000.0, 1)
+        except Exception as e:
+            log.warning(f"Failed to read temperature: {e}")
+            self.temperature = None
+            
     def echo(self, transform, distances, pose):
         t = [""] * 6
         for idx, val in enumerate(transform):
@@ -428,21 +434,7 @@ class SimInterfaceCore(QtCore.QObject):
         msg = req_msg + dist_msg + pose_msg + "\n"
         # print(msg)
         self.echo_sock.sendto(bytes(msg, "utf-8"), ('<broadcast>', echo_port))
-
-    def update_activate_transition(self, percent,  muscle_lengths=None):
-        """
-        Emits activation progress including muscle lengths.
-        If muscle_lengths not provided, falls back to current physical state.
-        """
-        if muscle_lengths is None:
-            muscle_lengths = self.muscle_lengths
-
-        self.activationLevelUpdated.emit(ActivationTransition(
-            activation_percent = percent,
-            muscle_lengths=tuple(muscle_lengths)
-        ))
-
-      
+        
     def update_gain(self, index, value):
         """
         Updates the gain based on the slider change.
@@ -521,59 +513,70 @@ class SimInterfaceCore(QtCore.QObject):
     def update_state(self, new_state):
         """
         Valid transitions:
-        - Disabled → Enabled (only)
-        - Enabled → Running, Paused, Disabled
-        - Running → Paused, Disabled
-        - Paused → Running, Disabled
+          initialized → deactivated  
+          deactivating → deactivated  
+          deactivated → activating  
+          activating → enabled  
+          enabled → running, paused, deactivating  
+          running → paused, deactivating  
+          paused → running, deactivating
         """
 
         if new_state == self.state:
-            return  # No change needed
-        
-        # Enforce allowed transitions
+            return  # No state change needed
+
+        log.debug(f"in update_state, new state is {new_state}")
+
+        # Define valid state transitions
         valid_transitions = {
-            "initialized": ["deactivated"],  
-            "deactivated": ["enabled"],
-            "enabled": ["running", "paused", "deactivated"],
-            "running": ["paused", "deactivated"],
-            "paused": ["running", "deactivated"]
+            "initialized": ["deactivated", "deactivating"],
+            "deactivating": ["deactivated"],
+            "deactivated": ["activating"],
+            "activating": ["enabled"],
+            "enabled": ["running", "paused", "deactivating"],
+            "running": ["paused", "deactivating"],
+            "paused": ["running", "deactivating"]
         }
-        
+
         if new_state not in valid_transitions.get(self.state, []):
             log.warning("Invalid transition: %s → %s", self.state, new_state)
-            return  # Invalid transition
+            return
 
         old_state = self.state
         self.state = new_state
         log.debug("Core: Platform state changed from %s to %s", old_state, new_state)
         self.platformStateChanged.emit(self.state)
 
-        # Handle transitions
-        if new_state == 'enabled':
+        # State-specific handling
+        if new_state == 'activating':
             transform = self.sim.read()
+            log.debug(f"in activating, transforms: {transform}")
             if transform:
                 transform = [
                     transform[i] * self.gains[i] * self.master_gain * (self.intensity_percent / 100.0)
                     for i in range(6)
                 ]
                 end_lengths = self.k.muscle_lengths(self.dynam.regulate(transform))
-                self.start_transition("activating", end_lengths)
-        elif new_state == 'deactivated':
+                
+            else:
+                end_lengths = self.cfg.PLATFORM_NEUTRAL_MUSCLE_LENGTHS
+            self.start_transition("activating", end_lengths)    
+
+        elif new_state == 'enabled':
+            log.info("Platform is now enabled.")
+
+        elif new_state == 'deactivating':
             self.start_transition("deactivating", self.cfg.DEACTIVATED_MUSCLE_LENGTHS)
+
+        elif new_state == 'deactivated':
+            log.debug("Platform is now fully deactivated.")
+
         elif new_state == 'running':
             self.sim.run()
+
         elif new_state == 'paused':
             self.sim.pause()
 
-    def read_temperature(self):
-        """Read CPU temperature on Raspberry Pi if available."""
-        try:
-            with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-                raw = f.readline().strip()
-                self.temperature = round(int(raw) / 1000.0, 1)
-        except Exception as e:
-            log.warning(f"Failed to read temperature: {e}")
-            self.temperature = None
 
 
     # --------------------------------------------------------------------------
@@ -635,7 +638,6 @@ def setup_logging():
 if __name__ == "__main__":
     setup_logging()
     log = logging.getLogger(__name__)  
-    log.info("Starting SimInterface with separated UI and Core")
 
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle('Fusion')
