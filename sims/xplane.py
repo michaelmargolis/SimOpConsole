@@ -31,6 +31,7 @@ class Sim:
         self.norm_factors = config.norm_factors
         self.washout_callback = None
         self.telemetry = XplaneTelemetry((sim_ip, TELEMETRY_EVT_PORT), config.norm_factors)
+        self.raw_transform = [None]*6 # transform as received from xplane
         self.xplane_ip = sim_ip
         self.xplane_addr = None
         self.aircraft_info = AircraftInfo(status="nogo", name="Aircraft")
@@ -49,7 +50,7 @@ class Sim:
         self.pause_after_startup = True
 
     def service(self, washout_callback=None):
-        return self.state_machine.handle(washout_callback)
+        return self.state_machine.handle(washout_callback)     
 
     def read(self):
         return self.service(self.washout_callback)
@@ -79,7 +80,7 @@ class Sim:
             connection_status = "warning"
         else:
             connection_status = "ok"
-
+         
         if self.state == SimState.RECEIVING_DATAREFS:
             data_status = "ok"
         elif self.state == SimState.WAITING_DATAREFS:

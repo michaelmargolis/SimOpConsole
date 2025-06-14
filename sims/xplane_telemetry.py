@@ -1,5 +1,6 @@
 from common.udp_tx_rx import UdpReceive
 import json
+import logging
 
 class XplaneTelemetry:
     def __init__(self, addr, norm_factors):
@@ -34,11 +35,11 @@ class XplaneTelemetry:
                 ]
                 self.last_xyzrpy = tuple(xyzrpy)
                 self.last_icao = telemetry_data.get("icao", "Aircraft")
-
-                return self.last_xyzrpy
+                return self.last_xyzrpy        
+            except Exception as e: 
+                logging.error(f"telemetry format error {e}")
+                # raise JSONDecodeError(e)
                 
-            except Exception as e:
-                print(f"Error parsing telemetry: {e}")
         return None
 
     def get_icao(self):
@@ -51,7 +52,4 @@ class XplaneTelemetry:
             print(f"Failed to send telemetry command: {e}")
 
     def close(self):
-        try:
-            self.telemetry.close()
-        except:
-            pass
+        self.telemetry.close()

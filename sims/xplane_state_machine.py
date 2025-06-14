@@ -90,19 +90,20 @@ class WaitingXplaneState(BaseState):
             self.machine.transition_to(SimState.WAITING_HEARTBEAT)
         elif app_running:
             self.machine.transition_to(SimState.WAITING_DATAREFS)
+            logging.info("X-Plane connected, waiting for telemetry")
 
         return None
 
 
 class WaitingDatarefsState(BaseState):
     def handle(self, washout_callback):
-        self.sim.report_state_cb("Waiting for datarefs...")
+        self.sim.report_state_cb(" Waiting for telemetry...")
 
         now = time.time()
         hb_ok, app_running = self.sim.heartbeat.query_status(now)
         self.sim.heartbeat_ok = hb_ok
         self.sim.xplane_running = app_running
-
+ 
         self.send_initcoms_if_due(now)
 
         if not hb_ok:
@@ -120,8 +121,11 @@ class WaitingDatarefsState(BaseState):
                 logging.info("Flight mode load completed — pausing sim")
                 self.sim.pause()
                 self.sim.situation_load_started = False
+            logging.info("X-Plane telemetry received")    
             self.machine.transition_to(SimState.RECEIVING_DATAREFS)
-
+            if washout_callback:
+                return washout_callback(copy.copy(xyzrpy))
+            return xyzrpy
         return None
 
 
@@ -136,19 +140,26 @@ class ReceivingDatarefsState(BaseState):
             if not hb_ok or not app_running:
                 self.machine.transition_to(SimState.WAITING_HEARTBEAT)
                 return None
+            try:
+                xyzrpy = self.sim.telemetry.get_telemetry()
+                # print("in receiving datarefs", xyzrpy, now)
+                """
+                if xyzrpy:
+                    self.sim.report_state_cb(" " + " ".join(f"{x:8.2f}" for x in xyzrpy))
+                 """   
+                supported = self.sim.is_icao_supported()
+                self.sim.aircraft_info = AircraftInfo(
+                    status="ok" if supported else "nogo",
+                    name=self.sim.telemetry.get_icao()
+                )
 
-            xyzrpy = self.sim.telemetry.get_telemetry()
-            supported = self.sim.is_icao_supported()
-            self.sim.aircraft_info = AircraftInfo(
-                status="ok" if supported else "nogo",
-                name=self.sim.telemetry.get_icao()
-            )
-
-            if xyzrpy:
+                self.sim.raw_transform = xyzrpy
                 if washout_callback:
                     return washout_callback(copy.copy(xyzrpy))
                 return xyzrpy
-            else:
+            except JSONDecodeError as e: 
+                log.error(f"telemetry format error {e}")
+                self.sim.raw_transform = [None]*6
                 self.machine.transition_to(SimState.WAITING_DATAREFS)
                 return None
 
