@@ -90,12 +90,15 @@ class UdpReceive:
             try:
                 msg, addr = sock.recvfrom(MAX_MSG_LEN)
                 if self.encodeing:
-                    msg = msg.decode(self.encodeing).rstrip()
+                    msg = msg.decode(self.encodeing).rstrip()  
                 self.in_q.put((addr, msg))
             except Exception as e:
-                # log.error("UDP listen error: %s", e)
-                print(e)
-                pass
+                if isinstance(e, OSError) and e.errno == 10054:
+                    # Suppress WinError 10054 (ICMP Port Unreachable)
+                    pass
+                    # logging.debug("[UdpReceive] Ignored benign WinError 10054 (connection reset by peer)")
+                else:
+                    logging.error(f"[UdpReceive] Listener thread error: {e}")
 
        
 """ the following is for testing """
