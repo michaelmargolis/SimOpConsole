@@ -43,9 +43,7 @@ Message Payload:
     roll_rate, pitch_rate, yaw_rate,
     roll_angle, pitch_angle, ICAO
 
-Example:
-    xplane_telemetry,-0.020,0.005,-0.980,-0.003,0.000,-0.002,0.087,-0.045,C172
-"""
+
 import json
 from XPPython3 import xp
 from collections import namedtuple
@@ -68,7 +66,7 @@ class PythonInterface:
     def XPluginStart(self):
         self.Name = "PlatformItf v1.01"
         self.Sig = "Mdx.Python.UdpTelemetry"
-        self.Desc = "Sends 6DoF telemetry + ICAO code over UDP to platform."
+        self.Desc = "Sends json 6DoF telemetry + ICAO code over UDP to platform."
 
         self.controller_addr = []
         self.udp = UdpReceive(10023)
@@ -120,7 +118,6 @@ class PythonInterface:
 
     def InputOutputLoopCallback(self, elapsedMe, elapsedSim, counter, refcon):
         try:
-            # telemetry, icao = self.read_telemetry()
             # msg = "xplane_telemetry," + ",".join(f"{x:.3f}" for x in telemetry) + f",{icao}\n"
             msg = self.read_telemetry()
             for addr in self.controller_addr:
@@ -223,39 +220,6 @@ class PythonInterface:
         }
         telemetry_json = json.dumps(telemetry_dict)
         return telemetry_json
-        
-    """
-    def read_telemetry(self):
-        try:
-            data = [xp.getDataf(ref) for ref in self.OutputDataRef]
-            named = transform_refs._make(data)
-            telemetry = [
-                -named.DR_g_axil,
-                -named.DR_g_side,
-                named.DR_g_nrml - 1.0,
-                -named.DR_Prad,
-                -named.DR_Qrad,
-                -named.DR_Rrad,
-                radians(named.DR_phi),
-                -radians(named.DR_theta)
-            ]
-
-            try:
-                if self.acf_icao_ref is not None:
-                    icao_buf = [0] * 40
-                    xp.getDatab(self.acf_icao_ref, icao_buf, 0, 40)
-                    icao = bytes(icao_buf).decode('utf-8').strip('\x00')
-                else:
-                    raise ValueError("acf_icao_ref is None")
-            except Exception as e:
-                xp.log(f"[WARN] Failed to read ICAO: {e}")
-                icao = "unknown"
-
-            return telemetry, icao
-        except Exception as e:
-            xp.log(f"[ERROR] Telemetry read failed: {e}")
-            return [0.0] * 8, "unknown"
-    """ 
 
 
 

@@ -1146,7 +1146,7 @@
 </string>
        </property>
        <property name="title">
-        <string>Transform levels</string>
+        <string>Transform Levels Out</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
@@ -1154,7 +1154,7 @@
        <widget class="QLabel" name="label_18">
         <property name="geometry">
          <rect>
-          <x>280</x>
+          <x>290</x>
           <y>0</y>
           <width>31</width>
           <height>20</height>
@@ -1170,7 +1170,7 @@
        <widget class="QLabel" name="label_19">
         <property name="geometry">
          <rect>
-          <x>50</x>
+          <x>30</x>
           <y>0</y>
           <width>41</width>
           <height>20</height>
@@ -2990,7 +2990,7 @@ QRadioButton::indicator:unchecked {
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>101</width>
+         <width>231</width>
          <height>21</height>
         </rect>
        </property>
@@ -3002,7 +3002,7 @@ QRadioButton::indicator:unchecked {
         </font>
        </property>
        <property name="text">
-        <string>Transform</string>
+        <string>Transform from X-Plane</string>
        </property>
       </widget>
       <widget class="Line" name="line_2">

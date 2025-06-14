@@ -7,8 +7,8 @@ class PlatformConfig(object):
     PLATFORM_NAME = "Chair V3"
     PLATFORM_TYPE = "Inverted Stewart Platform"
     PLATFORM_INVERTED = True
-    MUSCLE_PRESSURE_MAPPING_FILE = 'output/DtoP200.csv'
-    #MUSCLE_PRESSURE_MAPPING_FILE = "output/wheelchair_DtoP.csv"
+    # MUSCLE_PRESSURE_MAPPING_FILE = 'output/chair_DtoP.csv'
+    MUSCLE_PRESSURE_MAPPING_FILE = "output/wheelchair_DtoP.csv"
 
     PLATFORM_CLEARANCE_OFFSET = 0   # Minimum clearance in mm between platform and base when active
     PLATFORM_LOWEST_Z = -1085       # Z offset of platform when muscles are at full extension (max length)
@@ -42,13 +42,13 @@ class PlatformConfig(object):
         self.SWAP_ROLL_PITCH = False
 
         self.LIMITS_1DOF_TRANFORM = (
-            90, 90, 100, math.radians(12), math.radians(10), math.radians(10)
+            90, 90, 100, math.radians(12), math.radians(10), math.radians(12)
         )
         self.LIMIT_Z_TRANSLATION = self.LIMITS_1DOF_TRANFORM[2]
         print("Note: Platform limits need verification, the file contains theoretical max values")
 
         self.LIMITS_6DOF_TRANSLATION_ROTATION = (
-            80, 80, 80, math.radians(10), math.radians(10), math.radians(8)
+            80, 80, 80, math.radians(10), math.radians(10), math.radians(10)
         )
         
         # self.DISABLED_DISTANCES = [self.MAX_ACTUATOR_LEN *.05] * 6

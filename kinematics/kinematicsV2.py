@@ -42,7 +42,7 @@ class Kinematics(object):
         self.slider_origin[:,2] = 0 # set z to zero
         self.temp_max_iter =0
         self.actuator_range = joint_max_offset - joint_min_offset
-        log.info("Kinematics set for sliding platform")
+        log.debug("Kinematics set for sliding platform")
 
     def set_platform_params(self, min_actuator_len, max_actuator_len, fixed_len):
         #  paramaters for a conventional (normal or inverted) stewart platform
@@ -51,7 +51,7 @@ class Kinematics(object):
         self.fixed_len = fixed_len
         self.actuator_range = max_actuator_len - min_actuator_len
         self.is_slider = False  # will be set True iff set_slider_params method is called
-        log.info("Kinematics set for chairs")
+        log.debug("Kinematics set for chairs")
 
     def calc_rotation(self, rpy):
         # return rotation matrix from roll,pitch,yaw

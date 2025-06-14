@@ -143,7 +143,7 @@ class Dynamics(object):
             log.info("loaded gains from file %s", self.config_fname)
             self.update_sliders()
         except IOError:
-            log.warning("Using default gains (unable to open gains config file %s)", self.config_fname)
+            log.info("Using default gains (unable to open gains config file %s)", self.config_fname)
 
     def save_config(self):
         try:

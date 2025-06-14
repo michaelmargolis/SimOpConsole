@@ -16,12 +16,13 @@ class HeartbeatClient:
         rx_port = heartbeat_addr[1] + 1
         self.sock = UdpReceive(rx_port)
 
-    def send_ping(self):
+    def send_ping(self):        
         try:
             self.sock.send("ping", self.heartbeat_addr)
             self.last_ping_time = time.time()
         except Exception as e:
-            logging.warning(f"[HeartbeatClient] Ping failed: {e}")
+            log.warning(f"[HeartbeatClient] Ping failed: {e}")
+
 
     def query_status(self, now):
         try:

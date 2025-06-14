@@ -11,7 +11,7 @@
 
   No ArduinoJson library, no dynamic memory.
 ******************************/
-#define USE_USB_SERIAL               // COMMENT OUT IF USING TTL
+// #define USE_USB_SERIAL               // COMMENT OUT IF USING TTL
 #ifdef USE_USB_SERIAL
   #define SERIAL_OUT Serial
 #else

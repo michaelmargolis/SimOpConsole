@@ -33,7 +33,7 @@ class Kinematics(object):
         self.MAX_MUSCLE_LENGTH = max_muscle_len
         self.FIXED_HARDWARE_LENGTH = fixed_len
         self.MUSCLE_LENGTH_RANGE = max_muscle_len - min_muscle_len
-        log.info("Kinematics set for Stewart platform")
+        # log.info("Kinematics set for Stewart Platform")
 
     def calc_rotation(self, rpy):
         roll, pitch, yaw = rpy

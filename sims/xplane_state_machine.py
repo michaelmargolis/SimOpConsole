@@ -6,6 +6,7 @@ from enum import Enum
 from .xplane_cfg import TELEMETRY_CMD_PORT
 from .shared_types import AircraftInfo
 
+NO_TRANSFORM = [None]*6
 
 class SimState(Enum):
     WAITING_HEARTBEAT = "Waiting for heartbeat"
@@ -37,6 +38,10 @@ class BaseState(ABC):
                 logging.debug("Sent InitComs to X-Plane")
             except Exception as e:
                 logging.warning(f"[InitComs] Send failed: {e}")
+                
+    def no_transform(self):
+         self.sim.raw_transform = NO_TRANSFORM
+         return NO_TRANSFORM
 
 
 class SimStateMachine:
@@ -74,7 +79,7 @@ class WaitingHeartbeatState(BaseState):
         if hb_ok:
             self.machine.transition_to(SimState.WAITING_XPLANE)
 
-        return None
+        return self.no_transform() 
 
 
 class WaitingXplaneState(BaseState):
@@ -92,7 +97,7 @@ class WaitingXplaneState(BaseState):
             self.machine.transition_to(SimState.WAITING_DATAREFS)
             logging.info("X-Plane connected, waiting for telemetry")
 
-        return None
+        return self.no_transform() 
 
 
 class WaitingDatarefsState(BaseState):
@@ -108,11 +113,11 @@ class WaitingDatarefsState(BaseState):
 
         if not hb_ok:
             self.machine.transition_to(SimState.WAITING_HEARTBEAT)
-            return None
+            return self.no_transform() 
 
         if not app_running:
             self.machine.transition_to(SimState.WAITING_XPLANE)
-            return None
+            return self.no_transform() 
 
         xyzrpy = self.sim.telemetry.get_telemetry()
         if xyzrpy:
@@ -126,7 +131,7 @@ class WaitingDatarefsState(BaseState):
             if washout_callback:
                 return washout_callback(copy.copy(xyzrpy))
             return xyzrpy
-        return None
+        return self.no_transform() 
 
 
 class ReceivingDatarefsState(BaseState):
@@ -139,9 +144,12 @@ class ReceivingDatarefsState(BaseState):
 
             if not hb_ok or not app_running:
                 self.machine.transition_to(SimState.WAITING_HEARTBEAT)
-                return None
+                return self.no_transform() 
             try:
                 xyzrpy = self.sim.telemetry.get_telemetry()
+                if xyzrpy == None:
+                    self.machine.transition_to(SimState.WAITING_DATAREFS)
+                    return self.no_transform()
                 # print("in receiving datarefs", xyzrpy, now)
                 """
                 if xyzrpy:
@@ -159,10 +167,10 @@ class ReceivingDatarefsState(BaseState):
                 return xyzrpy
             except JSONDecodeError as e: 
                 log.error(f"telemetry format error {e}")
-                self.sim.raw_transform = [None]*6
+                self.sim.raw_transform = self.no_transform() 
                 self.machine.transition_to(SimState.WAITING_DATAREFS)
-                return None
+                return self.no_transform() 
 
         except Exception as e:
             logging.error("Exception in ReceivingDatarefsState:", exc_info=True)
-            return None
+            return self.no_transform() 

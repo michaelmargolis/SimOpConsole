@@ -8,7 +8,7 @@
 """
 from typing import List, Tuple
 
-XPLANE_11_IP_ADDRESS =  '127.0.0.1'  # <== set this ip address
+XPLANE_11_IP_ADDRESS =  '127.0.0.1' # '192.168.1.241' # <== set this ip address
 
 # Core config values
 AVAILABLE_SIMS: List[Tuple[str, str, str, str]] = [
@@ -32,6 +32,6 @@ FESTO_IP = "192.168.0.10"
 def get_switch_comport(os_name: str) -> str:
     """Returns the correct COM port based on the operating system."""
     if os_name == 'nt':
-        return None # "COM11"
+        return "COM11"
     else:
         return "/dev/ttyUSB1"

@@ -296,7 +296,7 @@ class SimInterfaceCore(QtCore.QObject):
         # Emit update for UI + Unity twin
         temperature = self.temperature
         conn_status, data_status, aircraft_info = self.sim.get_connection_state()
-
+  
         self.dataUpdated.emit(SimUpdate(
             raw_transform=tuple(self.sim.raw_transform ),
             processed_transform=tuple(self.transform),
@@ -309,6 +309,7 @@ class SimInterfaceCore(QtCore.QObject):
             processing_percent=self.processing_percent,
             jitter_percent=self.jitter_percent
         ))
+
 
         # Performance monitoring
         loop_duration = time.perf_counter() - frame_start
