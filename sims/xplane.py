@@ -44,6 +44,8 @@ class Sim:
         self.heartbeat = HeartbeatClient(heartbeat_addr, target_app="xplane_running", interval=self.HEARTBEAT_INTERVAL)
         self.last_initcoms_time = 0
         self.INITCOMS_INTERVAL = 1.0  # seconds
+        self.last_ping_time = 0
+        self.PING_INTERVAL = 1.0  # seconds
         self.beacon = XplaneBeacon()
 
         self.situation_load_started = False

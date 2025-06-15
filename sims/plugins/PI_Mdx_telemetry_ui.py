@@ -12,6 +12,7 @@ TARGET_PORT = 10022
 LISTEN_PORT = 10023
 FLIGHT_LOOP_INTERVAL = 0.025
 ICAO_BUFFER_SIZE = 40
+PING_TIMEOUT_COUNT = 120 # three second grace time before ping timeout
 
 transform_refs = namedtuple('transform_refs', (
     'DR_g_axil', 'DR_g_side', 'DR_g_nrml',
@@ -26,7 +27,9 @@ class PythonInterface:
         self.Sig = "Mdx.Python.UdpTelemetry"
         self.Desc = "Sends json 6DoF telemetry + ICAO code over UDP to platform."
 
-        self.controller_addr = []
+        self.controller_ip = None
+        self.ping_counter = PING_TIMEOUT_COUNT
+        
         self.udp = UdpReceive(LISTEN_PORT)
         self.situation_loader = SituationLoader()
         self.settings = load_accessibility_settings()
@@ -46,6 +49,7 @@ class PythonInterface:
         self.jitter_min = None
         self.jitter_max = None
         self.jitter_caption = None
+        self.controller_caption = None                                     
 
         # Create menu with dialog
         Item = xp.appendMenuItem(xp.findPluginsMenu(), "Flight transforms", 0)
@@ -76,10 +80,31 @@ class PythonInterface:
     def InputOutputLoopCallback(self, elapsedMe, elapsedSim, counter, refcon):
         try:
             telemetry = self.read_telemetry()
-            for addr in self.controller_addr:
-                self.udp.send(telemetry, (addr, TARGET_PORT))
+            if self.controller_ip:
+                self.udp.send(telemetry, (self.controller_ip, TARGET_PORT))
         except Exception as e:
             xp.log(f"[PlatformItf] ERROR: Telemetry send failed: {e}")
+
+        # Process incoming UDP messages
+        while self.udp.available() > 0:
+            try:
+                addr, payload = self.udp.get()
+                msg = payload.split(',')
+                cmd = msg[0].strip()
+                if self.controller_ip is None and cmd == 'InitComs':
+                    self.cmd_init_coms(addr, msg)
+                elif addr[0] == self.controller_ip:
+                    handler = self.command_handlers.get(cmd)
+                    if handler:
+                        handler(addr, msg)
+            except Exception as e:
+                xp.log(f"[PlatformItf] ERROR: Failed to process UDP message: {e}")
+
+        if self.controller_ip:
+            self.ping_counter -= 1
+            if self.ping_counter <= 0:
+                xp.log(f"[PlatformItf] INFO: Controller {self.controller_ip} timed out.")
+                self.controller_ip = None
 
         if self.is_ui_visible and self.last_sent_named:
             telemetry_str = [f"{getattr(self.last_sent_named, f):.3f}" for f in self.last_sent_named._fields]
@@ -100,23 +125,10 @@ class PythonInterface:
 
                 jitter_text = f"Jitter Avg: {self.jitter_avg:.2f} ms | Min: {self.jitter_min:.2f} ms | Max: {self.jitter_max:.2f} ms"
                 xp.setWidgetDescriptor(self.jitter_caption, jitter_text)
-                controller_text = "Controllers: " + ", ".join(self.controller_addr) if self.controller_addr else "Controllers: None"
+                controller_text = f"Controller: {self.controller_ip}" if self.controller_ip else "Controller: None"
                 xp.setWidgetDescriptor(self.controller_caption, controller_text)
 
             self.last_loop_time = now
-
-        # Process incoming UDP messages
-        while self.udp.available() > 0:
-            try:
-                addr, payload = self.udp.get()
-                msg = payload.split(',')
-                cmd = msg[0].strip()
-                if cmd in self.command_handlers:
-                    self.command_handlers[cmd](addr, msg)
-                else:
-                    xp.log(f"[PlatformItf] WARN: Unknown command received: {cmd}")
-            except Exception as e:
-                xp.log(f"[PlatformItf] ERROR: UDP command handling failed: {e}")
 
         return FLIGHT_LOOP_INTERVAL
 
@@ -165,6 +177,7 @@ class PythonInterface:
             xp.hideWidget(self.telemetry_widget_id)
             self.is_ui_visible = False
             return 1
+        return 0    
 
 
     def read_icao_code(self):
@@ -229,6 +242,7 @@ class PythonInterface:
     def init_command_handlers(self):
         self.command_handlers = {
             'InitComs': self.cmd_init_coms,
+            'ping': self.cmd_ping,
             'Run': self.cmd_run,
             'PauseToggle': self.cmd_pause_toggle,
             'Pause': self.cmd_pause,
@@ -241,9 +255,13 @@ class PythonInterface:
         }
 
     def cmd_init_coms(self, addr, msg):
-        if addr[0] not in self.controller_addr:
-            self.controller_addr.append(addr[0])
-            xp.log(f"[PlatformItf] INFO: Controller added: {addr[0]}")
+        self.controller_ip = addr[0]
+        self.ping_counter = PING_TIMEOUT_COUNT
+        xp.log(f"[PlatformItf] INFO: Controller added: {self.controller_ip}")
+
+    def cmd_ping(self, addr, msg):
+        # xp.log(f"in ping cmd {self.ping_counter}, {time.time()}")
+        self.ping_counter = PING_TIMEOUT_COUNT
 
     def cmd_run(self, addr, msg):
         if xp.getDatai(self.pauseStateDR):

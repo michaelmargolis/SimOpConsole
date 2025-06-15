@@ -30,14 +30,23 @@ class BaseState(ABC):
     def handle(self, washout_callback):
         pass
 
-    def send_initcoms_if_due(self, now):
-        if now - self.sim.last_initcoms_time > self.sim.INITCOMS_INTERVAL:
-            try:
-                self.sim.telemetry.send("InitComs")
-                self.sim.last_initcoms_time = now
-                logging.debug("Sent InitComs to X-Plane")
-            except Exception as e:
-                logging.warning(f"[InitComs] Send failed: {e}")
+    def send_control_message_if_due(self, now, message_type: str):
+        if message_type == "ping":
+            if now - self.sim.last_ping_time > self.sim.PING_INTERVAL:
+                try:
+                    self.sim.telemetry.send("ping")
+                    self.sim.last_ping_time = now
+                except Exception as e:
+                    logging.warning(f"[ping] Send failed: {e}")                    
+        elif message_type == "InitComs":
+            if now - self.sim.last_initcoms_time > self.sim.INITCOMS_INTERVAL:
+                try:
+                    self.sim.telemetry.send("InitComs")
+                    self.sim.last_initcoms_time = now
+                    logging.debug("Sent InitComs to X-Plane")
+                except Exception as e:
+                    logging.warning(f"[InitComs] Send failed: {e}")
+
                 
     def no_transform(self):
          self.sim.raw_transform = NO_TRANSFORM
@@ -109,7 +118,7 @@ class WaitingDatarefsState(BaseState):
         self.sim.heartbeat_ok = hb_ok
         self.sim.xplane_running = app_running
  
-        self.send_initcoms_if_due(now)
+        self.send_control_message_if_due(now, "InitComs")
 
         if not hb_ok:
             self.machine.transition_to(SimState.WAITING_HEARTBEAT)
@@ -144,7 +153,9 @@ class ReceivingDatarefsState(BaseState):
 
             if not hb_ok or not app_running:
                 self.machine.transition_to(SimState.WAITING_HEARTBEAT)
-                return self.no_transform() 
+                return self.no_transform()
+                
+            self.send_control_message_if_due(now, "ping")    
             try:
                 xyzrpy = self.sim.telemetry.get_telemetry()
                 if xyzrpy == None:
