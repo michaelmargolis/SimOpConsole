@@ -30,8 +30,7 @@ These modules provide the core source code for this application
 │   ├── xplane_cfg.py                     # x-plane specific runtime configuration 
 │   └── ...
 ├── kinematics/
-│   ├── kinematicsV2SP.py                 # converts sim transform and accelerations to actuator lengths 
-│   ├── dynamics.py                       # manages intensity and washout   
+│   ├── kinematics_V3.py                  # converts sim transform and accelerations to actuator lengths 
 │   ├── cfg_SuspendedPlatform.py          # platform configuration parameters used by kinematics
 │   └── ...
 ├── output/
@@ -43,7 +42,15 @@ These modules provide the core source code for this application
 │   ├── heartbeat_client.py               # receives heartbeat from heartbeat server running on x-plane PC 
 │   ├── serial_switch_json_reader.py      # switch press handler
 │   └── ...
-└── ...
+│   ├── washout/
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── washout_ui.py
+│   │   ├── exponential.py
+│   │   ├── classical.py
+│   │   └── factory.py
+
+
 """
 
 
@@ -51,8 +58,9 @@ import sim_config
 # from sim_config import selected_sim, platform_config, switches_comport
 from siminterface_ui import MainWindow
 #naming#from kinematics.kinematicsV2 import Kinematics
-from kinematics.kinematics_V2SP import Kinematics
-from kinematics.dynamics import Dynamics
+from kinematics.kinematics_V3 import Kinematics, PlatformParams
+
+from washout.factory import create_washout_filter
 
 import output.d_to_p as d_to_p
 from common.get_local_ip import get_local_ip
@@ -62,7 +70,9 @@ from output.muscle_output import MuscleOutput
 from typing import NamedTuple
 from sims.shared_types import SimUpdate, ActivationTransition
 
-echo_port = 10020 # port used by optional external Unity visualizer
+visualizer_port = 10020 # port used by optional external Unity visualizer
+
+axes_name = ['x', 'y', 'z', 'roll', 'pitch', 'yaw']
 
 class SimInterfaceCore(QtCore.QObject):
     """
@@ -110,18 +120,18 @@ class SimInterfaceCore(QtCore.QObject):
         # Default transforms
         self.transform = [0, 0, 0, 0, 0, 0]
 
-        # Kinematics, dynamics, distance->pressure references
+        # Kinematics, gain and output references
         self.k = None
-        self.dynam = None
         self.DtoP = None
         self.muscle_output = None
         self.cfg = None
         self.is_slider = False
-        self.invert_axis = (1, 1, 1, 1, 1, 1)   # can be set by config
         self.swap_roll_pitch = False
         self.gains = [1.0]*6
         self.master_gain = 1.0
         self.intensity_percent = 100 
+        
+        self._last_update_time =  None   # used for washout calculations
         
         # Transition control (new version)
         self.transition_state = None            # "activating" or "deactivating"
@@ -165,8 +175,10 @@ class SimInterfaceCore(QtCore.QObject):
         logging.debug("Core: Initialization complete. Emitting 'initialized' state.")
         self.platformStateChanged.emit("initialized")  
         
-        self.echo_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.echo_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.visualizer_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if self.VISUALIZER_IP ==  '<broadcast>':
+            self.visualizer_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            
         self.local_ip = get_local_ip()
         
     # --------------------------------------------------------------------------
@@ -181,8 +193,10 @@ class SimInterfaceCore(QtCore.QObject):
             selected_platform, description = sim_config.AVAILABLE_PLATFORMS[sim_config.DEFAULT_PLATFORM_INDEX]
             cfg_module = importlib.import_module(selected_platform)       
             self.cfg = cfg_module.PlatformConfig()
-            log.info(f"Core: Imported cfg from {selected_platform}: {description}")
+            log.info(f"Core: Imported cfg from {selected_platform}: {description}")           
             self.FESTO_IP = sim_config.FESTO_IP
+            self.VISUALIZER_IP = sim_config.VISUALIZER_IP 
+
         except Exception as e:
             self.handle_error(e, f"Unable to import platform config from {cfg_module}, check sim_config.py")
             return
@@ -195,39 +209,26 @@ class SimInterfaceCore(QtCore.QObject):
         # Hardcoded Festo IP in example above—change if needed or pass as param
 
         # Setup kinematics
-        self.k = Kinematics()
-        self.cfg.calculate_coords()
-        self.k.set_geometry(self.cfg.BASE_POS, self.cfg.PLATFORM_POS)
-        self.muscle_lengths = self.cfg.DEACTIVATED_MUSCLE_LENGTHS.copy()
+        # named tuple for passing platform parms defined in Kinematics 
+        params = PlatformParams(
+                self.cfg.MUSCLE_MIN_LENGTH,
+                self.cfg.MUSCLE_MAX_LENGTH,
+                self.cfg.FIXED_HARDWARE_LENGTH,
+                self.cfg.LIMITS_1DOF_TRANFORM
+            )
         
+        self.k = Kinematics()
+        self.k.set_geometry(self.cfg.base_coords, self.cfg.platform_coords_xy, params, self.cfg.PLATFORM_CLEARANCE_OFFSET)
+        
+        self.muscle_lengths = self.cfg.DEACTIVATED_MUSCLE_LENGTHS.copy()
+        self.DEACTIVATED_MUSCLE_LENGTHS = [self.cfg.MUSCLE_MAX_LENGTH] * 6
 
-        if self.cfg.PLATFORM_TYPE == "SLIDER":
-            self.k.set_slider_params(
-                self.cfg.joint_min_offset,
-                self.cfg.joint_max_offset,
-                self.cfg.strut_length,
-                self.cfg.slider_angles,
-                self.cfg.slider_endpoints
-            )
-            self.is_slider = True
-        else:
-            self.k.set_platform_params(
-                self.cfg.MIN_ACTUATOR_LENGTH,
-                self.cfg.MAX_ACTUATOR_LENGTH,
-                self.cfg.FIXED_HARDWARE_LENGTH
-            )
-            self.is_slider = False
         
         self.payload_weights = [int((w + self.cfg.UNLOADED_PLATFORM_WEIGHT) / 6) for w in self.cfg.PAYLOAD_WEIGHTS]
         log.debug(f"Core: Payload weights in kg per muscle: {self.payload_weights}")
         
-        self.invert_axis = self.cfg.INVERT_AXIS
-        self.swap_roll_pitch = self.cfg.SWAP_ROLL_PITCH
+        self.swap_roll_pitch = False  # FIXME self.cfg.SWAP_ROLL_PITCH
 
-        self.dynam = Dynamics()
-        self.dynam.begin(self.cfg.LIMITS_1DOF_TRANFORM, "shape.cfg")
-        
-        
         # Load distance->pressure file
         try:
             if self.DtoP.load_data(self.cfg.MUSCLE_PRESSURE_MAPPING_FILE):
@@ -238,6 +239,24 @@ class SimInterfaceCore(QtCore.QObject):
 
         log.debug("Core: %s config data loaded", description)
         self.simStatusChanged.emit("Config Loaded")
+
+    def apply_washout_configuration(self, config_data):
+        filter_type = config_data["type"]
+        axis_params = config_data.get("axis_params", {})
+        global_params = config_data.get("global_params", {})
+
+        if filter_type == "no_washout":
+            self.washout_filter = None
+            log.info("Washout disabled")
+            return
+
+        self.washout_filter = {}
+        for axis in ['x', 'y', 'z', 'roll', 'pitch', 'yaw']:
+            f = create_washout_filter(filter_type, axis, axis_params, global_params)
+            if f:
+                self.washout_filter[axis] = f
+        log.info(f"Washout applied: {filter_type} with {len(self.washout_filter)} axes configured")
+
 
     # --------------------------------------------------------------------------
     # Simulation Management
@@ -258,6 +277,9 @@ class SimInterfaceCore(QtCore.QObject):
                 log.debug("Core: Instantiated sim '%s' from class '%s'", self.sim.name, self.sim_class)
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
+            axis_flip_mask = self.sim.get_axis_flip_mask()
+            print("wha", axis_flip_mask)
+            self.k.set_axis_flip_mask(axis_flip_mask)
             self.sim.set_default_address(self.sim_ip_address)
             log.info(f"Ready to connect to {self.sim_name} at {self.sim_ip_address}")    
         except Exception as e:
@@ -286,11 +308,20 @@ class SimInterfaceCore(QtCore.QObject):
             self.sim.service()
         else:
             transform = self.sim.read()
-            if transform:               
+            if transform and transform[0] is not None:
+                delta_time = self._delta_time() if self.washout_filter else 0.0
+                self.pre_washout_transform = []
                 for idx in range(6):
                     base_gain = self.gains[idx] * self.master_gain
                     attenuated_gain = base_gain * (self.intensity_percent / 100.0)
-                    self.transform[idx] = transform[idx] * attenuated_gain
+                    raw_value = transform[idx] * attenuated_gain
+                    self.pre_washout_transform.append(raw_value)                    
+
+                    axis = axes_name[idx]                        
+                    if self.washout_filter and axis in self.washout_filter and delta_time is not None:
+                        self.transform[idx] = self.washout_filter[axis].update(raw_value, delta_time)
+                    else:
+                        self.transform[idx] = raw_value
                 self.move_platform(self.transform)
 
         # Emit update for UI + Unity twin
@@ -316,7 +347,18 @@ class SimInterfaceCore(QtCore.QObject):
         self.processing_percent = int((loop_duration / 0.050) * 100)
         self.jitter_percent = int(abs(frame_interval - 0.050) / 0.050 * 100)
 
+    def _delta_time(self) -> float:
+        now = time.perf_counter()
 
+        if self._last_update_time is None:
+            self._last_update_time = now
+            return None  # Indicates: skip filter update this frame
+
+        dt = now - self._last_update_time
+        self._last_update_time = now
+        return dt
+
+        
     # following is used to drive slow moves on activation and deactivation
     def handle_transition_step(self):
         if not self.transition_state:
@@ -396,18 +438,6 @@ class SimInterfaceCore(QtCore.QObject):
             sent_pressures=tuple(self.muscle_output.sent_pressures)
         ))
 
-    """  
-    def start_slow_move(self, start_lengths, end_lengths, mode):
-        log.info(f"[Init Slow Move] {mode}: {self._slow_move_steps} steps from {start_lengths} to {end_lengths}")
-        self._motion_state = mode
-        self._requested_motion_state = mode
-        self._slow_move_step_index = 0
-        self._slow_move_steps = max(1, int(max(abs(j - i) for i, j in zip(start_lengths, end_lengths)) / (50 * 0.05)))
-        self._slow_move_muscle_len = list(start_lengths)
-        self._delta_muscle_len = [(j - i) / self._slow_move_steps for i, j in zip(start_lengths, end_lengths)]
-        self._block_sim_control = True
-    """
-
     def read_temperature(self):
         """Read CPU temperature on Raspberry Pi if available."""
         try:
@@ -417,24 +447,39 @@ class SimInterfaceCore(QtCore.QObject):
         except Exception as e:
             log.warning(f"Failed to read temperature: {e}")
             self.temperature = None
-            
-    def echo(self, transform, distances, pose):
-        t = [""] * 6
-        for idx, val in enumerate(transform):
-            if idx < 3:
-                # Invert z if idx == 2?
-                if idx == 2:
-                    val = -val
-                t[idx] = str(round(val))
-            else:
-                t[idx] = str(round(val * 180 / math.pi, 1))
+  
+    # echo format changed from commas seperating each groups to pipe char '|'
+    # changed header names and added pre and post washed normalized transforms 
+    def echo(self, real_transform, lengths, pose, pre_washout_transform, transform):        # Preformat real_transform into request string
+        if self.VISUALIZER_IP.lower() != 'none':
 
-        req_msg = "request," + ",".join(t)
-        dist_msg = ",distances," + ",".join(str(int(d)) for d in distances)
-        pose_msg = ",pose," + ",".join([";".join(map(lambda x: format(x, ".1f"), row)) for row in pose])
-        msg = req_msg + dist_msg + pose_msg + "\n"
-        # print(msg)
-        self.echo_sock.sendto(bytes(msg, "utf-8"), ('<broadcast>', echo_port))
+            req_parts = []
+            for i, val in enumerate(real_transform):
+                if i < 3:
+                    req_parts.append(str(round(-val if i == 2 else val)))
+                    # req_parts.append(str(round(val))) 
+                else:
+                    req_parts.append(f"{math.degrees(val):.1f}")
+            req_str = "request," + ",".join(req_parts)
+
+
+                    
+            # Format muscle lengths as integers
+            dist_str = "|distances," + ",".join(map(str, map(int, lengths)))
+
+            # Format pose matrix: each row as "x;y;z" with 1 decimal place
+            pose_str = "|pose," + ",".join(";".join(f"{v:.1f}" for v in row) for row in pose)
+
+            # Format pre-washout transform rounded to 4 decimal places
+            pre_washed_str = "|pre_washed," + ",".join(f"{v:.4f}" for v in pre_washout_transform)
+
+            # Format normalized transform rounded to 4 decimal places
+            norm_xform_str = "|norm_xform," + ",".join(f"{v:.4f}" for v in transform)
+
+            # Combine all parts into final message
+            msg = req_str + dist_str + pose_str + pre_washed_str + norm_xform_str + "\n"
+
+            self.visualizer_sock.sendto(bytes(msg, "utf-8"), (self.VISUALIZER_IP, visualizer_port))
         
     def update_gain(self, index, value):
         """
@@ -478,32 +523,35 @@ class SimInterfaceCore(QtCore.QObject):
     # --------------------------------------------------------------------------
     # Platform Movement
     # --------------------------------------------------------------------------
+
     def move_platform(self, transform):
         """
-        Convert transform to muscle moves.
+        Convert normalized transform to muscle moves.
         """
         if self.state == "deactivated":
             return
-        # apply inversion
-        transform = [inv * axis for inv, axis in zip(self.invert_axis, transform)]
-        request = self.dynam.regulate(transform)
+
+        real_transform = self.k.norm_to_real(transform)
+
         if self.swap_roll_pitch:
             # swap roll/pitch
-            request[0], request[1], request[3], request[4] = request[1], request[0], request[4], request[3]
-
-        muscle_lengths = self.k.muscle_lengths(request)
+            real_transform[0], real_transform[1], real_transform[3], real_transform[4] = real_transform[1], real_transform[0], real_transform[4], real_transform[3]
+        muscle_lengths = self.k.muscle_lengths(real_transform)
+        # print("in core real xform:", real_transform , "muscle lens", muscle_lengths)
         if not all(x == y for x, y in zip(muscle_lengths, self.muscle_lengths)):
             # print(f"Muscle Lengths: {muscle_lengths}")
             self.muscle_lengths = muscle_lengths
-        #self.muscle_lengths = self.k.muscle_lengths(request)
-        
+        #self.muscle_lengths = self.k.muscle_lengths(real_transform)
+
         # output actuator command (physical platform) only if enabled
         if not self.virtual_only_mode:
             self.muscle_output.set_muscle_lengths(self.muscle_lengths)
 
-        # Always echo to Unity for digital twin sync
-        pose = self.k.get_pose()
-        self.echo(request, self.muscle_lengths, pose)
+        # echo to visualizer for digital twin sync        
+        pose = self.k.get_cached_pose()
+
+        # note: parms are in real values except pre_washout_transform & transform (after washing) are normalized values
+        self.echo(real_transform, self.muscle_lengths, pose, self.pre_washout_transform, transform)
 
         return self.muscle_lengths
         
@@ -540,7 +588,7 @@ class SimInterfaceCore(QtCore.QObject):
         }
 
         if new_state not in valid_transitions.get(self.state, []):
-            log.warning("Invalid transition: %s → %s", self.state, new_state)
+            log.warning("Invalid transition: %s → %s", self.state, new_self.state)
             return
 
         old_state = self.state
@@ -552,15 +600,15 @@ class SimInterfaceCore(QtCore.QObject):
         if new_state == 'activating':
             transform = self.sim.read()
             log.debug(f"in activating, transforms: {transform}")
-            if transform:
+            if transform and transform[0] != None:
                 transform = [
                     transform[i] * self.gains[i] * self.master_gain * (self.intensity_percent / 100.0)
                     for i in range(6)
                 ]
-                end_lengths = self.k.muscle_lengths(self.dynam.regulate(transform))
+                end_lengths = self.k.muscle_lengths(self.k.norm_to_real(transform))
                 
             else:
-                end_lengths = self.cfg.PLATFORM_NEUTRAL_MUSCLE_LENGTHS
+                end_lengths = self.k.PLATFORM_NEUTRAL_MUSCLE_LENGTHS
             self.start_transition("activating", end_lengths)    
 
         elif new_state == 'enabled':
