@@ -1,12 +1,14 @@
 import os
 import platform
 import logging
+import configparser
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtGui import QMovie
 from typing import NamedTuple
 # from common.serial_switch_json_reader import SerialSwitchReader
 from switch_ui_controller import SwitchUIController
 from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
+from washout.washout_ui import WashoutUI
 from ui_widgets import ActivationButton, ButtonGroupHelper,  FatalErrDialog
 
 log = logging.getLogger(__name__)
@@ -55,7 +57,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.init_buttons()
         self.initialize_intensity_controls()
         self.init_images()
-        self.init_sliders()
+        self.init_input_controls()
         self.init_telemetry_format_string()
         self.configure_ui()
 
@@ -80,6 +82,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.btn_fly.clicked.connect(self.on_btn_fly_clicked)
         self.btn_pause.clicked.connect(self.on_btn_pause_clicked)
         self.chk_activate.clicked.connect(self.on_activate_toggled)
+        self.btn_save_gains.clicked.connect(self.on_save_gains)
+        self.btn_reset_gains.clicked.connect(self.on_reset_gains)
 
     def init_buttons(self):
         self.flight_button_group = ButtonGroupHelper(self, [(self.btn_mode_0, 0), (self.btn_mode_1, 1), (self.btn_mode_2, 2)], self.on_flight_mode_changed)
@@ -110,16 +114,23 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.lbl_busy_spinner.hide() 
          
 
-    def init_sliders(self):
-        self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
-        self.transform_blocks = [getattr(self, f'transform_block_{i}') for i in range(6)]
-
-        # gain sldiers
+    def init_input_controls(self):
+        self.washout_ui = WashoutUI(self.grp_washout, config_path="washout/washout.cfg", on_activate=self.core.apply_washout_configuration)
+     
+        # init gain sliders         
+        self.gain_sliders = [] 
         slider_names = [f'sld_gain_{i}' for i in range(6)] + ['sld_gain_master']
         for name in slider_names:
             slider = getattr(self, name)
             slider.valueChanged.connect(lambda value, s=name: self.on_slider_value_changed(s, value))
-            
+            self.gain_sliders.append(slider) 
+
+        self.gain_labels = [getattr(self, f'lbl_gain_{i}') for i in range(7)]
+
+        self.load_gains() # set gains sliders
+        
+        self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
+        self.transform_blocks = [getattr(self, f'transform_block_{i}') for i in range(6)]
 
     def initialize_intensity_controls(self):
         """ Sets up Up/Down buttons and visual parameters for Mild intensity. """
@@ -152,7 +163,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         avail_width = self.lbl_sim_status.width() - (char_width*6*5) # 6 values each 5 chars wide
         avail_pixels = avail_width // 5 # 5 gaps between values
         self.telem_str_spacing = 5 + (avail_pixels//char_width)
-        print(f"spacing: {self.telem_str_spacing},avail_pixels: {avail_pixels}, avail width {avail_width}, char width {char_width}, total width: {self.lbl_sim_status.width()}")
+        # print(f"spacing: {self.telem_str_spacing},avail_pixels: {avail_pixels}, avail width {avail_width}, char width {char_width}, total width: {self.lbl_sim_status.width()}")
         
         
     def on_fatal_error(self, err_context):
@@ -192,6 +203,38 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.activate_warning_dialog:
                     self.activate_warning_dialog.accept()
                     self.activate_warning_dialog = None
+             
+    def load_gains(self, config_path='gains.cfg'):
+        config = configparser.ConfigParser()
+        config.read(config_path)
+
+        # Use default section if not present
+        section = config['Gains'] if 'Gains' in config else {}
+
+        for i in range(6):
+            if self.gain_sliders[i]:
+                val = int(section.get(f'gain_{i}', 100))
+                self.gain_sliders[i].setValue(max(0, min(200, val)))  # Clamp within range
+
+        if hasattr(self, 'sld_gain_master'):
+            master_val = int(section.get('master_gain', 100))
+            self.sld_gain_master.setValue(max(0, min(100, master_val)))
+
+    def save_gains(self, config_path='gains.cfg'):
+        config = configparser.ConfigParser()
+        config['Gains'] = {}
+
+        for i in range(6):
+            slider = getattr(self, f'sld_gain_{i}', None)
+            if slider:
+                config['Gains'][f'gain_{i}'] = str(slider.value())
+
+        if hasattr(self, 'sld_gain_master'):
+            config['Gains']['master_gain'] = str(self.sld_gain_master.value())
+
+        with open(config_path, 'w') as f:
+            config.write(f)
+
 
     # --------------------------------------------------------------------------
     # Status / Communication Utilities
@@ -320,11 +363,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.core.update_state("deactivating")
             self.sync_ui_with_switches()
 
-
     def on_slider_value_changed(self, slider_name, value):
         index = 6 if slider_name == 'sld_gain_master' else int(slider_name.split('_')[-1])
+        self.gain_labels[index].setText(str(value))
         self.core.update_gain(index, value)
 
+    def on_reset_gains(self):
+        for i in range(7):
+            self.gain_sliders[i].setValue(100)
+    
     def on_flight_mode_changed(self, mode_id, from_hardware=False):
         self.core.modeChanged(mode_id)
         if from_hardware:
@@ -358,7 +405,9 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             )
             self.intensity_button_group.set_checked(intensity_index)
 
-
+    def on_save_gains(self):
+        self.save_gains('gains.cfg')
+        
     def update_mild_button_position(self):
         """ 
         Moves the 'Mild' button, aligns the Up/Down buttons, and updates the mild value label.
@@ -571,6 +620,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                     width =  int((sent_pressures[i] / 6000) * full_visual_width)
                     line.setGeometry(0, line.y(), width, line.height())
                     line.update()
+                 
                 
     def show_performance_bars(self, processing_percent: int, jitter_percent: int):
         """
@@ -652,10 +702,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if current_tab == 'tab_main':
             for idx in range(6):
                 self.update_transform_blocks(update.processed_transform)
-        else: 
+        elif current_tab == 'tab_output': 
             self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
             self.txt_festo_ip.setText(self.core.FESTO_IP)
+            self.txt_visualizer_ip.setText(self.core.VISUALIZER_IP)
             if not self.cb_supress_graphics.isChecked():
                 self.show_transform(update.raw_transform)
                 self.show_muscles(update.muscle_lengths, update.sent_pressures)

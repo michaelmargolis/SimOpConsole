@@ -130,21 +130,9 @@ class Dynamics(object):
         return r
 
     def read_config(self):
-        # in this version we only read gains
-        try:
-            with open(self.config_fname) as f:
-                lines = f.readlines()
-                for line in lines:
-                    fields = line.split(',')
-                    if fields[0] == 'gains':
-                       gains = fields[1:]
-                       self.gains = np.array([float(i) for i in fields[1:-1]])
-                       self.master_gain = float(fields[7])
-            log.info("loaded gains from file %s", self.config_fname)
-            self.update_sliders()
-        except IOError:
-            log.info("Using default gains (unable to open gains config file %s)", self.config_fname)
-
+        # gain config is in the core ui, washout is in washout_ui
+        pass  
+        
     def save_config(self):
         try:
             with open(self.config_fname, "w") as outfile:

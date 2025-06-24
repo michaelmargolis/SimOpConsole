@@ -1558,20 +1558,48 @@
       </widget>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_platform">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
+    <widget class="QWidget" name="tab_input">
      <attribute name="title">
-      <string>Platform Output Control</string>
+      <string>Telemetry Input Control</string>
      </attribute>
+     <widget class="QGroupBox" name="grp_washout">
+      <property name="geometry">
+       <rect>
+        <x>610</x>
+        <y>10</y>
+        <width>621</width>
+        <height>541</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>9</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QGroupBox {
+    border: 2px solid lightblue;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
+      </property>
+      <property name="title">
+       <string>Washout</string>
+      </property>
+      <property name="flat">
+       <bool>false</bool>
+      </property>
+     </widget>
      <widget class="QGroupBox" name="ControlGroupbox">
       <property name="geometry">
        <rect>
         <x>30</x>
-        <y>20</y>
+        <y>10</y>
         <width>571</width>
-        <height>411</height>
+        <height>541</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -1594,7 +1622,7 @@
          <x>94</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1616,7 +1644,7 @@
          <x>250</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1641,7 +1669,7 @@
          <x>150</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1666,7 +1694,7 @@
          <x>200</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1691,7 +1719,7 @@
          <x>310</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1716,7 +1744,7 @@
          <x>365</x>
          <y>68</y>
          <width>21</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -1739,7 +1767,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>380</y>
+         <y>430</y>
          <width>46</width>
          <height>13</height>
         </rect>
@@ -1755,7 +1783,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>75</y>
+         <y>70</y>
          <width>31</width>
          <height>16</height>
         </rect>
@@ -1771,7 +1799,7 @@
        <property name="geometry">
         <rect>
          <x>20</x>
-         <y>220</y>
+         <y>240</y>
          <width>31</width>
          <height>20</height>
         </rect>
@@ -2054,10 +2082,10 @@
       <widget class="QSlider" name="sld_gain_master">
        <property name="geometry">
         <rect>
-         <x>440</x>
+         <x>430</x>
          <y>68</y>
          <width>111</width>
-         <height>321</height>
+         <height>371</height>
         </rect>
        </property>
        <property name="minimum">
@@ -2119,7 +2147,7 @@
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>370</y>
+         <y>430</y>
          <width>46</width>
          <height>13</height>
         </rect>
@@ -2131,14 +2159,206 @@
         <set>Qt::AlignCenter</set>
        </property>
       </widget>
+      <widget class="QPushButton" name="btn_save_gains">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>490</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Save as Default</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="btn_reset_gains">
+       <property name="geometry">
+        <rect>
+         <x>100</x>
+         <y>490</y>
+         <width>141</width>
+         <height>31</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Set all 100%</string>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_0">
+       <property name="geometry">
+        <rect>
+         <x>78</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_1">
+       <property name="geometry">
+        <rect>
+         <x>134</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_2">
+       <property name="geometry">
+        <rect>
+         <x>185</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_3">
+       <property name="geometry">
+        <rect>
+         <x>235</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_4">
+       <property name="geometry">
+        <rect>
+         <x>295</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_5">
+       <property name="geometry">
+        <rect>
+         <x>350</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="lbl_gain_6">
+       <property name="geometry">
+        <rect>
+         <x>450</x>
+         <y>450</y>
+         <width>51</width>
+         <height>16</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
      </widget>
+    </widget>
+    <widget class="QWidget" name="tab_output">
+     <attribute name="title">
+      <string>Platform Output</string>
+     </attribute>
      <widget class="QGroupBox" name="gb_actuator_percent">
       <property name="geometry">
        <rect>
         <x>610</x>
-        <y>20</y>
+        <y>70</y>
         <width>611</width>
-        <height>161</height>
+        <height>231</height>
        </rect>
       </property>
       <property name="font">
@@ -2172,7 +2392,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>115</y>
+         <y>170</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2207,7 +2427,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>135</y>
+         <y>200</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2229,7 +2449,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>35</y>
+         <y>55</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2251,7 +2471,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>55</y>
+         <y>80</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2273,7 +2493,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>75</y>
+         <y>110</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2295,7 +2515,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>95</y>
+         <y>140</y>
          <width>500</width>
          <height>16</height>
         </rect>
@@ -2314,7 +2534,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>95</y>
+         <y>140</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2327,7 +2547,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>35</y>
+         <y>55</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2340,7 +2560,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>115</y>
+         <y>170</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2353,7 +2573,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>135</y>
+         <y>200</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2366,7 +2586,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>55</y>
+         <y>80</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2379,7 +2599,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>520</x>
-         <y>75</y>
+         <y>110</y>
          <width>91</width>
          <height>16</height>
         </rect>
@@ -2452,7 +2672,7 @@ QGroupBox::title {
        <property name="geometry">
         <rect>
          <x>50</x>
-         <y>5</y>
+         <y>10</y>
          <width>191</width>
          <height>31</height>
         </rect>
@@ -2507,7 +2727,7 @@ QRadioButton::indicator:unchecked {
        <property name="geometry">
         <rect>
          <x>310</x>
-         <y>5</y>
+         <y>10</y>
          <width>161</width>
          <height>31</height>
         </rect>
@@ -2578,7 +2798,7 @@ QRadioButton::indicator:unchecked {
       <property name="geometry">
        <rect>
         <x>610</x>
-        <y>420</y>
+        <y>390</y>
         <width>611</width>
         <height>141</height>
        </rect>
@@ -2776,146 +2996,11 @@ QRadioButton::indicator:unchecked {
        </property>
       </widget>
      </widget>
-     <widget class="QLabel" name="label_21">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>530</y>
-        <width>141</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Festo IP</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="txt_festo_ip">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>530</y>
-        <width>201</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>192.168.0.10</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="txt_xplane_ip">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>490</y>
-        <width>201</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>192.168.0.100</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_28">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>490</y>
-        <width>141</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>X-Plane IP</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="txt_this_ip">
-      <property name="enabled">
-       <bool>false</bool>
-      </property>
-      <property name="geometry">
-       <rect>
-        <x>290</x>
-        <y>450</y>
-        <width>201</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>192.168.0.10</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignCenter</set>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_30">
-      <property name="geometry">
-       <rect>
-        <x>150</x>
-        <y>450</y>
-        <width>121</width>
-        <height>20</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>12</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>This IP</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-     </widget>
      <widget class="QWidget" name="wdgt_transform" native="true">
       <property name="geometry">
        <rect>
-        <x>620</x>
-        <y>190</y>
+        <x>20</x>
+        <y>70</y>
         <width>551</width>
         <height>221</height>
        </rect>
@@ -3100,6 +3185,199 @@ QRadioButton::indicator:unchecked {
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </widget>
+     <widget class="QGroupBox" name="groupBox">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>340</y>
+        <width>451</width>
+        <height>201</height>
+       </rect>
+      </property>
+      <property name="title">
+       <string>IP Addresses   (set in sim_config file)</string>
+      </property>
+      <widget class="QLabel" name="label_30">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>40</y>
+         <width>121</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>This IP</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_28">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>80</y>
+         <width>141</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>X-Plane IP</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_21">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>120</y>
+         <width>141</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Festo IP</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="txt_this_ip">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>40</y>
+         <width>201</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>192.168.0.10</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="txt_festo_ip">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>120</y>
+         <width>201</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>192.168.0.10</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="txt_xplane_ip">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>80</y>
+         <width>201</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>192.168.0.100</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="txt_visualizer_ip">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="geometry">
+        <rect>
+         <x>160</x>
+         <y>160</y>
+         <width>201</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>None</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_35">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>160</y>
+         <width>141</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Visualizer IP</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </widget>

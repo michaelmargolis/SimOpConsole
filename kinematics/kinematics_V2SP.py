@@ -18,6 +18,8 @@ class Kinematics(object):
     def __init__(self):
         np.set_printoptions(precision=3, suppress=True)
         self.intensity = 1.0
+        self.set_axis_flip_mask([1,1,-1,-1,1,1]) # defualt, the sim will set the mask it needs
+
 
     def clamp(self, n, minn, maxn):
         return max(min(maxn, n), minn)
@@ -28,12 +30,21 @@ class Kinematics(object):
         assert self.base_coords.shape == (6, 3), "Base coordinates must be 6x3"
         assert self.platform_coords.shape == (6, 3), "Platform coordinates must be 6x3"
 
-    def set_platform_params(self, min_muscle_len, max_muscle_len, fixed_len):
-        self.MIN_MUSCLE_LENGTH = min_muscle_len
-        self.MAX_MUSCLE_LENGTH = max_muscle_len
+    def set_platform_params(self, min_muscle_len, max_muscle_len, fixed_len, limits_1dof, mid_height):
+        self.MIN_MUSCLE_LENGTH = min_muscle_len  
+        self.MAX_MUSCLE_LENGTH = max_muscle_len 
         self.FIXED_HARDWARE_LENGTH = fixed_len
         self.MUSCLE_LENGTH_RANGE = max_muscle_len - min_muscle_len
+        self.cached_muscle_lengths = (max_muscle_len) * 6
+        self.limits_1dof = limits_1dof
+        self.PLATFORM_MID_HEIGHT = mid_height  # new
         # log.info("Kinematics set for Stewart Platform")
+
+    def set_axis_flip_mask(self, axis_flip_mask):
+        assert len(axis_flip_mask) == 6, "Axis flip mask must be 6 elements"
+        self.AXIS_FLIP_MASK = np.asarray(axis_flip_mask, dtype=float)
+        self.FLIP_TRANSLATION = self.AXIS_FLIP_MASK[:3]
+        self.FLIP_ROTATION = self.AXIS_FLIP_MASK[3:]
 
     def calc_rotation(self, rpy):
         roll, pitch, yaw = rpy
@@ -55,14 +66,26 @@ class Kinematics(object):
 
     def inverse_kinematics(self, request, return_lengths=False):
         assert len(request) == 6, "Transform must be 6-element sequence"
-        a = np.asarray(request, dtype=float) * self.intensity
-        translation = a[:3]
-        rpy = a[3:6]
-
+    
+        a = np.asarray(request, dtype=float)
+        rpy = a[3:6] * self.FLIP_ROTATION
         Rxyz = self.calc_rotation(rpy)
-        pose = (Rxyz @ self.platform_coords.T).T + translation  # shape (6, 3)
-        self.pose = pose
 
+        # Interpret Z translation relative to platform mid-height
+        translation = np.array([
+            a[0] * self.FLIP_TRANSLATION[0],
+            a[1] * self.FLIP_TRANSLATION[1],
+            self.PLATFORM_MID_HEIGHT + (a[2] * self.FLIP_TRANSLATION[2])
+        ])
+
+        # Flip the platform geometry to match the transform flip
+        platform_coords = self.platform_coords * self.FLIP_TRANSLATION
+
+        pose = (Rxyz @ platform_coords.T).T + translation
+        self.cached_pose = pose
+
+        # print("lengths = ", np.linalg.norm(pose - self.base_coords, axis=1)  )      
+        
         if return_lengths:
             actuator_lengths = np.linalg.norm(pose - self.base_coords, axis=1)
             return pose, actuator_lengths
@@ -70,22 +93,16 @@ class Kinematics(object):
 
     def muscle_lengths(self, xyzrpy):
         _, actuator_lengths = self.inverse_kinematics(xyzrpy, return_lengths=True)
+        self.cached_muscle_lengths = tuple(self.muscle_lengths_from_lengths(actuator_lengths)) # cache the calculated muscle lengths
         return self.muscle_lengths_from_lengths(actuator_lengths)
 
     def muscle_lengths_from_lengths(self, actuator_lengths):
         # return np.clip(actuator_lengths - self.FIXED_HARDWARE_LENGTH, 0, self.MAX_MUSCLE_LENGTH)
-        """
         return [
             min(int(round(length - self.FIXED_HARDWARE_LENGTH)), self.MAX_MUSCLE_LENGTH)
             for length in actuator_lengths
         ]
-        """     
-        return [
-            int(round(length - self.FIXED_HARDWARE_LENGTH))
-            for length in actuator_lengths
-        ]
- 
-
+  
     def muscle_lengths_from_pose(self, pose):
         actuator_lengths = np.linalg.norm(pose - self.base_coords, axis=1)
         return self.muscle_lengths_from_lengths(actuator_lengths)
@@ -98,20 +115,31 @@ class Kinematics(object):
     def percent_from_muscle_length(self, lengths, offset=0):
         return [round(((l - offset) * 100.0) / self.MUSCLE_LENGTH_RANGE, 1) for l in lengths]
 
-    def get_pose(self):
-        return self.pose
+    def get_cached_pose(self):
+        return self.cached_pose
 
+    def get_cached_muscle_lengths(self):
+        return self.cached_muscle_lengths
+        
     def set_intensity(self, intensity):
         self.intensity = intensity
         log.info("Kinematics intensity set to %.1f", intensity)
 
+    def norm_to_real(self, transform):
+        xform = np.asarray(transform, dtype=float)
+        np.clip(xform, -1, 1, xform)  # clip normalized values
+        #  convert from normalized to real world values
+        real_transform = np.multiply(xform, self.limits_1dof) 
+        return real_transform        
+        
 
 if __name__ == "__main__":
     from cfg_SuspendedPlatform import PlatformConfig
 
+    axis_flip_mask = [-1,-1,-1,-1,1,1]
     k = Kinematics()
     cfg = PlatformConfig()
-    cfg.calculate_coords()
+    cfg.calculate_coords(k)
 
     # Debug print for key constants
     print("=== Platform Muscle Configuration ===")
@@ -128,19 +156,24 @@ if __name__ == "__main__":
 
     k.set_geometry(cfg.BASE_POS, cfg.PLATFORM_POS)
     k.set_platform_params(
-        cfg.MIN_ACTUATOR_LENGTH,
-        cfg.MAX_ACTUATOR_LENGTH,
-        cfg.FIXED_HARDWARE_LENGTH
-    )
-
-    invert_axis = cfg.INVERT_AXIS
+        cfg.MUSCLE_MIN_LENGTH,
+        cfg.MUSCLE_MAX_LENGTH,
+        cfg.FIXED_HARDWARE_LENGTH,
+        cfg.LIMITS_1DOF_TRANFORM,
+        cfg.PLATFORM_MID_HEIGHT
+        )
+        
+    k.set_axis_flip_mask(axis_flip_mask)
+    
     swap_roll_pitch = cfg.SWAP_ROLL_PITCH
 
+
+    
     limits_range = cfg.LIMITS_1DOF_TRANFORM
-    print("limits range: ", limits_range)
+    print("limits range: ", ",".join(f"{v:.2f}" for v in limits_range))
 
     def move_platform(transform):
-        transform = [inv * axis for inv, axis in zip(invert_axis, transform)]
+        # transform = [inv * axis for inv, axis in zip(invert_axis, transform)]
         if swap_roll_pitch:
             transform[0], transform[1], transform[3], transform[4] = (
                 transform[1], transform[0], transform[4], transform[3]
@@ -160,7 +193,8 @@ if __name__ == "__main__":
                 transform = [0.0] * 6
                 transform[i] = val
                 muscle_lengths = move_platform(transform)
-                print(f"{dof_labels[i]} = {val}: → lengths: {muscle_lengths}")
+                print(f"{dof_labels[i]} = {val}: → muscle lengths: {muscle_lengths}")
             print()
 
+    print(f"axis_flip_mask = {axis_flip_mask}")
     test_all_dofs()

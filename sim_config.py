@@ -8,7 +8,7 @@
 """
 from typing import List, Tuple
 
-XPLANE_11_IP_ADDRESS =  '127.0.0.1' # '192.168.1.241' # <== set this ip address
+XPLANE_11_IP_ADDRESS = '127.0.0.1' #  '192.168.1.241' # <== set this ip address
 
 # Core config values
 AVAILABLE_SIMS: List[Tuple[str, str, str, str]] = [
@@ -17,6 +17,8 @@ AVAILABLE_SIMS: List[Tuple[str, str, str, str]] = [
     ("MS FS2020", "fs2020", "fs2020.jpg", "127.0.0.1"),
     ("NoLimits2 Coaster", "nolimits2", "nolimits2.jpg", "127.0.0.1")
 ]
+
+DEFAULT_WASHOUT_FILTER_INDEX = 1
 
 DEFAULT_SIM_INDEX = 0
 
@@ -28,6 +30,8 @@ AVAILABLE_PLATFORMS: List[Tuple[str, str]] = [
 DEFAULT_PLATFORM_INDEX = 0
  
 FESTO_IP = "192.168.0.10"
+
+VISUALIZER_IP= '<broadcast>' # addr of digital twin and RT tranform graphs, (can use  '<broadcast>', or 'None' to disable) 
 
 def get_switch_comport(os_name: str) -> str:
     """Returns the correct COM port based on the operating system."""

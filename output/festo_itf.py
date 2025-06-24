@@ -15,7 +15,11 @@ import time
 import traceback
 import threading
 from builtins import input
-from output.fstlib import easyip
+try:
+    from output.fstlib import easyip
+except:
+    from fstlib import easyip
+    
 import logging
 
 log = logging.getLogger(__name__)
@@ -152,16 +156,43 @@ class Festo(object):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s',
-                    datefmt='%H:%M:%S')
-    festo = Festo('192.168.1.16')
-    print("Festo address set to 192.168.1.16")
+                        datefmt='%H:%M:%S')
+    festo = Festo('192.168.0.10')
+    print("Festo address set to 192.168.0.10")
     festo.set_wait_ack(True)
+    festo.enable_poll_pressure(True)
+
     while True:
         try:
-            msg = eval(input("enter one to six comma separated millibar values (0-6000): "))
-            if msg:
-                festo.process_test_message(msg)
-            else:
-                exit()
-        except: 
-            exit()
+            user_input = input("\nEnter 1 to 6 comma-separated pressure values (0–6000 mbar): ").strip()
+            if not user_input:
+                continue
+
+            # Parse and validate input
+            parts = [int(x.strip()) for x in user_input.split(',') if x.strip()]
+            if not parts:
+                print("No valid values entered.")
+                continue
+
+            if any(p < 0 or p > 6000 for p in parts):
+                print("Values must be between 0 and 6000 millibar.")
+                continue
+
+            # Extend to 6 elements by repeating the last value
+            while len(parts) < 6:
+                parts.append(parts[-1])
+            if len(parts) > 6:
+                print("Too many values; using the first six.")
+                parts = parts[:6]
+
+            print(f"Sending: {parts}")
+            festo.send_pressures(parts)
+            time.sleep(0.1)
+            actual = festo.get_pressure()
+            print(f"Actual pressures: {actual}")
+
+        except ValueError:
+            print("Please enter integers only.")
+        except KeyboardInterrupt:
+            print("\nExiting.")
+            break
