@@ -72,6 +72,9 @@ class Sim:
     def get_washout_config(self):
         return config.washout_time
 
+    def get_axis_flip_mask(self):
+        return config.axis_flip_mask
+
     def is_Connected(self):
         return True
 

@@ -14,12 +14,15 @@ FLIGHT_LOOP_INTERVAL = 0.025
 ICAO_BUFFER_SIZE = 40
 PING_TIMEOUT_COUNT = 120 # three second grace time before ping timeout
 
+# all datarefs returning integers must be at the end of this tuple
 transform_refs = namedtuple('transform_refs', (
     'DR_g_axil', 'DR_g_side', 'DR_g_nrml',
     'DR_Prad', 'DR_Qrad', 'DR_Rrad',
     'DR_theta', 'DR_psi', 'DR_phi',
-    'DR_groundspeed'
+    'DR_airspeed', 'DR_on_ground'
 ))
+
+INT_DATAREF_COUNT = 1 # change this is modifying nbr of int datarefs
 
 class PythonInterface:
     def XPluginStart(self):
@@ -198,6 +201,7 @@ class PythonInterface:
             "Rrad":    -named.DR_g_axil,
             "phi":     radians(named.DR_phi),
             "theta":   -radians(named.DR_theta),
+            "on_ground": -named.DR_on_ground,
             "icao":    icao
         }
 
@@ -207,7 +211,14 @@ class PythonInterface:
         except Exception:
             icao = "unknown"
 
-        data = [xp.getDataf(ref) for ref in self.OutputDataRef]
+        # Read all float datarefs except the last one (on_ground)
+        float_data = [xp.getDataf(ref) for ref in self.OutputDataRef[:-1]]
+        # Read the last dataref (on_ground) as integer
+        on_ground = xp.getDatai(self.OutputDataRef[-1])
+
+        # Combine into one list
+        data = float_data + [on_ground]
+
         named = transform_refs._make(data)
         self.last_sent_named = named
         telemetry_dict = self.build_telemetry_dict(named, icao)
@@ -224,7 +235,8 @@ class PythonInterface:
             'sim/flightmodel/position/theta',
             'sim/flightmodel/position/psi',
             'sim/flightmodel/position/phi',
-            'sim/flightmodel/position/groundspeed'
+            'sim/flightmodel/position/true_airspeed',
+            'sim/flightmodel/failures/onground_any'
         ]
         self.OutputDataRef = [xp.findDataRef(ref) for ref in self.xform_drefs]
         self.NumberOfDatarefs = len(self.OutputDataRef)

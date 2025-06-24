@@ -214,6 +214,7 @@ class SpoofXPlaneApp(QMainWindow):
             "Rrad": -self.transform_values[5] / norm_factors[5],
             "phi": -self.transform_values[3] / norm_factors[3],
             "theta": -self.transform_values[4] / norm_factors[4],
+            "on_ground": 0,
             "icao": self.icao_code
         }
         try:
@@ -224,8 +225,14 @@ class SpoofXPlaneApp(QMainWindow):
     def main_tick(self):
         if self.playback_engine and self.is_playing and not self.is_paused:
             self.playback_engine.tick()
+            if not self.playback_engine.is_playing:
+                # Playback just ended
+                self.media_player.stop()
+                self.is_playing = False
+                self.btn_playback.setText("Play")
         else:
             self.send_telemetry()
+
         self.service_heartbeat()
 
     def service_heartbeat(self):
