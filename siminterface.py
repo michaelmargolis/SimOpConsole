@@ -237,6 +237,12 @@ class SimInterfaceCore(QtCore.QObject):
         except Exception as e:
             self.handle_error(e, "Error loading Muscle pressure mapping table ")
 
+        # set visualizer ip address
+        self.visualizer_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        if self.VISUALIZER_IP ==  '<broadcast>':
+            self.visualizer_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        logging.info(f"Visualizer IP set to {self.VISUALIZER_IP}")    
+        
         log.debug("Core: %s config data loaded", description)
         self.simStatusChanged.emit("Config Loaded")
 
@@ -278,7 +284,7 @@ class SimInterfaceCore(QtCore.QObject):
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
             axis_flip_mask = self.sim.get_axis_flip_mask()
-            print("wha", axis_flip_mask)
+            print("Axis flip mask =", axis_flip_mask)
             self.k.set_axis_flip_mask(axis_flip_mask)
             self.sim.set_default_address(self.sim_ip_address)
             log.info(f"Ready to connect to {self.sim_name} at {self.sim_ip_address}")    
@@ -452,7 +458,7 @@ class SimInterfaceCore(QtCore.QObject):
     # changed header names and added pre and post washed normalized transforms 
     def echo(self, real_transform, lengths, pose, pre_washout_transform, transform):        # Preformat real_transform into request string
         if self.VISUALIZER_IP.lower() != 'none':
-
+            """
             req_parts = []
             for i, val in enumerate(real_transform):
                 if i < 3:
@@ -461,6 +467,8 @@ class SimInterfaceCore(QtCore.QObject):
                 else:
                     req_parts.append(f"{math.degrees(val):.1f}")
             req_str = "request," + ",".join(req_parts)
+            """
+            req_str =  "real_transform," + ','.join(map(str, real_transform))
 
 
                     
