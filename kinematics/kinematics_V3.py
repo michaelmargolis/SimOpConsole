@@ -54,7 +54,6 @@ class Kinematics(object):
         self.MAX_ACTUATOR_LENGTH = self.MAX_MUSCLE_LENGTH + self.FIXED_HARDWARE_LENGTH
         self.limits_1dof = platform_params.LIMITS_1DOF_TRANSFORM
 
-        # ───── Mirror utility ─────
         def mirror(coords):
             return coords + [[x, -y, z] for x, y, z in reversed(coords)]
 
@@ -67,7 +66,7 @@ class Kinematics(object):
         # Infer UPPER_ACTUATOR_Z_HEIGHT from average Z of base coords
         self.UPPER_ACTUATOR_Z_HEIGHT = np.mean(self.base_coords[:, 2])
 
-        # ───── Expand platform XY → XYZ, then mirror if needed ─────
+        # ───── Expand platform XY to XYZ, then mirror if needed ─────
         if len(platform_coords[0]) == 2:
             platform_coords = [[x, y, clearance_offset] for x, y in platform_coords]
         if len(platform_coords) == 3:
@@ -99,6 +98,7 @@ class Kinematics(object):
         # ───── Finalize geometry ─────
         self.platform_coords = np.array([[x, y, best_z] for x, y, _ in platform_coords])
         self.PLATFORM_MID_HEIGHT = best_z
+        log.info(f"Platform mid height:  {round(self.PLATFORM_MID_HEIGHT)}")
         actuator_lengths = np.linalg.norm(self.platform_coords - self.base_coords, axis=1)
         self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS = actuator_lengths - self.FIXED_HARDWARE_LENGTH
         self.cached_muscle_lengths = self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS.copy()
@@ -138,7 +138,6 @@ class Kinematics(object):
 
         Rxyz = self.calc_rotation(rpy)
 
-        # ✅ Use the final platform_coords, not an offset/mirrored copy
         pose = (Rxyz @ self.platform_coords.T).T + translation
         self.cached_pose = pose
         # print("lengths = ", np.linalg.norm(pose - self.base_coords, axis=1)  )      
