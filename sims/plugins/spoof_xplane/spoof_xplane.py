@@ -44,6 +44,7 @@ class SpoofXPlaneApp(QMainWindow):
             slider.setRange(-100, 100)
             slider.setValue(0)
             slider.valueChanged.connect(self.update_values)
+        self.is_on_ground = 1 
 
         self.txt_icao.textChanged.connect(self.update_icao)
         self.chk_xplane_running.stateChanged.connect(self.update_running_state)
@@ -156,7 +157,6 @@ class SpoofXPlaneApp(QMainWindow):
     def update_slider(self, value):
         if not self.playback_engine or not self.is_playing:
             return
-        print("wha dur", self.duration_ms)  
         # Convert slider value (0–10000) to ms
         target_ts = (value / self.sld_record.maximum()) * self.duration_ms
 
@@ -185,7 +185,8 @@ class SpoofXPlaneApp(QMainWindow):
                 val = rec[i + 1] * norm_factors[i] * (-1 if i != 2 else 1)
                 self.sliders[i].setValue(round(val * 100))
             self.update_values()  # Ensure transform_values is updated
-
+            self.is_on_ground = int(rec[7]) # field following yaw is 1 when on ground, else 0
+            self.txt_on_ground.setText(str(self.is_on_ground))
             # Send telemetry for this frame
             self.send_telemetry()
 
@@ -214,7 +215,7 @@ class SpoofXPlaneApp(QMainWindow):
             "Rrad": -self.transform_values[5] / norm_factors[5],
             "phi": -self.transform_values[3] / norm_factors[3],
             "theta": -self.transform_values[4] / norm_factors[4],
-            "on_ground": 0,
+            "on_ground": self.is_on_ground,
             "icao": self.icao_code
         }
         try:
