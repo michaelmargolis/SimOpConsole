@@ -9,6 +9,7 @@ from typing import NamedTuple
 from switch_ui_controller import SwitchUIController
 from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
 from washout.washout_ui import WashoutUI
+from show_washout import WashoutScope 
 from ui_widgets import ActivationButton, ButtonGroupHelper,  FatalErrDialog
 
 log = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def init_input_controls(self):
         self.washout_ui = WashoutUI(self.grp_washout, config_path="washout/washout.cfg", on_activate=self.core.apply_washout_configuration)
+        self.transform_viewer = WashoutScope(self.frm_transform_viewer)
      
         # init gain sliders         
         self.gain_sliders = [] 
@@ -702,6 +704,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         if current_tab == 'tab_main':
             for idx in range(6):
                 self.update_transform_blocks(update.processed_transform)
+        elif current_tab == 'tab_transform_viewer':
+            self.transform_viewer.update(update.raw_transform, update.processed_transform)
         elif current_tab == 'tab_output': 
             self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
