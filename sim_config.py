@@ -18,7 +18,6 @@ AVAILABLE_SIMS: List[Tuple[str, str, str, str]] = [
     ("NoLimits2 Coaster", "nolimits2", "nolimits2.jpg", "127.0.0.1")
 ]
 
-DEFAULT_WASHOUT_FILTER_INDEX = 1
 
 DEFAULT_SIM_INDEX = 0
 
@@ -32,6 +31,8 @@ DEFAULT_PLATFORM_INDEX = 0
 FESTO_IP = "192.168.0.10"
 
 VISUALIZER_IP= '<broadcast>' # addr of digital twin and RT tranform graphs, (can use  '<broadcast>', or 'None' to disable) 
+
+SHOW_TRANSFORM_GRAPHS = True  # needs pyqtgraph if True
 
 def get_switch_comport(os_name: str) -> str:
     """Returns the correct COM port based on the operating system."""

@@ -159,6 +159,8 @@ class SimInterfaceCore(QtCore.QObject):
         # performance monitor   
         self.processing_percent = 0
         self.jitter_percent = 0
+        
+        self.SHOW_TRANSFORM_GRAPHS = sim_config.SHOW_TRANSFORM_GRAPHS # pyqtgraph must be enabled if set True
 
     # --------------------------------------------------------------------------
     # set up configurations
@@ -180,6 +182,7 @@ class SimInterfaceCore(QtCore.QObject):
             self.visualizer_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
             
         self.local_ip = get_local_ip()
+
         
     # --------------------------------------------------------------------------
     # Platform Config

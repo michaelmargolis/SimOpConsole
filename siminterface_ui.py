@@ -9,7 +9,6 @@ from typing import NamedTuple
 from switch_ui_controller import SwitchUIController
 from sims.shared_types import SimUpdate, AircraftInfo, ActivationTransition
 from washout.washout_ui import WashoutUI
-from show_washout import WashoutScope 
 from ui_widgets import ActivationButton, ButtonGroupHelper,  FatalErrDialog
 
 log = logging.getLogger(__name__)
@@ -62,6 +61,17 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.init_telemetry_format_string()
         self.configure_ui()
 
+        # enable transform view if configured
+        print("SHOW_TRANSFORM_GRAPHS is", self.core.SHOW_TRANSFORM_GRAPHS)
+        if self.core.SHOW_TRANSFORM_GRAPHS:
+            from show_washout import WashoutScope            
+            self.transform_viewer = WashoutScope(self.frm_transform_viewer)
+        else:           
+            for i in range(self.tabWidget.count()):
+                if self.tabWidget.widget(i).objectName() == "tab_tranform_viewer":
+                    self.tabWidget.removeTab(i)
+                    break; 
+
         self.switch_controller = SwitchUIController(
             self.core,
             parent=self,
@@ -72,7 +82,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.switch_controller.activateStateChanged.connect(self.on_hardware_activate_toggled)
         self.switch_controller.validActivateReceived.connect(self.on_valid_activate_received)
         self.switch_controller.activate_switch_invalid.connect(self.show_activate_warning_dialog)
-
+        
+        
 
     def connect_signals(self):
         self.core.simStatusChanged.connect(self.on_sim_status_changed)
@@ -117,7 +128,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def init_input_controls(self):
         self.washout_ui = WashoutUI(self.grp_washout, config_path="washout/washout.cfg", on_activate=self.core.apply_washout_configuration)
-        self.transform_viewer = WashoutScope(self.frm_transform_viewer)
      
         # init gain sliders         
         self.gain_sliders = [] 

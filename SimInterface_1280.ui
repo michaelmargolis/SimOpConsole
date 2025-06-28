@@ -2348,27 +2348,6 @@
       </widget>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_transform_viewer">
-     <attribute name="title">
-      <string>Transform Viewer</string>
-     </attribute>
-     <widget class="QFrame" name="frm_transform_viewer">
-      <property name="geometry">
-       <rect>
-        <x>0</x>
-        <y>0</y>
-        <width>1231</width>
-        <height>561</height>
-       </rect>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-     </widget>
-    </widget>
     <widget class="QWidget" name="tab_output">
      <attribute name="title">
       <string>Platform Output</string>
@@ -3401,6 +3380,27 @@ QRadioButton::indicator:unchecked {
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_tranform_viewer">
+     <attribute name="title">
+      <string>Transform Viewer</string>
+     </attribute>
+     <widget class="QFrame" name="frm_transform_viewer">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>1231</width>
+        <height>561</height>
+       </rect>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Raised</enum>
+      </property>
      </widget>
     </widget>
    </widget>
