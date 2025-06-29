@@ -166,7 +166,7 @@ if __name__ == '__main__':
         def poll_udp():
             while udp.available():
                 addr, msg = udp.get()
-                print(msg)
+                # print(msg)
                 pre, post = parse_message(msg)
                 if pre and post:
                     scope.update(pre, post)
