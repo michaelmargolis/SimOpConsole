@@ -676,24 +676,29 @@ def sleep_qt(delay):
 
 # Configure logging
 def setup_logging():
-    # Check if running on Windows
     is_windows = os.name == 'nt'
 
-    # Ensure proper line endings only on Unix-like systems
-    if not is_windows:
-        sys.stdout.reconfigure(encoding='utf-8', newline='\n')
+    # Ensure consistent line endings on POSIX systems
+    if not is_windows and hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', newline='')
 
-    # Define logging format
+    # Define a clean formatter that avoids extra newlines
+    class CleanFormatter(logging.Formatter):
+        def format(self, record):
+            return super().format(record).rstrip('\n')
+
     log_format = "%(asctime)s [%(levelname)s] %(message)s"
-    if not is_windows:
-        log_format += '\n'  # Append newline only if NOT Windows
+    formatter = CleanFormatter(log_format, datefmt="%H:%M:%S")
 
-    # Set up logging
-    logging.basicConfig(
-        level=logging.INFO,
-        format=log_format,
-        datefmt="%H:%M:%S"
-    )
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    # Avoid duplicate handlers if setup_logging is called multiple times
+    if not root_logger.handlers:
+        root_logger.addHandler(handler)
 
 if __name__ == "__main__":
     setup_logging()
