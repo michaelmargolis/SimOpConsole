@@ -27,24 +27,20 @@ class Kinematics(object):
     def __init__(self):
         np.set_printoptions(precision=3, suppress=True)
         self.intensity = 1.0
-        self.set_axis_flip_mask([1,1,-1,-1,1,1]) # defualt, the sim will set the mask it needs
+        self.set_axis_flip_mask([1,1,-1,-1,1,1]) # defualt, the sim will set the mask if necessary
 
 
     def clamp(self, n, minn, maxn):
         return max(min(maxn, n), minn)
 
+    def set_geometry(self, base_coords, platform_coords_xy, platform_params, clearance_offset=50):
+        """
+        Sets base and platform geometry and calculates mid-height.
+        The platform is vertically swept from clearance_offset upward until
+        any actuator reaches MIN_ACTUATOR_LENGTH. The midpoint between these two Zs
+        becomes the neutral pose, and platform_coords are shifted so Z=0 represents that pose.
+        """
 
-    def set_geometry(self, base_coords, platform_coords, platform_params, clearance_offset=50):
-        """
-        Sets base and platform geometry, handles half-side definitions and calculates mid-height.
-        
-        Arguments:
-        - base_coords: list of 3 or 6 [x, y, z] points
-        - platform_coords: list of 3 or 6 [x, y] or [x, y, z] points
-        - platform_params: namedtuple/class with:
-            MUSCLE_MIN_LENGTH, MUSCLE_MAX_LENGTH, FIXED_HARDWARE_LENGTH, LIMITS_1DOF_TRANSFORM
-        - clearance_offset: starting Z for platform (default: 50 mm)
-        """
         # ───── Unpack platform parameters ─────
         self.MIN_MUSCLE_LENGTH = platform_params.MUSCLE_MIN_LENGTH
         self.MAX_MUSCLE_LENGTH = platform_params.MUSCLE_MAX_LENGTH
@@ -63,47 +59,84 @@ class Kinematics(object):
         else:
             self.base_coords = np.array(base_coords)
 
-        # Infer UPPER_ACTUATOR_Z_HEIGHT from average Z of base coords
         self.UPPER_ACTUATOR_Z_HEIGHT = np.mean(self.base_coords[:, 2])
 
-        # ───── Expand platform XY to XYZ, then mirror if needed ─────
-        if len(platform_coords[0]) == 2:
-            platform_coords = [[x, y, clearance_offset] for x, y in platform_coords]
-        if len(platform_coords) == 3:
+        # ───── Create initial platform_coords at Z = 0 ─────
+        platform_coords = [[x, y, 0.0] for x, y in platform_coords_xy]
+        if len(platform_coords_xy) == 3:
             platform_coords = mirror(platform_coords)
         platform_coords = np.array(platform_coords)
+        self.platform_coords = platform_coords  # temp Z=0, will be updated
 
-        # ───── Search for PLATFORM_MID_HEIGHT ─────
-        low_z = clearance_offset
-        high_z = self.UPPER_ACTUATOR_Z_HEIGHT - self.FIXED_HARDWARE_LENGTH - self.MIN_MUSCLE_LENGTH
-        target_avg = (self.MIN_ACTUATOR_LENGTH + self.MAX_ACTUATOR_LENGTH) / 2
+        # ───── Sweep from clearance_offset upwards to find max Z (start of contraction) ─────
+        z_min = clearance_offset
+        z_max = None
+        z_step = 1.0
 
-        best_z = None
-        best_error = float('inf')
+        for z in np.arange(z_min, 1000, z_step):
+            candidate = np.array([[x, y, z] for x, y, _ in self.platform_coords])
+            lengths = np.linalg.norm(candidate - self.base_coords, axis=1)
+            if np.any(lengths <= self.MIN_ACTUATOR_LENGTH):
+                z_max = z
+                break
 
-        for z in np.linspace(low_z, high_z, 200):
-            candidate_coords = np.array([[x, y, z] for x, y, _ in platform_coords])
-            lengths = np.linalg.norm(candidate_coords - self.base_coords, axis=1)
-            if any(l < self.MIN_ACTUATOR_LENGTH or l > self.MAX_ACTUATOR_LENGTH for l in lengths):
-                continue
-            avg = np.mean(lengths)
-            error = abs(avg - target_avg)
-            if error < best_error:
-                best_error = error
-                best_z = z
+        if z_max is None:
+            raise ValueError("Unable to find mid-Z position where any actuator reaches minimum length.")
 
-        if best_z is None:
-            raise ValueError("Unable to determine valid PLATFORM_MID_HEIGHT.")
+        # ───── Compute mid Z and shift platform coords so Z = 0 is neutral pose ─────
+        mid_z = (z_min + z_max) / 2.0
 
-        # ───── Finalize geometry ─────
-        self.platform_coords = np.array([[x, y, best_z] for x, y, _ in platform_coords])
-        self.PLATFORM_MID_HEIGHT = best_z
-        log.info(f"Platform mid height:  {round(self.PLATFORM_MID_HEIGHT)}")
-        actuator_lengths = np.linalg.norm(self.platform_coords - self.base_coords, axis=1)
-        self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS = actuator_lengths - self.FIXED_HARDWARE_LENGTH
+        self.platform_coords = np.array([[x, y, mid_z] for x, y, _ in self.platform_coords])
+        self.platform_coords -= np.array([0, 0, mid_z])  # shift so Z=0 is mid pose
+
+        self.PLATFORM_MID_HEIGHT = mid_z  # absolute mid Z
+
+        # ───── Compute neutral actuator lengths at Z = 0 pose ─────
+        _, lengths_at_mid = self.inverse_kinematics([0, 0, 0, 0, 0, 0], return_lengths=True)
+        self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS = lengths_at_mid - self.FIXED_HARDWARE_LENGTH
         self.cached_muscle_lengths = self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS.copy()
 
+        # ───── Debug Output ─────
+        print(f"Clearance offset (Z min): {z_min:.2f}")
+        print(f"Trigger Z (any actuator reaches min): {z_max:.2f}")
+        print(f"Computed mid_z: {mid_z:.2f}")
+        print(f"PLATFORM_MID_HEIGHT (Z=0 reference): {self.PLATFORM_MID_HEIGHT:.2f}")
+        print("Actuator lengths at mid_z (Z=0):", np.round(lengths_at_mid, 2))
+        print("Muscle lengths above fixed hardware:", np.round(self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS, 2))
 
+
+        
+        self. print_geometry_details(clearance_offset)
+
+    def print_geometry_details(self, clearance_offset):
+        print("debug info:")
+        print(f"Clearance_offset: {clearance_offset}")
+        print(f"PLATFORM_MID_HEIGHT: {self.PLATFORM_MID_HEIGHT}")
+        print(f"Min active MUSCLE LENGTH: {self.MIN_MUSCLE_LENGTH}")
+        print(f"Max active MUSCLE LENGTH: {self.MAX_MUSCLE_LENGTH}")
+        print(f"PLATFORM_MID_HEIGHT: {self.PLATFORM_MID_HEIGHT}")
+
+
+    def solve_heave_for_target_lengths(self, target_lengths, z_bounds=(100, 200)):
+        """
+        Solves for Z (heave) such that actuator lengths match the target_lengths.
+        All other pose components are zero.
+        """
+        def objective(z):
+            pose = [0, 0, z, 0, 0, 0]
+            _, lengths = self.inverse_kinematics(pose, return_lengths=True)
+            return np.sum((lengths - target_lengths) ** 2)
+
+        result = minimize_scalar(objective, bounds=z_bounds, method='bounded')
+
+        if not result.success:
+            raise ValueError(f"Z-only IK solve failed: {result.message}")
+
+        final_z = result.x
+        final_pose = [0, 0, final_z, 0, 0, 0]
+        platform_coords, lengths = self.inverse_kinematics(final_pose, return_lengths=True)
+        return platform_coords, lengths
+   
     def set_axis_flip_mask(self, axis_flip_mask):
         assert len(axis_flip_mask) == 6, "Axis flip mask must be 6 elements"
         self.AXIS_FLIP_MASK = np.asarray(axis_flip_mask, dtype=float)

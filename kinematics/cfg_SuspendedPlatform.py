@@ -1,5 +1,4 @@
 import math
-import numpy as np
 
 class PlatformConfig(object):
     PLATFORM_NAME = "Falcon chair"
