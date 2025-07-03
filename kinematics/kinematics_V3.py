@@ -87,7 +87,6 @@ class Kinematics(object):
         mid_z = (z_min + z_max) / 2.0
 
         self.platform_coords = np.array([[x, y, mid_z] for x, y, _ in self.platform_coords])
-        self.platform_coords -= np.array([0, 0, mid_z])  # shift so Z=0 is mid pose
 
         self.PLATFORM_MID_HEIGHT = mid_z  # absolute mid Z
 
