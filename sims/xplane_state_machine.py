@@ -3,7 +3,6 @@ import logging
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum
-from .xplane_cfg import TELEMETRY_CMD_PORT
 from .shared_types import AircraftInfo
 
 NO_TRANSFORM = [None]*6

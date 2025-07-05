@@ -342,7 +342,7 @@ class SimInterfaceCore(QtCore.QObject):
         conn_status, data_status, aircraft_info = self.sim.get_connection_state()
   
         self.dataUpdated.emit(SimUpdate(
-            raw_transform=tuple(self.sim.raw_transform ),
+            raw_transform=tuple(self.pre_washout_transform),  # self.sim.raw_transform ),
             processed_transform=tuple(self.transform),
             muscle_lengths=tuple(self.muscle_lengths),
             sent_pressures=tuple(self.muscle_output.sent_pressures),
@@ -511,7 +511,8 @@ class SimInterfaceCore(QtCore.QObject):
             # Convert to float before emitting to UI
             air_floats = [float(v) for v in air_values]
             gnd_floats = [float(v) for v in gnd_values]
-            self.normFactorsUpdated.emit(air_floats, gnd_floats)
+            # ???? self.normFactorsUpdated.emit(air_floats, gnd_floats)
+            self.sim.telemetry.update_normalization_factors(air_floats, gnd_floats)
         except ValueError:
             # Optionally handle or log input error here
             print("Invalid normalization factor value(s) entered.")

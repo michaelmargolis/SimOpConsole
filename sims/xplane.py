@@ -218,7 +218,7 @@ class Sim:
         }
 
 
-    def save_telemetry_config(self, air_factor_values, ground_factor_values, telemetry_keys=None):
+    def save_telemetry_config(self, air_factor_values, ground_factor_values, telemetry_keys=None, telemetry_settings=None):
         """
         Save telemetry normalization factors (and optional keys) to an INI config file.
 
