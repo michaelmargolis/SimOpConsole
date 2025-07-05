@@ -11,8 +11,8 @@ import configparser
 from enum import Enum
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from . import xplane_cfg as config
-from .xplane_cfg import TELEMETRY_CMD_PORT, TELEMETRY_EVT_PORT, HEARTBEAT_PORT
+
+# from .xplane_cfg import TELEMETRY_CMD_PORT, TELEMETRY_EVT_PORT, HEARTBEAT_PORT
 from .xplane_state_machine import SimStateMachine, SimState
 from .shared_types import AircraftInfo
 from .xplane_beacon import XplaneBeacon
@@ -35,19 +35,19 @@ class Sim:
         self.raw_transform = [None]*6 # transform as received from xplane
         self.xplane_ip = sim_ip
         self.xplane_addr = None
-        self.init_telemetry()
+
         self.aircraft_info = AircraftInfo(status="nogo", name="Aircraft")
         self.state_machine = SimStateMachine(self)
         self.heartbeat_ok = False
         self.xplane_running = False
         self.state = SimState.WAITING_HEARTBEAT
         self.HEARTBEAT_INTERVAL = 1.0  # seconds
-        heartbeat_addr = (sim_ip, HEARTBEAT_PORT)
-        self.heartbeat = HeartbeatClient(heartbeat_addr, target_app="xplane_running", interval=self.HEARTBEAT_INTERVAL)
         self.last_initcoms_time = 0
         self.INITCOMS_INTERVAL = 1.0  # seconds
         self.last_ping_time = 0
         self.PING_INTERVAL = 1.0  # seconds
+        self.init_telemetry()
+        
         self.beacon = XplaneBeacon()
 
         self.situation_load_started = False
@@ -62,9 +62,15 @@ class Sim:
              "theta",    # Pitch angle
              "Rrad"      # Yaw rate
          ]
-         self.telemetry_keys, self.air_factors, self.ground_factors = self.load_telemetry_config(default_telemetry_keys)
+         self.telemetry_keys, self.air_factors, self.ground_factors, settings = self.load_telemetry_config(default_telemetry_keys)
          log.info(f"Normalization factors loaded from: {TELEMETRY_CONFIG_FILE}")
-         self.telemetry = XplaneTelemetry((self.xplane_ip, TELEMETRY_EVT_PORT), self.telemetry_keys)
+         self.telemetry_evt_port = settings["TELEMETRY_EVT_PORT"]
+         self.heartbeat_port = settings["HEARTBEAT_PORT"]
+         self.heartbeat_addr = (self.xplane_ip ,  self.heartbeat_port)
+         self.heartbeat = HeartbeatClient(self.heartbeat_addr, target_app="xplane_running", interval=self.HEARTBEAT_INTERVAL)
+         self.axis_flip_mask = settings["axis_flip_mask"]
+         
+         self.telemetry = XplaneTelemetry((self.xplane_ip, self.telemetry_evt_port), self.telemetry_keys)
          self.telemetry.update_normalization_factors(self.air_factors, self.ground_factors)
 
     def get_norm_factors(self):
@@ -88,11 +94,8 @@ class Sim:
     def set_washout_callback(self, callback):
         self.washout_callback = callback
 
-    def get_washout_config(self):
-        return config.washout_time
-
     def get_axis_flip_mask(self):
-        return config.axis_flip_mask
+        return self.axis_flip_mask
 
     def is_Connected(self):
         return True
@@ -201,7 +204,18 @@ class Sim:
         air_factors = load_factors("air_factors")
         ground_factors = load_factors("ground_factors")
 
-        return telemetry_keys, air_factors, ground_factors
+        settings = config["telemetry_settings"]
+        evt_port = int(settings.get("TELEMETRY_EVT_PORT", "10022"))
+        cmd_port = int(settings.get("TELEMETRY_CMD_PORT", str(evt_port + 1)))
+        hb_port  = int(settings.get("HEARTBEAT_PORT", "10030"))
+        flip_mask = [int(v.strip()) for v in settings.get("axis_flip_mask", "1,1,1,1,1,1").split(",")]
+    
+        return telemetry_keys, air_factors, ground_factors, {
+            "TELEMETRY_EVT_PORT": evt_port,
+            "TELEMETRY_CMD_PORT": cmd_port,
+            "HEARTBEAT_PORT": hb_port,
+            "axis_flip_mask": flip_mask
+        }
 
 
     def save_telemetry_config(self, air_factor_values, ground_factor_values, telemetry_keys=None):
@@ -233,6 +247,14 @@ class Sim:
                 "keys": ", ".join(telemetry_keys)
             }
 
+        if telemetry_settings:
+            config["telemetry_settings"] = {
+                "TELEMETRY_EVT_PORT": str(telemetry_settings["TELEMETRY_EVT_PORT"]),
+                "TELEMETRY_CMD_PORT": str(telemetry_settings["TELEMETRY_CMD_PORT"]),
+                "HEARTBEAT_PORT": str(telemetry_settings["HEARTBEAT_PORT"]),
+                "axis_flip_mask": ", ".join(str(v) for v in telemetry_settings["axis_flip_mask"])
+            }
+        
         with open(TELEMETRY_CONFIG_FILE, "w") as f:
             config.write(f)
             
