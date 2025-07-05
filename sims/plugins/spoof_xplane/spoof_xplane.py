@@ -52,6 +52,7 @@ class SpoofXPlaneApp(QMainWindow):
         self.btn_load_file.clicked.connect(self.load_file)
         self.btn_playback.clicked.connect(self.toggle_playback)
         self.btn_pause.clicked.connect(self.toggle_pause)
+        self.btn_zero_transforms.clicked.connect(self.zero_transforms)
         self.sld_record.valueChanged.connect(self.update_slider)
 
         self.heartbeat_udp = UdpReceive(HEARTBEAT_PORT)
@@ -153,6 +154,10 @@ class SpoofXPlaneApp(QMainWindow):
             if self.media_loaded:
                 self.media_player.play()
             self.btn_pause.setText("Pause")
+
+    def zero_transforms(self):
+        for i in range(6):
+            self.sliders[i].setValue(0)
 
     def update_slider(self, value):
         if not self.playback_engine or not self.is_playing:

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>484</width>
+    <width>722</width>
     <height>611</height>
    </rect>
   </property>
@@ -394,20 +394,23 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>450</y>
-      <width>47</width>
-      <height>14</height>
+      <y>490</y>
+      <width>51</width>
+      <height>16</height>
      </rect>
     </property>
     <property name="text">
      <string>ICAO</string>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
     </property>
    </widget>
    <widget class="QLineEdit" name="txt_icao">
     <property name="geometry">
      <rect>
       <x>100</x>
-      <y>450</y>
+      <y>490</y>
       <width>91</width>
       <height>20</height>
      </rect>
@@ -419,9 +422,9 @@
    <widget class="QCheckBox" name="chk_xplane_running">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>480</y>
-      <width>251</width>
+      <x>170</x>
+      <y>540</y>
+      <width>181</width>
       <height>21</height>
      </rect>
     </property>
@@ -438,10 +441,10 @@
    <widget class="QCheckBox" name="chk_enable_telemetry">
     <property name="geometry">
      <rect>
-      <x>30</x>
-      <y>500</y>
-      <width>231</width>
-      <height>31</height>
+      <x>370</x>
+      <y>540</y>
+      <width>201</width>
+      <height>21</height>
      </rect>
     </property>
     <property name="text">
@@ -451,57 +454,12 @@
      <bool>true</bool>
     </property>
    </widget>
-   <widget class="QLabel" name="label_4">
-    <property name="geometry">
-     <rect>
-      <x>240</x>
-      <y>440</y>
-      <width>151</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Playback file</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="txt_playback">
-    <property name="geometry">
-     <rect>
-      <x>250</x>
-      <y>460</y>
-      <width>141</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>C172_demo_ts</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_playback">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>280</x>
-      <y>490</y>
-      <width>75</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Play</string>
-    </property>
-   </widget>
    <widget class="QSlider" name="sld_record">
     <property name="geometry">
      <rect>
-      <x>20</x>
-      <y>550</y>
-      <width>431</width>
+      <x>30</x>
+      <y>450</y>
+      <width>671</width>
       <height>20</height>
      </rect>
     </property>
@@ -512,88 +470,170 @@
      <enum>Qt::Horizontal</enum>
     </property>
    </widget>
-   <widget class="QLineEdit" name="txt_recno">
+   <widget class="QGroupBox" name="groupBox">
     <property name="geometry">
      <rect>
-      <x>350</x>
-      <y>530</y>
-      <width>101</width>
-      <height>20</height>
+      <x>480</x>
+      <y>20</y>
+      <width>221</width>
+      <height>411</height>
      </rect>
     </property>
-    <property name="text">
-     <string>0</string>
+    <property name="styleSheet">
+     <string notr="true">QGroupBox {
+    border: 2px solid lightblue;
+    border-radius: 5px;
+    padding: 5px;
+}
+</string>
     </property>
+    <property name="title">
+     <string>Playback</string>
+    </property>
+    <widget class="QLineEdit" name="txt_playback">
+     <property name="geometry">
+      <rect>
+       <x>40</x>
+       <y>50</y>
+       <width>141</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>C172_demo_ts</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_4">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>30</y>
+       <width>151</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Playback file</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_load_file">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>90</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Load</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_playback">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>140</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Play</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="btn_pause">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>190</y>
+       <width>81</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Pause</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_13">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>250</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Timestamp</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_recno">
+     <property name="geometry">
+      <rect>
+       <x>120</x>
+       <y>250</y>
+       <width>81</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_14">
+     <property name="geometry">
+      <rect>
+       <x>60</x>
+       <y>320</y>
+       <width>91</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>On ground</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="txt_on_ground">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>320</y>
+       <width>21</width>
+       <height>20</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>0</string>
+     </property>
+    </widget>
    </widget>
-   <widget class="QLabel" name="label_13">
+   <widget class="QPushButton" name="btn_zero_transforms">
     <property name="geometry">
      <rect>
       <x>250</x>
-      <y>530</y>
-      <width>91</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Timestamp</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_load_file">
-    <property name="geometry">
-     <rect>
-      <x>400</x>
-      <y>460</y>
-      <width>71</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Load</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="btn_pause">
-    <property name="enabled">
-     <bool>false</bool>
-    </property>
-    <property name="geometry">
-     <rect>
-      <x>390</x>
       <y>490</y>
-      <width>75</width>
-      <height>21</height>
+      <width>191</width>
+      <height>31</height>
      </rect>
     </property>
     <property name="text">
-     <string>Pause</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="txt_on_ground">
-    <property name="geometry">
-     <rect>
-      <x>210</x>
-      <y>530</y>
-      <width>21</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>0</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_14">
-    <property name="geometry">
-     <rect>
-      <x>110</x>
-      <y>530</y>
-      <width>91</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>On ground</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     <string>Zero all Transforms</string>
     </property>
    </widget>
   </widget>
@@ -602,7 +642,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>484</width>
+     <width>722</width>
      <height>22</height>
     </rect>
    </property>
