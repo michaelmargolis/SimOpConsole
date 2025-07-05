@@ -7,6 +7,7 @@ import traceback
 import copy
 import time
 import logging
+import configparser
 from enum import Enum
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -17,6 +18,8 @@ from .shared_types import AircraftInfo
 from .xplane_beacon import XplaneBeacon
 from .xplane_telemetry import XplaneTelemetry
 from common.heartbeat_client import HeartbeatClient
+
+TELEMETRY_CONFIG_FILE = "sims/telemetry_config.ini"
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +54,7 @@ class Sim:
         self.pause_after_startup = True
         
     def init_telemetry(self):
-         telemetry_keys = [
+         default_telemetry_keys = [
              "g_axil",   # X translation
              "g_side",   # Y translation
              "g_nrml",   # Z translation
@@ -59,13 +62,14 @@ class Sim:
              "theta",    # Pitch angle
              "Rrad"      # Yaw rate
          ]
-         air_factors = config.norm_factors
-         ground_factors = config.norm_factors.copy()
-         ground_factors[5]  = air_factors[5] * 0.2
-         print(air_factors, ground_factors)
-         self.telemetry = XplaneTelemetry((self.xplane_ip, TELEMETRY_EVT_PORT), telemetry_keys)
-         self.telemetry.update_normalization_factors(air_factors, ground_factors)
+         self.telemetry_keys, self.air_factors, self.ground_factors = self.load_telemetry_config(default_telemetry_keys)
+         log.info(f"Normalization factors loaded from: {TELEMETRY_CONFIG_FILE}")
+         self.telemetry = XplaneTelemetry((self.xplane_ip, TELEMETRY_EVT_PORT), self.telemetry_keys)
+         self.telemetry.update_normalization_factors(self.air_factors, self.ground_factors)
 
+    def get_norm_factors(self):
+        return self.telemetry.air_factors, self.telemetry.ground_factors
+    
     def service(self, washout_callback=None):
         return self.state_machine.handle(washout_callback)     
 
@@ -179,17 +183,57 @@ class Sim:
         self.beacon.close()
         self.heartbeat.close()
 
-    def init_plot(self):
-        from .washout import motionCueing
-        from common.plot_itf import PlotItf
-        nbr_plots = 6
-        traces_per_plot = 2
-        titles = ('x (surge)', 'y (sway)', 'z (heave)', 'roll', 'pitch', 'yaw')
-        legends = ('from xplane', 'washed')
-        main_title = "Translations and Rotation washouts from XPlane"
-        self.plotter = PlotItf(main_title, nbr_plots, titles, traces_per_plot, legends=legends, minmax=(-1, 1), grouping='traces')
-        self.mca = motionCueing()
 
-    def plot(self, raw, rates):
-        washed = self.mca.wash(rates)
-        self.plotter.plot([raw, rates])
+    def load_telemetry_config(self, default_telemetry_keys):
+        config = configparser.ConfigParser()
+        config.read(TELEMETRY_CONFIG_FILE)
+
+        # Load keys or use default fallback
+        keys_str = config.get("telemetry", "keys", fallback=",".join(default_telemetry_keys))
+        telemetry_keys = [k.strip() for k in keys_str.split(",")]
+
+        # Load normalization factors for air and ground
+        def load_factors(section):
+            if not config.has_section(section):
+                raise ValueError(f"Missing section: [{section}] in config file")
+            return [float(config.get(section, f"f{i}", fallback="1.0")) for i in range(len(telemetry_keys))]
+
+        air_factors = load_factors("air_factors")
+        ground_factors = load_factors("ground_factors")
+
+        return telemetry_keys, air_factors, ground_factors
+
+
+    def save_telemetry_config(self, air_factor_values, ground_factor_values, telemetry_keys=None):
+        """
+        Save telemetry normalization factors (and optional keys) to an INI config file.
+
+        Parameters:
+        - air_factor_values (list or tuple of str): Airside normalization factor values (as strings).
+        - ground_factor_values (list or tuple of str): Groundside normalization factor values (as strings).
+        - telemetry_keys (optional list or tuple of str): If given, saves under [telemetry] section.
+        """
+ 
+        if len(air_factor_values) != len(ground_factor_values):
+            raise ValueError("Air and ground factor lists must be the same length")
+
+        config = configparser.ConfigParser()
+        config.read(TELEMETRY_CONFIG_FILE)
+
+        config["air_factors"] = {
+            f"f{i}": air_factor_values[i] for i in range(len(air_factor_values))
+        }
+
+        config["ground_factors"] = {
+            f"f{i}": ground_factor_values[i] for i in range(len(ground_factor_values))
+        }
+
+        if telemetry_keys:
+            config["telemetry"] = {
+                "keys": ", ".join(telemetry_keys)
+            }
+
+        with open(TELEMETRY_CONFIG_FILE, "w") as f:
+            config.write(f)
+            
+

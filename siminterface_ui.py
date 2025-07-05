@@ -59,6 +59,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.init_images()
         self.init_input_controls()
         self.init_telemetry_format_string()
+        self.init_normalization_widgets()
         self.configure_ui()
 
         # enable transform view if configured
@@ -91,11 +92,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.core.dataUpdated.connect(self.on_data_updated)
         self.core.activationLevelUpdated.connect(self.on_activation_transition)
         self.core.platformStateChanged.connect(self.on_platform_state_changed)
+        self.core.normFactorsUpdated.connect(self.update_norm_fields)
+        
         self.btn_fly.clicked.connect(self.on_btn_fly_clicked)
         self.btn_pause.clicked.connect(self.on_btn_pause_clicked)
         self.chk_activate.clicked.connect(self.on_activate_toggled)
         self.btn_save_gains.clicked.connect(self.on_save_gains)
         self.btn_reset_gains.clicked.connect(self.on_reset_gains)
+        self.btn_save_norm_factors.clicked.connect(self.on_save_norm_factors)
 
     def init_buttons(self):
         self.flight_button_group = ButtonGroupHelper(self, [(self.btn_mode_0, 0), (self.btn_mode_1, 1), (self.btn_mode_2, 2)], self.on_flight_mode_changed)
@@ -144,6 +148,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.transform_tracks = [getattr(self, f'transform_track_{i}') for i in range(6)]
         self.transform_blocks = [getattr(self, f'transform_block_{i}') for i in range(6)]
 
+    def init_normalization_widgets(self):
+        self.txt_norm_air = []
+        self.txt_norm_gnd = []
+        for i in range(6):
+            attr = getattr(self, f'txt_norm_air_{i}')
+            self.txt_norm_air.append(attr)
+            attr = getattr(self, f'txt_norm_gnd_{i}')
+            self.txt_norm_gnd.append(attr)
+    
     def initialize_intensity_controls(self):
         """ Sets up Up/Down buttons and visual parameters for Mild intensity. """
 
@@ -383,7 +396,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def on_reset_gains(self):
         for i in range(7):
             self.gain_sliders[i].setValue(100)
-    
+  
+    def on_save_norm_factors(self):
+        air_values = [field.text() for field in self.txt_norm_air]
+        gnd_values = [field.text() for field in self.txt_norm_gnd] 
+        self.core.save_norm_factors(air_values, gnd_values)
+  
     def on_flight_mode_changed(self, mode_id, from_hardware=False):
         self.core.modeChanged(mode_id)
         if from_hardware:
@@ -842,6 +860,15 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.lbl_temperature.setStyleSheet("background-color: yellow; color: black;")
             else:
                 self.lbl_temperature.setStyleSheet("") 
+
+    @QtCore.pyqtSlot(list, list)
+    def update_norm_fields(self, air_factors, gnd_factors):
+        for i, val in enumerate(air_factors):
+            if i < len(self.txt_norm_air):
+                self.txt_norm_air[i].setText(f"{val:.2f}")
+        for i, val in enumerate(gnd_factors):
+            if i < len(self.txt_norm_gnd):
+                self.txt_norm_gnd[i].setText(f"{val:.2f}")
 
     # --------------------------------------------------------------------------
     # Event Handling

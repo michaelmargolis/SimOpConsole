@@ -94,6 +94,7 @@ class SimInterfaceCore(QtCore.QObject):
     dataUpdated = QtCore.pyqtSignal(object)            # passing transforms or status to the UI
     activationLevelUpdated = QtCore.pyqtSignal(object) # activation percent passed in slow moved  
     platformStateChanged = QtCore.pyqtSignal(str)      # "enabled", "deactivated", "running", "paused"
+    normFactorsUpdated = QtCore.pyqtSignal(list, list) # norm factors: air_floats, gnd_floats
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -287,9 +288,12 @@ class SimInterfaceCore(QtCore.QObject):
 
             self.simStatusChanged.emit(f"Sim '{self.sim_name}' loaded.")
             axis_flip_mask = self.sim.get_axis_flip_mask()
-            print("Axis flip mask =", axis_flip_mask)
+            # print("Axis flip mask =", axis_flip_mask)
             self.k.set_axis_flip_mask(axis_flip_mask)
             self.sim.set_default_address(self.sim_ip_address)
+            air_factors, gnd_factors = self.sim.get_norm_factors()
+            self.normFactorsUpdated.emit(air_factors, gnd_factors)
+            
             log.info(f"Ready to connect to {self.sim_name} at {self.sim_ip_address}")    
         except Exception as e:
             self.handle_error(e, f"Unable to load sim from {sim_path}")
@@ -500,12 +504,24 @@ class SimInterfaceCore(QtCore.QObject):
             self.master_gain = value *.01
         else:
             self.gains[index] = value *.01
-        
+
+    def save_norm_factors(self, air_values, gnd_values):
+        self.sim.save_telemetry_config(air_values, gnd_values)
+        try:
+            # Convert to float before emitting to UI
+            air_floats = [float(v) for v in air_values]
+            gnd_floats = [float(v) for v in gnd_values]
+            self.normFactorsUpdated.emit(air_floats, gnd_floats)
+        except ValueError:
+            # Optionally handle or log input error here
+            print("Invalid normalization factor value(s) entered.")
+            self.normFactorsUpdated.emit( air_floats, gnd_values)
+
     def intensityChanged(self, percent):
         if self.is_started:
             self.intensity_percent = percent
             log.debug(f"Core: intensity set to {percent}%")
-        
+    
     def loadLevelChanged(self, load_level):
         if self.is_started:
             if load_level>=0 and load_level <=2:   

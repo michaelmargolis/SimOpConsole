@@ -96,16 +96,10 @@ class Kinematics(object):
         self.cached_muscle_lengths = self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS.copy()
 
         # ───── Debug Output ─────
-        print(f"Clearance offset (Z min): {z_min:.2f}")
-        print(f"Trigger Z (any actuator reaches min): {z_max:.2f}")
-        print(f"Computed mid_z: {mid_z:.2f}")
-        print(f"PLATFORM_MID_HEIGHT (Z=0 reference): {self.PLATFORM_MID_HEIGHT:.2f}")
-        print("Actuator lengths at mid_z (Z=0):", np.round(lengths_at_mid, 2))
-        print("Muscle lengths above fixed hardware:", np.round(self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS, 2))
+        # print("Actuator lengths at mid_z (Z=0):", np.round(lengths_at_mid, 2))
+        # print("Muscle lengths above fixed hardware:", np.round(self.PLATFORM_NEUTRAL_MUSCLE_LENGTHS, 2))
 
-
-        
-        self. print_geometry_details(clearance_offset)
+        # self. print_geometry_details(clearance_offset)
 
     def print_geometry_details(self, clearance_offset):
         print("debug info:")
