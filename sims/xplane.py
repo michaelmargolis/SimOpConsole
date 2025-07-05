@@ -28,12 +28,11 @@ class Sim:
         self.report_state_cb = report_state_cb
         self.name = "X-Plane"
         self.prev_yaw = None
-        self.norm_factors = config.norm_factors
         self.washout_callback = None
-        self.telemetry = XplaneTelemetry((sim_ip, TELEMETRY_EVT_PORT), config.norm_factors)
         self.raw_transform = [None]*6 # transform as received from xplane
         self.xplane_ip = sim_ip
         self.xplane_addr = None
+        self.init_telemetry()
         self.aircraft_info = AircraftInfo(status="nogo", name="Aircraft")
         self.state_machine = SimStateMachine(self)
         self.heartbeat_ok = False
@@ -50,6 +49,22 @@ class Sim:
 
         self.situation_load_started = False
         self.pause_after_startup = True
+        
+    def init_telemetry(self):
+         telemetry_keys = [
+             "g_axil",   # X translation
+             "g_side",   # Y translation
+             "g_nrml",   # Z translation
+             "phi",      # Roll angle
+             "theta",    # Pitch angle
+             "Rrad"      # Yaw rate
+         ]
+         air_factors = config.norm_factors
+         ground_factors = config.norm_factors.copy()
+         ground_factors[5]  = air_factors[5] * 0.2
+         print(air_factors, ground_factors)
+         self.telemetry = XplaneTelemetry((self.xplane_ip, TELEMETRY_EVT_PORT), telemetry_keys)
+         self.telemetry.update_normalization_factors(air_factors, ground_factors)
 
     def service(self, washout_callback=None):
         return self.state_machine.handle(washout_callback)     
