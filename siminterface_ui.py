@@ -69,7 +69,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.transform_viewer = WashoutScope(self.frm_transform_viewer)
         else:           
             for i in range(self.tabWidget.count()):
-                if self.tabWidget.widget(i).objectName() == "tab_tranform_viewer":
+                if self.tabWidget.widget(i).objectName() == "tab_transform_viewer":
                     self.tabWidget.removeTab(i)
                     break; 
 
@@ -733,7 +733,8 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             for idx in range(6):
                 self.update_transform_blocks(update.processed_transform)
         elif current_tab == 'tab_transform_viewer':
-            self.transform_viewer.update(update.raw_transform, update.processed_transform)
+            if self.core.SHOW_TRANSFORM_GRAPHS: 
+                self.transform_viewer.update(update.raw_transform, update.processed_transform)
         elif current_tab == 'tab_output': 
             self.txt_this_ip.setText(self.core.local_ip)
             self.txt_xplane_ip.setText(self.core.sim_ip_address)
