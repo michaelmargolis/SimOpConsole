@@ -9,7 +9,7 @@ from PyQt5.QtCore import QUrl, QTimer, Qt
 from PyQt5 import uic
 from udp_tx_rx import UdpReceive
 from datetime import datetime
-
+import configparser
 from playback_engine import PlaybackEngine
 
 version = "0.5.1"
@@ -21,11 +21,13 @@ HEARTBEAT_PORT = 10030
 TELEMETRY_PORT = 10023
 FRAME_DURATION_MS = 25
 
-        
+TELEMETRY_CONFIG_FILE = "../../telemetry_config.ini"
+  
 class SpoofXPlaneApp(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi("spoof_xplane.ui", self)
+        self.load_telemetry_config()
 
         self.transform_values = [0] * 6
         self.icao_code = "C172"
@@ -88,7 +90,9 @@ class SpoofXPlaneApp(QMainWindow):
     def update_enable_telemetry(self, state):
         self.enable_telemetry = (state == Qt.Checked)
 
-    def load_file(self):
+    def load_file(self):        
+        self.load_telemetry_config() # refresh telemetry factors
+        
         self.filename = self.txt_playback.text()
         self.btn_playback.setEnabled(False)
         self.btn_pause.setEnabled(False)
@@ -186,12 +190,21 @@ class SpoofXPlaneApp(QMainWindow):
         if len(rec) > 6:
             # Set sliders from playback values
             # print(rec)
-            for i in range(6):
-                val = rec[i + 1] * norm_factors[i] * (-1 if i != 2 else 1)
-                self.sliders[i].setValue(round(val * 100))
-            self.update_values()  # Ensure transform_values is updated
             self.is_on_ground = int(rec[7]) # field following yaw is 1 when on ground, else 0
             self.txt_on_ground.setText(str(self.is_on_ground))
+            for i in range(6):
+                if i == 2:
+                    val = rec[i + 1] * self.air_factors [i] * -1 
+                elif i == 6:
+                    if self.is_on_ground :
+                        val = rec[i + 1] * self.gnd_factors [i] 
+                    else:
+                        val = rec[i + 1] * self.air_factors [i] 
+                else:
+                    val = rec[i + 1] * self.air_factors [i] 
+                self.sliders[i].setValue(round(val * 100))
+            self.update_values()  # Ensure transform_values is updated
+         
             # Send telemetry for this frame
             self.send_telemetry()
 
@@ -295,6 +308,19 @@ class SpoofXPlaneApp(QMainWindow):
         self.telemetry_udp.close()
         event.accept()
 
+    def load_telemetry_config(self, default_telemetry_keys=None):
+        config = configparser.ConfigParser()
+        config.read(TELEMETRY_CONFIG_FILE)
+
+        # Load normalization factors for air and ground
+        def load_factors(section):
+            if not config.has_section(section):
+                raise ValueError(f"Missing section: [{section}] in config file")
+            return [float(config.get(section, f"f{i}", fallback="1.0")) for i in range(6)]
+
+        self.air_factors = load_factors("air_factors")
+        self.ground_factors = load_factors("ground_factors")
+        
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     win = SpoofXPlaneApp()
