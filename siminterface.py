@@ -316,6 +316,7 @@ class SimInterfaceCore(QtCore.QObject):
         if self.handle_transition_step():
             return  # skip sim-driven control during transition
         
+        self.pre_washout_transform = [0,0,0,0,0,0] #default if no data from sim
         if self._block_sim_control or self.sim.aircraft_info.status != "ok" or self.state == 'deactivated':
             transform = self.transform
             self.sim.service()
@@ -711,8 +712,9 @@ def setup_logging():
     handler.setFormatter(formatter)
 
     root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-
+    log_level = logging.INFO # logging.DEBUG
+    root_logger.setLevel(log_level)
+    
     # Avoid duplicate handlers if setup_logging is called multiple times
     if not root_logger.handlers:
         root_logger.addHandler(handler)

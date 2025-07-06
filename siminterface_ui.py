@@ -179,7 +179,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.mild_step = 10  # Moves by 10% each click
 
         # Set mild initial percent
-        self.mild_percent = 30
+        self.mild_percent = 40
         self.update_mild_button_position()
 
     def init_telemetry_format_string(self):    
