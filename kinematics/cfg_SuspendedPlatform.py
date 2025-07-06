@@ -1,4 +1,4 @@
-import math
+from math import radians
 
 class PlatformConfig(object):
     PLATFORM_NAME = "Falcon chair"
@@ -6,7 +6,7 @@ class PlatformConfig(object):
     PLATFORM_INVERTED = True
     MUSCLE_PRESSURE_MAPPING_FILE = "output/wheelchair_DtoP.csv"
 
-    PLATFORM_CLEARANCE_OFFSET = 50  # mm
+    PLATFORM_CLEARANCE_OFFSET = 80  # mm
     PLATFORM_LOWEST_Z = -1085       # Legacy (unused now if mid-height is auto-computed)
     UPPER_ACTUATOR_Z_HEIGHT = 1070  # Z height of base attachment ring
 
@@ -21,21 +21,13 @@ class PlatformConfig(object):
         self.MUSCLE_MAX_ACTIVE_LENGTH = self.MUSCLE_MAX_LENGTH - self.PLATFORM_CLEARANCE_OFFSET
         self.MUSCLE_MIN_ACTIVE_LENGTH = self.MUSCLE_MIN_LENGTH
 
-        self.DEFAULT_PAYLOAD_WEIGHT = 65
-        self.PAYLOAD_WEIGHT_RANGE = (20, 90)
-        self.UNLOADED_PLATFORM_WEIGHT = 25
-        self.PAYLOAD_WEIGHTS = (50, 60, 150)
+        # self.DEFAULT_PAYLOAD_WEIGHT = 65
+        # self.PAYLOAD_WEIGHT_RANGE = (20, 90)
+        self.UNLOADED_PLATFORM_WEIGHT = 40
+        self.PAYLOAD_WEIGHTS = (50, 100, 150)
         self.MOTION_INTENSITY_RANGE = (10, 50, 150)
 
-        self.LIMITS_1DOF_TRANFORM = (
-            90, 90, 100,
-            math.radians(12), math.radians(10), math.radians(12)
-        )
-
-        self.LIMITS_6DOF_TRANSLATION_ROTATION = (
-            80, 80, 80,
-            math.radians(10), math.radians(10), math.radians(10)
-        )
+        self.LIMITS_1DOF_TRANFORM = (60, 60, 80, radians(8), radians(5), radians(10))
 
         self.DEACTIVATED_MUSCLE_LENGTHS = [self.MUSCLE_MAX_LENGTH] * 6
         self.PROPPING_MUSCLE_LENGTHS = [self.MUSCLE_MAX_LENGTH * 0.08] * 6
