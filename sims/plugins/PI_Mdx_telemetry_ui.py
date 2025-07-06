@@ -193,12 +193,12 @@ class PythonInterface:
     def build_telemetry_dict(self, named, icao):
         return {
             "header": "xplane_telemetry",
-            "g_axil":  -named.DR_Rrad,
+            "g_axil":  -named.DR_g_axil,
             "g_side":  -named.DR_Qrad,
             "g_nrml":  -named.DR_Prad,
             "Prad":    named.DR_g_nrml - 1.0,
             "Qrad":    -named.DR_g_side,
-            "Rrad":    -named.DR_g_axil,
+            "Rrad":    -named.DR_Rrad,
             "phi":     radians(named.DR_phi),
             "theta":   -radians(named.DR_theta),
             "on_ground": -named.DR_on_ground,
